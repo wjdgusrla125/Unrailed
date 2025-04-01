@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5400635164605228335
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7497052902633631969}
+  - component: {fileID: 1057837838017135439}
+  m_Layer: 0
+  m_Name: MapGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7497052902633631969
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5400635164605228335}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.0610476, y: -4.1563897, z: -11.421527}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1057837838017135439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5400635164605228335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d204d1c0f02cc594aa49a35050b0882c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mapSeed: 
+  tilePrefab: {fileID: 3258400204647497964, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
+  woodPrefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
+  ironPrefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
+  riverPrefab: {fileID: 3258400204647497964, guid: f609fffbcf524c948b7219fbdab92ffc, type: 3}
+  mountainPrefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}
+  startPointPrefab: {fileID: 3258400204647497964, guid: 1be121ad81a70df4c9b1c24421ff3e69, type: 3}
+  endPointPrefab: {fileID: 3258400204647497964, guid: ed10c27afcdbd764cb890ac0730c51a7, type: 3}
+  width: 20
+  height: 15
+  pathLength: 10
+  destructibleProbability: 0.2
+  mountainClusterCount: 3
