@@ -417,89 +417,13 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: width
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: height
-      value: 9
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: mapSeed
-      value: 638791550936572036
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: pathLength
-      value: 13
+      value: "\uC751\uC560\uC751\uC560"
       objectReference: {fileID: 0}
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: blockParent
       value: 
       objectReference: {fileID: 1740313673}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minIronCount
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minWoodCount
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: maxRiverCount
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minRiverCount
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minRiverLength
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: maxNoneTileCount
-      value: 70
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minNoneTileCount
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minHorizontalDistance
-      value: 11
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: mountainClusterSizeMax
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: mountainClusterSizeMin
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: destructibleProbability
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: mountainClusterCountMax
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: mountainClusterCountMin
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: destructibleClusterCount
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minDestructibleClusterSize
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: noneThresholdForEdgeMountains
-      value: 25
-      objectReference: {fileID: 0}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator

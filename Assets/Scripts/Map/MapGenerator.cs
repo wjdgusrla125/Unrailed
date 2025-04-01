@@ -69,12 +69,21 @@ public class MapGenerator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Q) && Time.time - lastQTime > qCooldown)
         {
             lastQTime = Time.time;
-            Debug.Log("Q입력");
+            Debug.Log("Q입력, 시드 랜덤화 후 맵 생성");
             for (int i = blockParent.childCount - 1; i >= 0; i--)
                 Destroy(blockParent.GetChild(i).gameObject);
             mapSeed = string.Empty;
             GenerateMap();
         }
+        if (Input.GetKeyDown(KeyCode.E) && Time.time - lastQTime > qCooldown)
+        {
+            lastQTime = Time.time;
+            Debug.Log("E입력, 시드 유지 맵 생성");
+            for (int i = blockParent.childCount - 1; i >= 0; i--)
+                Destroy(blockParent.GetChild(i).gameObject);
+            GenerateMap();
+        }
+
     }
 
     private void GenerateMap()
