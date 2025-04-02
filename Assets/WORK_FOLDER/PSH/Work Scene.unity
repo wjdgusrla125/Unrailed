@@ -418,7 +418,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: mapSeed
-      value: "\uC751\uC560\uC751\uC560"
+      value: 638791902013764617
       objectReference: {fileID: 0}
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: blockParent

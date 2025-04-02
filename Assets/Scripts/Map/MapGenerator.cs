@@ -75,6 +75,7 @@ public class MapGenerator : MonoBehaviour
             mapSeed = string.Empty;
             GenerateMap();
         }
+
         if (Input.GetKeyDown(KeyCode.E) && Time.time - lastQTime > qCooldown)
         {
             lastQTime = Time.time;
@@ -84,6 +85,11 @@ public class MapGenerator : MonoBehaviour
             GenerateMap();
         }
 
+        // if (Input.GetKeyDown(KeyCode.R))
+        // {
+        //     Debug.Log($"R입력, ({visitX}, {visitY}) visit 확인");
+        //     CheckVisit();
+        // }
     }
 
     private void GenerateMap()
@@ -100,6 +106,7 @@ public class MapGenerator : MonoBehaviour
         EnsureReachability(); // 플레이어가 접근할 수 없는 영역은 mountain으로 전환
         PlaceDestructibleObstacles(); // 초기 Wood, Iron 생성 (산/강 제외)
         GenerateEdgeMountainClusters();
+        EnsureReachability(); // 플레이어가 접근할 수 없는 영역은 mountain으로 전환
         ForceStartEndNone();
         EnsureStartEndInnerClear();
         FinalAdjustments(); // 부족한 Wood, Iron, None 보충 (아래 EnsureMinimumDestructibleObstacles() 사용)
@@ -615,51 +622,93 @@ public class MapGenerator : MonoBehaviour
     // 10. EnsureReachability: _posA에서 도달 불가능한 영역은 모두 Mountain으로 변경
     private void EnsureReachability()
     {
+        // 1. _posA에서 상하좌우 이동으로 도달 가능한 영역을 계산 (BFS)
         bool[][] visited = new bool[width][];
-        for (int index = 0; index < width; index++)
-        {
-            visited[index] = new bool[height];
-        }
-
         for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++)
-            visited[i][j] = false;
+            visited[i] = new bool[height];
+        
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
         queue.Enqueue(_posA);
         visited[_posA.x][_posA.y] = true;
-        int iterations = 0;
-        int maxIterations = 10000;
-        while (queue.Count > 0 && iterations < maxIterations)
+
+        Vector2Int[] directions = new Vector2Int[]
         {
-            iterations++;
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1)
+        };
+
+        while (queue.Count > 0)
+        {
             Vector2Int cur = queue.Dequeue();
-            Vector2Int[] neigh = new Vector2Int[]
+            foreach (var d in directions)
             {
-                new Vector2Int(cur.x + 1, cur.y),
-                new Vector2Int(cur.x - 1, cur.y),
-                new Vector2Int(cur.x, cur.y + 1),
-                new Vector2Int(cur.x, cur.y - 1)
-            };
-            foreach (var n in neigh)
-            {
-                if (IsInBounds(n) && !visited[n.x][n.y])
+                Vector2Int next = cur + d;
+                if (IsInBounds(next) && !visited[next.x][next.y])
                 {
-                    if (_map[n.x, n.y] != TileType.Mountain)
+                    // player는 mountain 타일은 통과하지 못하므로 mountain이 아닌 타일만 방문 처리
+                    if (_map[next.x, next.y] != TileType.Mountain)
                     {
-                        visited[n.x][n.y] = true;
-                        queue.Enqueue(n);
+                        visited[next.x][next.y] = true;
+                        queue.Enqueue(next);
                     }
                 }
             }
         }
 
-        if (iterations >= maxIterations)
-            Debug.LogWarning("EnsureReachability: 최대 반복 횟수 초과");
-
+        // 2. BFS에서 방문되지 않은 모든 타일을 mountain으로 전환
         for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-            if (!visited[x][y] && !_riverLocked[x, y])
-                _map[x, y] = TileType.Mountain;
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (!visited[x][y])
+                {
+                    _map[x, y] = TileType.Mountain;
+                }
+            }
+        }
+
+        // 3.  4면이 모두 mountain 또는 맵 밖인 타일을 반복적으로 mountain으로 변경
+        bool changed;
+        do
+        {
+            changed = false;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    // 시작/도착점 주변 3×3 영역 등 예외 처리 필요하면 여기서 건너뛸 수 있음
+                    if ((_posA.x == x && _posA.y == y) || (_posB.x == x && _posB.y == y))
+                        continue;
+
+                    // 이미 mountain이면 검사할 필요 없음
+                    if (_map[x, y] == TileType.Mountain)
+                        continue;
+
+                    bool allBlocked = true;
+                    foreach (var d in directions)
+                    {
+                        Vector2Int adj = new Vector2Int(x + d.x, y + d.y);
+                        if (IsInBounds(adj))
+                        {
+                            if (_map[adj.x, adj.y] != TileType.Mountain)
+                            {
+                                allBlocked = false;
+                                break;
+                            }
+                        }
+                        // 맵 밖은 기본적으로 막힌 것으로 간주
+                    }
+
+                    if (allBlocked)
+                    {
+                        _map[x, y] = TileType.Mountain;
+                        changed = true;
+                    }
+                }
+            }
+        } while (changed);
     }
 
     // 11. FinalAdjustments: 도달 가능한 영역에서 부족한 Wood, Iron, None 보충
@@ -670,7 +719,7 @@ public class MapGenerator : MonoBehaviour
         EnsureNoneTiles();
     }
 
-    // 새로운 함수: 플레이어가 도달 가능한 영역(시작점 기준 Flood Fill)에서, 시작/도착 주변 2셀 제외 후보들 중에서
+    // 플레이어가 도달 가능한 영역(시작점 기준 Flood Fill)에서, 시작/도착 주변 2셀 제외 후보들 중에서
     // 부족한 자원(wood 또는 iron)의 클러스터를 생성하여 최소치 달성
     private void EnsureMinimumDestructibleObstacles()
     {
@@ -774,7 +823,7 @@ public class MapGenerator : MonoBehaviour
         // Debug.Log($"[EnsureMinDestrObs] 최종 Wood={currentWood}, Iron={currentIron}");
     }
 
-    // 헬퍼 함수: 플레이어가 도달 가능한 영역(시작점 기준 Flood Fill) 리스트 반환
+    // 플레이어가 도달 가능한 영역(시작점 기준 Flood Fill) 리스트 반환
     private List<Vector2Int> GetReachableCells()
     {
         bool[][] visited = new bool[width][];
@@ -957,7 +1006,10 @@ public class MapGenerator : MonoBehaviour
         }
 
         foreach (var cell in path)
+        {
             _map[cell.x, cell.y] = TileType.None;
+        }
+
         Debug.Log("EnsureWoodAccessibility: Wood 통로 생성 완료");
     }
 
@@ -979,6 +1031,8 @@ public class MapGenerator : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
+                // if (x == visitX && y == visitY) Debug.Log($"({x}, {y}) TileType: {_map[x, y]}");
+
                 Vector3 pos = new Vector3(x, 0, y);
                 if (x == _posA.x && y == _posA.y)
                     Instantiate(startPointPrefab, pos, Quaternion.identity, blockParent);
@@ -1009,7 +1063,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    // 새로운 함수: 시작점에서 도착점까지 연결 가능한지 확인, 연결 불가능하면 수평/수직 경로로 mountain 제거
+    // 시작점에서 도착점까지 연결 가능한지 확인, 연결 불가능하면 수평/수직 경로로 mountain 제거
     private void EnsurePathConnectivity()
     {
         bool[][] visited = new bool[width][];
