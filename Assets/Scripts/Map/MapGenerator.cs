@@ -6,15 +6,7 @@ using Random = UnityEngine.Random;
 
 public class MapGenerator : MonoBehaviour
 {
-    [SerializeField] private string mapSeed;
-    [SerializeField] private GameObject tilePrefab;
-    [SerializeField] private GameObject woodPrefab;
-    [SerializeField] private GameObject ironPrefab;
-    [SerializeField] private GameObject riverPrefab;
-    [SerializeField] private GameObject mountainPrefab;
-    [SerializeField] private GameObject startPointPrefab;
-    [SerializeField] private GameObject endPointPrefab;
-    [SerializeField] private Transform blockParent;
+    [SerializeField, Header("맵 시드값(비울 경우 랜덤)")] private string mapSeed;
 
     [Header("맵 크기 설정")] [SerializeField] private int width = 15;
     [SerializeField] private int height = 9;
@@ -23,9 +15,8 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private int maxNoneTileCount = 70;
     [SerializeField] private int minNoneTileCount = 20;
 
-    [Header("나무, 철 관련 설정")] [SerializeField]
-    private int destructibleClusterCount = 5;
-
+    [Header("나무, 철 관련 설정")] 
+    [SerializeField] private int destructibleClusterCount = 5;
     [SerializeField] private float destructibleClusterProbability = 0.9f;
     [SerializeField] private int minWoodCount = 30;
     [SerializeField] private int minIronCount = 30;
@@ -39,8 +30,18 @@ public class MapGenerator : MonoBehaviour
     [Header("강 관련 설정")] [SerializeField] private int minRiverCount = 2;
     [SerializeField] private int maxRiverCount = 3;
     [SerializeField] private int minRiverLength = 8;
-
-    private enum TileType
+    
+    [Header("프리팹")]
+    [SerializeField] private GameObject tilePrefab;
+    [SerializeField] private GameObject woodPrefab;
+    [SerializeField] private GameObject ironPrefab;
+    [SerializeField] private GameObject riverPrefab;
+    [SerializeField] private GameObject mountainPrefab;
+    [SerializeField] private GameObject startPointPrefab;
+    [SerializeField] private GameObject endPointPrefab;
+    [SerializeField] private Transform blockParent;
+    
+    public enum TileType
     {
         None,
         Wood,
@@ -49,7 +50,7 @@ public class MapGenerator : MonoBehaviour
         River
     }
 
-    private TileType[,] _map;
+    public TileType[,] Map;
     private bool[,] _riverLocked; // 강 셀 보호
 
     private Vector2Int _posA; // 시작점
@@ -127,12 +128,12 @@ public class MapGenerator : MonoBehaviour
     // 맵 및 강 락 배열 초기화
     private void InitializeMap()
     {
-        _map = new TileType[width, height];
+        Map = new TileType[width, height];
         _riverLocked = new bool[width, height];
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
         {
-            _map[x, y] = TileType.None;
+            Map[x, y] = TileType.None;
             _riverLocked[x, y] = false;
         }
     }
@@ -169,7 +170,7 @@ public class MapGenerator : MonoBehaviour
                 current.x += (_posB.x > current.x) ? 1 : -1;
             else if (current.y != _posB.y)
                 current.y += (_posB.y > current.y) ? 1 : -1;
-            _map[current.x, current.y] = TileType.None;
+            Map[current.x, current.y] = TileType.None;
         }
 
         if (iterations >= maxIterations)
@@ -214,7 +215,7 @@ public class MapGenerator : MonoBehaviour
             int clusterSize = Random.Range(mountainClusterSizeMin, mountainClusterSizeMax + 1);
             Queue<Vector2Int> mountainQueue = new Queue<Vector2Int>();
             mountainQueue.Enqueue(new Vector2Int(startX, startY));
-            _map[startX, startY] = TileType.Mountain;
+            Map[startX, startY] = TileType.Mountain;
             int count = 1;
             int iterations = 0;
             int maxIterations = 10000;
@@ -236,7 +237,7 @@ public class MapGenerator : MonoBehaviour
                 foreach (var n in neighbors)
                 {
                     if (n.x >= 0 && n.x < width && n.y >= 0 && n.y < height &&
-                        _map[n.x, n.y] == TileType.None)
+                        Map[n.x, n.y] == TileType.None)
                     {
                         // 이웃이 start/end라면 건너뜀
                         if (n == _posA || n == _posB)
@@ -244,7 +245,7 @@ public class MapGenerator : MonoBehaviour
 
                         if (Random.value < 0.5f)
                         {
-                            _map[n.x, n.y] = TileType.Mountain;
+                            Map[n.x, n.y] = TileType.Mountain;
                             mountainQueue.Enqueue(n);
                             count++;
                         }
@@ -368,7 +369,7 @@ public class MapGenerator : MonoBehaviour
             {
                 foreach (var cell in riverCells)
                 {
-                    _map[cell.x, cell.y] = TileType.River;
+                    Map[cell.x, cell.y] = TileType.River;
                     _riverLocked[cell.x, cell.y] = true;
                 }
 
@@ -403,7 +404,7 @@ public class MapGenerator : MonoBehaviour
         {
             int x = Random.Range(0, width);
             int y = Random.Range(0, height);
-            if (_map[x, y] != TileType.None)
+            if (Map[x, y] != TileType.None)
                 continue;
 
             Vector2Int startPos = new Vector2Int(x, y);
@@ -432,9 +433,9 @@ public class MapGenerator : MonoBehaviour
 
             foreach (var cell in cluster)
             {
-                if (_map[cell.x, cell.y] == TileType.None)
+                if (Map[cell.x, cell.y] == TileType.None)
                 {
-                    _map[cell.x, cell.y] = obstacleType;
+                    Map[cell.x, cell.y] = obstacleType;
                     if (obstacleType == TileType.Wood)
                         totalWood++;
                     else if (obstacleType == TileType.Iron)
@@ -456,17 +457,17 @@ public class MapGenerator : MonoBehaviour
             List<Vector2Int> edgeNoneTiles = new List<Vector2Int>();
             for (int x = 0; x < width; x++)
             {
-                if (_map[x, 0] == TileType.None)
+                if (Map[x, 0] == TileType.None)
                     edgeNoneTiles.Add(new Vector2Int(x, 0));
-                if (_map[x, height - 1] == TileType.None)
+                if (Map[x, height - 1] == TileType.None)
                     edgeNoneTiles.Add(new Vector2Int(x, height - 1));
             }
 
             for (int y = 1; y < height - 1; y++)
             {
-                if (_map[0, y] == TileType.None)
+                if (Map[0, y] == TileType.None)
                     edgeNoneTiles.Add(new Vector2Int(0, y));
-                if (_map[width - 1, y] == TileType.None)
+                if (Map[width - 1, y] == TileType.None)
                     edgeNoneTiles.Add(new Vector2Int(width - 1, y));
             }
 
@@ -481,7 +482,7 @@ public class MapGenerator : MonoBehaviour
             int clusterSize = Random.Range(mountainClusterSizeMin, mountainClusterSizeMax + 1);
             Queue<Vector2Int> mountainQueue = new Queue<Vector2Int>();
             mountainQueue.Enqueue(start);
-            _map[start.x, start.y] = TileType.Mountain;
+            Map[start.x, start.y] = TileType.Mountain;
             int count = 1;
             int iterations = 0;
             int maxIterations = 10000;
@@ -502,11 +503,11 @@ public class MapGenerator : MonoBehaviour
                 };
                 foreach (var n in neighbors)
                 {
-                    if (IsInBounds(n) && _map[n.x, n.y] == TileType.None)
+                    if (IsInBounds(n) && Map[n.x, n.y] == TileType.None)
                     {
                         if (Random.value < 0.5f)
                         {
-                            _map[n.x, n.y] = TileType.Mountain;
+                            Map[n.x, n.y] = TileType.Mountain;
                             mountainQueue.Enqueue(n);
                             count++;
                         }
@@ -528,7 +529,7 @@ public class MapGenerator : MonoBehaviour
         int count = 0;
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
-            if (_map[x, y] == TileType.None)
+            if (Map[x, y] == TileType.None)
                 count++;
         return count;
     }
@@ -581,7 +582,7 @@ public class MapGenerator : MonoBehaviour
         {
             int nx = _posA.x + dx, ny = _posA.y + dy;
             if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-                _map[nx, ny] = TileType.None;
+                Map[nx, ny] = TileType.None;
         }
 
         for (int dx = -1; dx <= 1; dx++)
@@ -589,7 +590,7 @@ public class MapGenerator : MonoBehaviour
         {
             int nx = _posB.x + dx, ny = _posB.y + dy;
             if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-                _map[nx, ny] = TileType.None;
+                Map[nx, ny] = TileType.None;
         }
     }
 
@@ -599,7 +600,7 @@ public class MapGenerator : MonoBehaviour
         int count = 0;
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
-            if (_map[x, y] == TileType.None)
+            if (Map[x, y] == TileType.None)
                 count++;
         int iterations = 0;
         int maxIterations = 10000;
@@ -608,9 +609,9 @@ public class MapGenerator : MonoBehaviour
             iterations++;
             int x = Random.Range(0, width);
             int y = Random.Range(0, height);
-            if (_map[x, y] != TileType.None && _map[x, y] != TileType.River)
+            if (Map[x, y] != TileType.None && Map[x, y] != TileType.River)
             {
-                _map[x, y] = TileType.None;
+                Map[x, y] = TileType.None;
                 count++;
             }
         }
@@ -648,7 +649,7 @@ public class MapGenerator : MonoBehaviour
                 if (IsInBounds(next) && !visited[next.x][next.y])
                 {
                     // player는 mountain 타일은 통과하지 못하므로 mountain이 아닌 타일만 방문 처리
-                    if (_map[next.x, next.y] != TileType.Mountain)
+                    if (Map[next.x, next.y] != TileType.Mountain)
                     {
                         visited[next.x][next.y] = true;
                         queue.Enqueue(next);
@@ -664,7 +665,7 @@ public class MapGenerator : MonoBehaviour
             {
                 if (!visited[x][y])
                 {
-                    _map[x, y] = TileType.Mountain;
+                    Map[x, y] = TileType.Mountain;
                 }
             }
         }
@@ -683,7 +684,7 @@ public class MapGenerator : MonoBehaviour
                         continue;
 
                     // 이미 mountain이면 검사할 필요 없음
-                    if (_map[x, y] == TileType.Mountain)
+                    if (Map[x, y] == TileType.Mountain)
                         continue;
 
                     bool allBlocked = true;
@@ -692,7 +693,7 @@ public class MapGenerator : MonoBehaviour
                         Vector2Int adj = new Vector2Int(x + d.x, y + d.y);
                         if (IsInBounds(adj))
                         {
-                            if (_map[adj.x, adj.y] != TileType.Mountain)
+                            if (Map[adj.x, adj.y] != TileType.Mountain)
                             {
                                 allBlocked = false;
                                 break;
@@ -703,7 +704,7 @@ public class MapGenerator : MonoBehaviour
 
                     if (allBlocked)
                     {
-                        _map[x, y] = TileType.Mountain;
+                        Map[x, y] = TileType.Mountain;
                         changed = true;
                     }
                 }
@@ -744,7 +745,7 @@ public class MapGenerator : MonoBehaviour
             attempts++;
 
             // 현재 None인 셀 후보 목록 (reachable 중에서 None인 셀만)
-            List<Vector2Int> candidates = reachable.FindAll(cell => _map[cell.x, cell.y] == TileType.None);
+            List<Vector2Int> candidates = reachable.FindAll(cell => Map[cell.x, cell.y] == TileType.None);
             if (candidates.Count == 0)
             {
                 Debug.LogWarning(
@@ -760,9 +761,9 @@ public class MapGenerator : MonoBehaviour
             int added = 0;
             foreach (var c in cluster)
             {
-                if (_map[c.x, c.y] == TileType.None)
+                if (Map[c.x, c.y] == TileType.None)
                 {
-                    _map[c.x, c.y] = TileType.Wood;
+                    Map[c.x, c.y] = TileType.Wood;
                     currentWood++;
                     added++;
                     if (currentWood >= minWoodCount)
@@ -785,7 +786,7 @@ public class MapGenerator : MonoBehaviour
             attempts++;
 
             // 현재 None인 셀 후보 목록 (reachable 중에서 None인 셀만)
-            List<Vector2Int> candidates = reachable.FindAll(cell => _map[cell.x, cell.y] == TileType.None);
+            List<Vector2Int> candidates = reachable.FindAll(cell => Map[cell.x, cell.y] == TileType.None);
             if (candidates.Count == 0)
             {
                 Debug.LogWarning(
@@ -801,9 +802,9 @@ public class MapGenerator : MonoBehaviour
             int added = 0;
             foreach (var c in cluster)
             {
-                if (_map[c.x, c.y] == TileType.None)
+                if (Map[c.x, c.y] == TileType.None)
                 {
-                    _map[c.x, c.y] = TileType.Iron;
+                    Map[c.x, c.y] = TileType.Iron;
                     currentIron++;
                     added++;
                     if (currentIron >= minIronCount)
@@ -857,7 +858,7 @@ public class MapGenerator : MonoBehaviour
                 if (IsInBounds(n) && !visited[n.x][n.y])
                 {
                     // Debug.Log($"[BFS]   neighbor={n}, map={_map[n.x, n.y]}");
-                    if (_map[n.x, n.y] != TileType.Mountain)
+                    if (Map[n.x, n.y] != TileType.Mountain)
                     {
                         visited[n.x][n.y] = true;
                         queue.Enqueue(n);
@@ -886,7 +887,7 @@ public class MapGenerator : MonoBehaviour
         int count = 0;
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
-            if (_map[x, y] == type)
+            if (Map[x, y] == type)
                 count++;
         return count;
     }
@@ -896,18 +897,18 @@ public class MapGenerator : MonoBehaviour
     {
         int row = _posB.y;
         for (int x = _posB.x; x < width; x++)
-            _map[x, row] = TileType.None;
+            Map[x, row] = TileType.None;
 
         if (row - 1 >= 0)
         {
             for (int x = _posB.x; x < width; x++)
-                _map[x, row - 1] = TileType.None;
+                Map[x, row - 1] = TileType.None;
         }
 
         if (row + 1 < height)
         {
             for (int x = _posB.x; x < width; x++)
-                _map[x, row + 1] = TileType.None;
+                Map[x, row + 1] = TileType.None;
         }
     }
 
@@ -924,7 +925,7 @@ public class MapGenerator : MonoBehaviour
         while (queue.Count > 0)
         {
             Vector2Int cur = queue.Dequeue();
-            if (_map[cur.x, cur.y] == TileType.Wood)
+            if (Map[cur.x, cur.y] == TileType.Wood)
             {
                 targetWood = cur;
                 foundWood = true;
@@ -943,7 +944,7 @@ public class MapGenerator : MonoBehaviour
                 Vector2Int nxt = cur + d;
                 if (IsInBounds(nxt) && !visited.Contains(nxt))
                 {
-                    if (_map[nxt.x, nxt.y] != TileType.Mountain && _map[nxt.x, nxt.y] != TileType.River)
+                    if (Map[nxt.x, nxt.y] != TileType.Mountain && Map[nxt.x, nxt.y] != TileType.River)
                     {
                         queue.Enqueue(nxt);
                         visited.Add(nxt);
@@ -960,7 +961,7 @@ public class MapGenerator : MonoBehaviour
             for (int i = 0; i < width; i++)
             for (int j = 0; j < height; j++)
             {
-                if (_map[i, j] == TileType.Wood)
+                if (Map[i, j] == TileType.Wood)
                 {
                     int dist = Mathf.Abs(i - _posA.x) + Mathf.Abs(j - _posA.y);
                     if (dist < bestDist)
@@ -1007,7 +1008,7 @@ public class MapGenerator : MonoBehaviour
 
         foreach (var cell in path)
         {
-            _map[cell.x, cell.y] = TileType.None;
+            Map[cell.x, cell.y] = TileType.None;
         }
 
         Debug.Log("EnsureWoodAccessibility: Wood 통로 생성 완료");
@@ -1017,50 +1018,8 @@ public class MapGenerator : MonoBehaviour
     private void ForceStartEndNone()
     {
         // 시작점, 도착점은 절대 산 혹은 다른 장애물이 되지 않도록 강제로 None으로 설정
-        _map[_posA.x, _posA.y] = TileType.None;
-        _map[_posB.x, _posB.y] = TileType.None;
-    }
-
-    // 14. InstantiateMap: 맵 인스턴스화 및 최종 렌더링 전에 시작-도착 연결 보장
-    private void InstantiateMap()
-    {
-        // 최종 연결 확인: 도달 불가능하면 수평/수직 경로로 mountain 제거
-        EnsurePathConnectivity();
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                // if (x == visitX && y == visitY) Debug.Log($"({x}, {y}) TileType: {_map[x, y]}");
-
-                Vector3 pos = new Vector3(x, 0, y);
-                if (x == _posA.x && y == _posA.y)
-                    Instantiate(startPointPrefab, pos, Quaternion.identity, blockParent);
-                else if (x == _posB.x && y == _posB.y)
-                    Instantiate(endPointPrefab, pos, Quaternion.identity, blockParent);
-                else
-                {
-                    switch (_map[x, y])
-                    {
-                        case TileType.None:
-                            Instantiate(tilePrefab, pos, Quaternion.identity, blockParent);
-                            break;
-                        case TileType.Wood:
-                            Instantiate(woodPrefab, pos, Quaternion.identity, blockParent);
-                            break;
-                        case TileType.Iron:
-                            Instantiate(ironPrefab, pos, Quaternion.identity, blockParent);
-                            break;
-                        case TileType.Mountain:
-                            Instantiate(mountainPrefab, pos, Quaternion.identity, blockParent);
-                            break;
-                        case TileType.River:
-                            Instantiate(riverPrefab, pos, Quaternion.identity, blockParent);
-                            break;
-                    }
-                }
-            }
-        }
+        Map[_posA.x, _posA.y] = TileType.None;
+        Map[_posB.x, _posB.y] = TileType.None;
     }
 
     // 시작점에서 도착점까지 연결 가능한지 확인, 연결 불가능하면 수평/수직 경로로 mountain 제거
@@ -1094,7 +1053,7 @@ public class MapGenerator : MonoBehaviour
             };
             foreach (var n in neighbors)
             {
-                if (IsInBounds(n) && !visited[n.x][n.y] && _map[n.x, n.y] != TileType.Mountain)
+                if (IsInBounds(n) && !visited[n.x][n.y] && Map[n.x, n.y] != TileType.Mountain)
                 {
                     visited[n.x][n.y] = true;
                     queue.Enqueue(n);
@@ -1108,9 +1067,9 @@ public class MapGenerator : MonoBehaviour
             Vector2Int cur = _posA;
             while (cur.x != _posB.x)
             {
-                if (_map[cur.x, cur.y] == TileType.Mountain)
+                if (Map[cur.x, cur.y] == TileType.Mountain)
                 {
-                    _map[cur.x, cur.y] = TileType.None;
+                    Map[cur.x, cur.y] = TileType.None;
                 }
 
                 cur.x += (_posB.x > cur.x) ? 1 : -1;
@@ -1118,17 +1077,59 @@ public class MapGenerator : MonoBehaviour
 
             while (cur.y != _posB.y)
             {
-                if (_map[cur.x, cur.y] == TileType.Mountain)
+                if (Map[cur.x, cur.y] == TileType.Mountain)
                 {
-                    _map[cur.x, cur.y] = TileType.None;
+                    Map[cur.x, cur.y] = TileType.None;
                 }
 
                 cur.y += (_posB.y > cur.y) ? 1 : -1;
             }
 
-            if (_map[_posB.x, _posB.y] == TileType.Mountain)
+            if (Map[_posB.x, _posB.y] == TileType.Mountain)
             {
-                _map[_posB.x, _posB.y] = TileType.None;
+                Map[_posB.x, _posB.y] = TileType.None;
+            }
+        }
+    }
+    
+    // 14. InstantiateMap: 맵 인스턴스화 및 최종 렌더링 전에 시작-도착 연결 보장
+    private void InstantiateMap()
+    {
+        // 최종 연결 확인: 도달 불가능하면 수평/수직 경로로 mountain 제거
+        EnsurePathConnectivity();
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                // if (x == visitX && y == visitY) Debug.Log($"({x}, {y}) TileType: {_map[x, y]}");
+
+                Vector3 pos = new Vector3(x, 0, y);
+                if (x == _posA.x && y == _posA.y)
+                    Instantiate(startPointPrefab, pos, Quaternion.identity, blockParent);
+                else if (x == _posB.x && y == _posB.y)
+                    Instantiate(endPointPrefab, pos, Quaternion.identity, blockParent);
+                else
+                {
+                    switch (Map[x, y])
+                    {
+                        case TileType.None:
+                            Instantiate(tilePrefab, pos, Quaternion.identity, blockParent);
+                            break;
+                        case TileType.Wood:
+                            Instantiate(woodPrefab, pos, Quaternion.identity, blockParent);
+                            break;
+                        case TileType.Iron:
+                            Instantiate(ironPrefab, pos, Quaternion.identity, blockParent);
+                            break;
+                        case TileType.Mountain:
+                            Instantiate(mountainPrefab, pos, Quaternion.identity, blockParent);
+                            break;
+                        case TileType.River:
+                            Instantiate(riverPrefab, pos, Quaternion.identity, blockParent);
+                            break;
+                    }
+                }
             }
         }
     }
