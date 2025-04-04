@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3258400204647497962}
   - component: {fileID: 3258400204647497963}
   - component: {fileID: 1775186517129209259}
+  - component: {fileID: 4342469093281697553}
   m_Layer: 31
   m_Name: WaterBlock
   m_TagString: Invisible
@@ -107,8 +108,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1, y: 2.5047913, z: 1}
+  m_Center: {x: 0, y: 0.75239563, z: 0}
 --- !u!114 &1775186517129209259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,3 +122,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a1e808879774ab49e4825f9f1a3f536, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  envPrefab: []
+  fragPrefab: {fileID: 0}
+--- !u!114 &4342469093281697553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 0
+  blockType: 3
+  DropGameObject: []
