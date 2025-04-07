@@ -1,93 +1,50 @@
 using System.Collections;
-using System.Runtime.InteropServices;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
-using static BlockDigCheck;
+using UnityEngine.Serialization;
 
 public class PlayerInfo : MonoBehaviour
 {
-    [SerializeField] GameObject PlayerOBJ;
-    [SerializeField] GameObject PlayerHandOBJ;
     [SerializeField] private Vector3 PlayerPos;
     [SerializeField] private Vector3 PlayerFront;
+    
     private float rayDistance = 0.8f;
     private float digwaitTime = 1f;
-    [Header("ÇÃ·¹ÀÌ¾î »óÅÂ")]
-    [SerializeField] private HandleType PlayerHandleType;
-    [SerializeField] private bool IsDig = false;
-    [Header("¾Õ¿¡ ÀÎ½ÄµÈ ºí·° Å¸ÀÔ")]
-    [SerializeField] private BlockDigCheck.BlockType hitBlock;
-
-    #region ÇÃ·¹ÀÌ¾î ÄÚ·çÆ¾ Ã³¸®.
-    IEnumerator DigBlockCorutine()
+    
+    [Header("í”Œë ˆì´ì–´ ìƒíƒœ")]
+    [SerializeField] private ItemType itemType;
+    public bool IsDig = false;
+    
+    [Header("ì•ì— ì¸ì‹ëœ ë¸”ëŸ­ íƒ€ì…")]
+    [SerializeField] private BlockType hitBlock;
+    
+    public void Update()
     {
-        yield return new WaitForSeconds(0.5f);
-        if(hitBlock != BlockDigCheck.BlockType.None && !IsDig && HandleCheckDigBlock() && PlayerPos == gameObject.transform.position && PlayerFront == gameObject.transform.forward)
-        {
-            //if (PlayerOBJ.GetComponent<Animator>().GetBool("IsMoving") == true)
-            //    yield break;
-            IsDig = true;
-            Debug.Log("Ä³´Â Áß!");
-            // ¿©±â¿¡ Ä³´Â ¾Ö´Ï¸ŞÀÌ¼Ç Ãâ·ÂÇÏ¸é µÉ µí?
-        }
+        PlayerRaycast();
     }
-    #endregion
-
-    #region ÇÃ·¹ÀÌ¾î »óÅÂ ¹× ·¹ÀÌÄ³½ºÆ® ÄÚµå.
-    // ÇÃ·¹ÀÌ¾îÀÇ ¼Õ »óÅÂ Ã¼Å©.
-    public void ShowPlayerHandle()
+    
+    public void SetItemType(ItemType newItemType)
     {
-        switch(PlayerHandleType)
-        {
-            case HandleType.None:
-                PlayerHandOBJ.transform.GetChild(1).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(2).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(3).gameObject.SetActive(false);
-                break;
-            case HandleType.Pickaxe:
-                PlayerHandOBJ.transform.GetChild(1).gameObject.SetActive(true);
-                PlayerHandOBJ.transform.GetChild(2).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(3).gameObject.SetActive(false);
-                break;
-            case HandleType.Axe:
-                PlayerHandOBJ.transform.GetChild(1).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(2).gameObject.SetActive(true);
-                PlayerHandOBJ.transform.GetChild(3).gameObject.SetActive(false);
-                break;
-            case HandleType.Bucket:
-                PlayerHandOBJ.transform.GetChild(1).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(2).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(3).gameObject.SetActive(true);
-                PlayerHandOBJ.transform.GetChild(3).GetChild(0).GetChild(5).gameObject.SetActive(false);
-                break;
-            case HandleType.Bucket_In_Water:
-                PlayerHandOBJ.transform.GetChild(1).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(2).gameObject.SetActive(false);
-                PlayerHandOBJ.transform.GetChild(3).gameObject.SetActive(true);
-                PlayerHandOBJ.transform.GetChild(3).GetChild(0).GetChild(5).gameObject.SetActive(true);
-                break;
-        }
+        itemType = newItemType;
     }
-    // ÇÃ·¹ÀÌ¾î°¡ Ä³·Á´Â ºí·° Ã¼Å©.
+    
     public bool HandleCheckDigBlock()
     {
-        if (PlayerHandleType == HandleType.Axe && hitBlock == BlockType.Wood)
-        {
-            Debug.Log("³ª¹« ÀÎ½Ä");
-            return true;
-        }
-        else if (PlayerHandleType == HandleType.Pickaxe && hitBlock == BlockType.Iron)
+        if (itemType == ItemType.Axe && hitBlock == BlockType.Wood)
         {
             return true;
         }
-        else if (PlayerHandleType == HandleType.Bucket && hitBlock == BlockType.Water)
+        else if (itemType == ItemType.Pickaxe && hitBlock == BlockType.IronOre)
+        {
+            return true;
+        }
+        else if (itemType == ItemType.Bucket && hitBlock == BlockType.Water)
         {
             return true;
         }
         return false;
     }
-    // ÇÃ·¹ÀÌ¾î ·¹ÀÌ Ä³½ºÆ®.
+    
+    // í”Œë ˆì´ì–´ ë ˆì´ ìºìŠ¤íŠ¸.
     public void PlayerRaycast()
     {
         if (PlayerPos != gameObject.transform.position || PlayerFront != gameObject.transform.forward)
@@ -96,35 +53,39 @@ public class PlayerInfo : MonoBehaviour
             PlayerFront = new Vector3(0, 0, 0);
             IsDig = false;
         }
+        
         Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
         RaycastHit hit;
 
-        // ·¹ÀÌÄ³½ºÆ® ¼öÇà.
+        // ë ˆì´ìºìŠ¤íŠ¸ ìˆ˜í–‰.
         if (Physics.Raycast(ray, out hit, rayDistance))
         {
             PlayerPos = gameObject.transform.position;
             PlayerFront = gameObject.transform.forward;
-            BlockDigCheck.BlockType blockComponent = hit.collider.gameObject.GetComponent<BlockDigCheck>().BlockTypeProperty;
-            if (blockComponent == BlockType.None)
-                return;
-            //Debug.Log("ÇöÀç ÀÎ½ÄÇÑ ºí·° Å¸ÀÔ : " + blockComponent);
-            hitBlock = blockComponent;
+            
+            BlockType blockType = hit.collider.gameObject.GetComponent<BreakableObject>().BlockTypeProperty;
+            
+            if (blockType == BlockType.None) return;
+            
+            hitBlock = blockType;
             StartCoroutine(DigBlockCorutine());
         }
         else
-            hitBlock = BlockDigCheck.BlockType.None;
-
-        // µğ¹ö±×¿ë ·¹ÀÌ ½Ã°¢È­.
+        {
+            hitBlock = BlockType.None;
+        }
+        
+        // ë””ë²„ê·¸ìš© ë ˆì´ ì‹œê°í™”.
         Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
     }
-
-    #endregion
-
-    public void Update()
+    
+    IEnumerator DigBlockCorutine()
     {
-        // ·¹ÀÌ Ä³½ºÆ®.
-        PlayerRaycast();
-        // ÇÚµé Å¸ÀÔ¿¡ µû¶ó ½Ã°¢È­.
-        ShowPlayerHandle();
+        yield return new WaitForSeconds(0.5f);
+        
+        if(hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() && PlayerPos == gameObject.transform.position && PlayerFront == gameObject.transform.forward)
+        {
+            IsDig = true;
+        }
     }
 }

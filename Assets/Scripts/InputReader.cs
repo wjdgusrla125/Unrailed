@@ -8,6 +8,7 @@ public class InputReader : ScriptableObject, IPlayerActions
 {
     public event Action<Vector2> MoveEvent;
     public event Action<bool> InteractEvent;
+    public event Action<bool> DashEvent;
     
     private Controls controls;
 
@@ -40,6 +41,18 @@ public class InputReader : ScriptableObject, IPlayerActions
         else if (context.canceled)
         {
             InteractEvent?.Invoke(false);
+        }
+    }
+
+    public void OnDash(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            DashEvent?.Invoke(true);
+        }
+        else if (context.canceled)
+        {
+            DashEvent?.Invoke(false);
         }
     }
 }
