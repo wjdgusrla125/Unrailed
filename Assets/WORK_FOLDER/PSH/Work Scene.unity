@@ -450,13 +450,93 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: visitX
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: visitY
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: mapSeed
-      value: 638791902013764617
+      value: 638797488476984411
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: pathLength
+      value: 39
       objectReference: {fileID: 0}
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: blockParent
       value: 
       objectReference: {fileID: 1740313673}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minIronCount
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minWoodCount
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: maxRiverCount
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minRiverCount
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minRiverLength
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: maxGrassTileCount
+      value: 400
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minGrassTileCount
+      value: 350
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: maxRiverCellsAllowed
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minHorizontalDistance
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: elongatedRiverMaxWidth
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: elongatedRiverMinWidth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: mountainClusterSizeMax
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: mountainClusterSizeMin
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: mountainClusterCountMax
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: mountainClusterCountMin
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minDestructibleClusterSize
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: destructibleClusterProbability
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator

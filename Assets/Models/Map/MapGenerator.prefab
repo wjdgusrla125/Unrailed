@@ -44,17 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d204d1c0f02cc594aa49a35050b0882c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSeed: 638791550936572036
-  tilePrefab: {fileID: 3258400204647497964, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
-  woodPrefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
-  ironPrefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
-  riverPrefab: {fileID: 3258400204647497964, guid: f609fffbcf524c948b7219fbdab92ffc, type: 3}
-  mountainPrefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}
-  startPointPrefab: {fileID: 3258400204647497964, guid: 1be121ad81a70df4c9b1c24421ff3e69, type: 3}
-  endPointPrefab: {fileID: 3258400204647497964, guid: ed10c27afcdbd764cb890ac0730c51a7, type: 3}
-  blockParent: {fileID: 0}
-  width: 15
-  height: 9
+  mapSeed: 638791902013764617
+  width: 43
+  height: 19
   pathLength: 13
   minHorizontalDistance: 11
   maxNoneTileCount: 70
@@ -71,3 +63,11 @@ MonoBehaviour:
   minRiverCount: 3
   maxRiverCount: 4
   minRiverLength: 8
+  tilePrefab: {fileID: 3258400204647497964, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
+  woodPrefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
+  ironPrefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
+  riverPrefab: {fileID: 3258400204647497964, guid: f609fffbcf524c948b7219fbdab92ffc, type: 3}
+  mountainPrefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}
+  startPointPrefab: {fileID: 3258400204647497964, guid: 1be121ad81a70df4c9b1c24421ff3e69, type: 3}
+  endPointPrefab: {fileID: 3258400204647497964, guid: ed10c27afcdbd764cb890ac0730c51a7, type: 3}
+  blockParent: {fileID: 0}
