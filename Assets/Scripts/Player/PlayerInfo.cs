@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -11,12 +12,19 @@ public class PlayerInfo : MonoBehaviour
     private float digwaitTime = 1f;
     
     [Header("플레이어 상태")]
-    [SerializeField] private ItemType itemType;
+    public ItemType itemType;
     public bool IsDig = false;
     
     [Header("앞에 인식된 블럭 타입")]
-    [SerializeField] private BlockType hitBlock;
-    
+    public BlockType hitBlock;
+    [HideInInspector]
+    public CraftingTable CraftingTableObject;
+
+    public void Awake()
+    {
+        CraftingTableObject = FindObjectOfType<CraftingTable>();
+    }
+
     public void Update()
     {
         PlayerRaycast();
@@ -62,13 +70,15 @@ public class PlayerInfo : MonoBehaviour
         {
             PlayerPos = gameObject.transform.position;
             PlayerFront = gameObject.transform.forward;
-            
-            BlockType blockType = hit.collider.gameObject.GetComponent<BreakableObject>().BlockTypeProperty;
-            
+            BlockType blockType = BlockType.None;
+            if (hit.collider.gameObject.GetComponent<BreakableObject>() != null)
+                blockType = hit.collider.gameObject.GetComponent<BreakableObject>().BlockTypeProperty;
+
             if (blockType == BlockType.None) return;
             
             hitBlock = blockType;
-            StartCoroutine(DigBlockCorutine());
+            if (!IsDig)
+                StartCoroutine(DigBlockCorutine());
         }
         else
         {
@@ -81,7 +91,7 @@ public class PlayerInfo : MonoBehaviour
     
     IEnumerator DigBlockCorutine()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
         
         if(hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() && PlayerPos == gameObject.transform.position && PlayerFront == gameObject.transform.forward)
         {

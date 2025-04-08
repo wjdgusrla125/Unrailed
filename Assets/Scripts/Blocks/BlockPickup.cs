@@ -15,7 +15,6 @@ public class BlockPickup : NetworkBehaviour
     private bool canPickup = false;
     private NetworkObject targetObject = null;
     [SerializeField] private PlayerInfo playerInfo;
-    
     // 스택 관련 변수 추가
     private int stackCount = 0;
     private const int maxStackSize = 3;
@@ -195,6 +194,24 @@ public class BlockPickup : NetworkBehaviour
     {
         if (!pressed) return;
         if (!IsOwner) return;
+        
+
+        if (playerInfo.hitBlock == BlockType.CraftingTable)
+        {
+            if (playerInfo.itemType == ItemType.WoodPlank && playerInfo.CraftingTableObject.AbleInTableWood)
+            {
+                playerInfo.CraftingTableObject.OnTableItem(heldObject);
+                heldObject.RemoveOwnership();
+                RequestDropServerRpc(heldObject.NetworkObjectId);
+            }
+            else if (playerInfo.itemType == ItemType.Iron && playerInfo.CraftingTableObject.AbleInTableIron)
+            {
+                playerInfo.CraftingTableObject.OnTableItem(heldObject);
+                heldObject.RemoveOwnership();
+                RequestDropServerRpc(heldObject.NetworkObjectId);
+            }
+            return;
+        }
 
         if (heldObject != null && canPickup) 
         {
