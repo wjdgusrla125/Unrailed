@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -39,6 +40,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private int maxRiverCount = 3; // 최대 강 개수
     [SerializeField] private int minRiverLength = 8; // 강의 최소 셀 크기
     [SerializeField] private int maxRiverCellsAllowed = 35; // 강의 최대 셀 크기
+
     [SerializeField] private float lateralSpreadProbability = 0.4f; // 강 확산 확률
     // [SerializeField] private int elongatedRiverMinWidth = 1; // 강 최소 폭
     // [SerializeField] private int elongatedRiverMaxWidth = 2; // 강 최대 폭
@@ -88,9 +90,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     private List<ClusterGroup> _resourceClusterGroups = new(); // Wood, Iron 클러스터
     private List<ClusterGroup> _grassClusterGroups = new();
 
-    /// <summary>
-    /// 타일을 새 클러스터 그룹에 할당(이미 다른 그룹에 속해있다면 해당 그룹에서 제거 후 재할당)
-    /// </summary>
+    // 타일을 새 클러스터 그룹에 할당(이미 다른 그룹에 속해있다면 해당 그룹에서 제거 후 재할당)
     private void AssignTileToCluster(Vector2Int tile, ClusterGroup newGroup)
     {
         // 만약 이미 그룹에 할당되어 있다면 제거
@@ -106,9 +106,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         _tileClusterGroupMap[tile] = newGroup;
     }
 
-    /// <summary>
-    /// 여러 타일을 모아서 새 클러스터 그룹으로 생성한 후 반환.
-    /// </summary>
+    // 여러 타일을 모아서 새 클러스터 그룹으로 생성한 후 반환.
     private ClusterGroup CreateClusterGroupFromTiles(List<Vector2Int> tiles)
     {
         ClusterGroup group = new ClusterGroup();
@@ -121,30 +119,79 @@ public class MapGenerator : SingletonManager<MapGenerator>
         return group;
     }
 
-    /// <summary>
-    /// 타일의 클러스터 그룹에서 제거 (타입 변경 등으로 인해 그룹 재할당 필요 시 호출)
-    /// </summary>
-    private void RemoveTileFromCluster(Vector2Int tile)
+    // 타일의 타입 변경에 따른 재할당 메서드.
+    private void ReassignTile(Vector2Int tile)
     {
-        if (_tileClusterGroupMap.TryGetValue(tile, out ClusterGroup group))
+        if (_tileClusterGroupMap.TryGetValue(tile, out ClusterGroup oldGroup))
         {
-            group.Tiles.Remove(tile);
+            oldGroup.Tiles.Remove(tile);
+            oldGroup.RecalculateCenterAndDirection(height);
             _tileClusterGroupMap.Remove(tile);
-            group.RecalculateCenterAndDirection(height);
+            if (oldGroup.Tiles.Count == 0)
+            {
+                RemoveGroup(oldGroup);
+            }
+        }
+
+        ClusterGroup candidateGroup = null;
+        foreach (Vector2Int nb in GetCardinalNeighbors(tile))
+        {
+            if (IsInBounds(nb))
+            {
+                // 타일의 타입이 동일하고 인접 타일에 그룹 할당이 되어 있다면 candidateGroup 으로 선정
+                if (Map[nb.x, nb.y] == Map[tile.x, tile.y] &&
+                    _tileClusterGroupMap.TryGetValue(nb, out ClusterGroup neighborGroup))
+                {
+                    candidateGroup = neighborGroup;
+                    break;
+                }
+            }
+        }
+
+        if (candidateGroup == null)
+        {
+            candidateGroup = new ClusterGroup();
+            AddGroupToList(candidateGroup, Map[tile.x, tile.y]);
+        }
+
+        candidateGroup.Tiles.Add(tile);
+        candidateGroup.RecalculateCenterAndDirection(height);
+        _tileClusterGroupMap[tile] = candidateGroup;
+    }
+
+    // 그룹이 비었을 경우 전역 리스트에서 제거
+    private void RemoveGroup(ClusterGroup group)
+    {
+        _grassClusterGroups.Remove(group);
+        _mountainClusterGroups.Remove(group);
+        _riverClusterGroups.Remove(group);
+        _resourceClusterGroups.Remove(group);
+    }
+
+    //타일 타입에 따라 새 그룹을 전역 리스트에 추가
+    private void AddGroupToList(ClusterGroup group, TileType type)
+    {
+        switch (type)
+        {
+            case TileType.Grass:
+                _grassClusterGroups.Add(group);
+                break;
+            case TileType.Mountain:
+                _mountainClusterGroups.Add(group);
+                break;
+            case TileType.River:
+                _riverClusterGroups.Add(group);
+                break;
+            case TileType.Wood:
+            case TileType.Iron:
+                _resourceClusterGroups.Add(group);
+                break;
+            default:
+                break;
         }
     }
-
-    /// <summary>
-    /// 주어진 그룹이 Upper/Under 및 중앙 타일 정보를 반환
-    /// </summary>
-    public (ClusterDirection direction, Vector2Int centerTile) GetClusterInfo(ClusterGroup group)
-    {
-        return (group.Direction, group.CenterTile);
-    }
-
-    /// <summary>
-    /// 타일 좌표를 인자로 받아 해당 타일이 속한 클러스터 그룹을 반환
-    /// </summary>
+    
+    // 타일 좌표를 인자로 받아 해당 타일이 속한 클러스터 그룹을 반환
     public ClusterGroup GetClusterInfo(Vector2Int tile)
     {
         return _tileClusterGroupMap.GetValueOrDefault(tile);
@@ -221,6 +268,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             AdjustPathForRiverAndWood();
             FinalizeGrassClusters();
             FinalizeUnassignedClusters();
+            SplitDisconnectedClusterGroups();
             InstantiateMap();
 
             _isMapGenerating = false;
@@ -307,7 +355,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             else if (current.y != _posB.y)
                 current.y += (_posB.y > current.y) ? 1 : -1;
             Map[current.x, current.y] = TileType.Grass;
-            RemoveTileFromCluster(current); // 타입 변경 시 기존 클러스터 그룹 해제
+            ReassignTile(current); // 타입 변경 시 기존 클러스터 그룹 해제
         }
 
         if (iterations >= maxIterations)
@@ -360,7 +408,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             mountainQueue.Enqueue(startPos);
             Map[startX, startY] = TileType.Mountain;
             mountainClusterTiles.Add(startPos);
-            RemoveTileFromCluster(startPos); // 혹시 기존 할당 있으면 해제
+            ReassignTile(startPos); // 혹시 기존 할당 있으면 해제
 
             int count = 1;
             int iterations = 0;
@@ -380,7 +428,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                         if (localRng.NextDouble() < chance)
                         {
                             Map[n.x, n.y] = TileType.Mountain;
-                            RemoveTileFromCluster(n);
+                            ReassignTile(n);
                             mountainQueue.Enqueue(n);
                             mountainClusterTiles.Add(n);
                             count++;
@@ -431,7 +479,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 foreach (var cell in riverCells)
                 {
                     Map[cell.x, cell.y] = TileType.River;
-                    RemoveTileFromCluster(cell);
+                    ReassignTile(cell);
                 }
 
                 // 강 클러스터 그룹 생성 및 할당
@@ -776,7 +824,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 if (Map[cell.x, cell.y] == TileType.Grass)
                 {
                     Map[cell.x, cell.y] = obstacleType;
-                    RemoveTileFromCluster(cell);
+                    ReassignTile(cell);
                     if (obstacleType == TileType.Wood)
                         totalWood++;
                     else
@@ -826,7 +874,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             Queue<Vector2Int> mountainQueue = new Queue<Vector2Int>();
             mountainQueue.Enqueue(start);
             Map[start.x, start.y] = TileType.Mountain;
-            RemoveTileFromCluster(start);
+            ReassignTile(start);
             List<Vector2Int> mountainClusterTiles = new List<Vector2Int> { start };
             int count = 1;
             int iterations = 0;
@@ -843,7 +891,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                         if (localRng.NextDouble() < chance)
                         {
                             Map[n.x, n.y] = TileType.Mountain;
-                            RemoveTileFromCluster(n);
+                            ReassignTile(n);
                             mountainQueue.Enqueue(n);
                             mountainClusterTiles.Add(n);
                             count++;
@@ -877,7 +925,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (IsInBounds(new Vector2Int(nx, ny)))
             {
                 Map[nx, ny] = TileType.Grass;
-                RemoveTileFromCluster(new Vector2Int(nx, ny));
+                ReassignTile(new Vector2Int(nx, ny));
             }
         }
 
@@ -888,7 +936,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (IsInBounds(new Vector2Int(nx, ny)))
             {
                 Map[nx, ny] = TileType.Grass;
-                RemoveTileFromCluster(new Vector2Int(nx, ny));
+                ReassignTile(new Vector2Int(nx, ny));
             }
         }
     }
@@ -932,7 +980,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             {
                 Map[candidate.x, candidate.y] = TileType.Grass;
                 currentGrass++;
-                RemoveTileFromCluster(candidate);
+                ReassignTile(candidate);
                 candidates.RemoveAt(index);
             }
         }
@@ -982,7 +1030,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (!visited[x][y])
             {
                 Map[x, y] = TileType.Mountain;
-                RemoveTileFromCluster(new Vector2Int(x, y));
+                ReassignTile(new Vector2Int(x, y));
             }
     }
 
@@ -1061,7 +1109,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 if (cellType == TileType.Mountain || cellType == TileType.Grass || cellType == TileType.River)
                 {
                     Map[cell.x, cell.y] = targetResource;
-                    RemoveTileFromCluster(cell);
+                    ReassignTile(cell);
                 }
             }
 
@@ -1102,21 +1150,21 @@ public class MapGenerator : SingletonManager<MapGenerator>
         for (int x = _posB.x; x < width; x++)
         {
             Map[x, row] = TileType.Grass;
-            RemoveTileFromCluster(new Vector2Int(x, row));
+            ReassignTile(new Vector2Int(x, row));
         }
 
         if (row - 1 >= 0)
             for (int x = _posB.x; x < width; x++)
             {
                 Map[x, row - 1] = TileType.Grass;
-                RemoveTileFromCluster(new Vector2Int(x, row - 1));
+                ReassignTile(new Vector2Int(x, row - 1));
             }
 
         if (row + 1 < height)
             for (int x = _posB.x; x < width; x++)
             {
                 Map[x, row + 1] = TileType.Grass;
-                RemoveTileFromCluster(new Vector2Int(x, row + 1));
+                ReassignTile(new Vector2Int(x, row + 1));
             }
     }
 
@@ -1210,7 +1258,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         foreach (var cell in path)
         {
             Map[cell.x, cell.y] = TileType.Grass;
-            RemoveTileFromCluster(cell);
+            ReassignTile(cell);
         }
 
         // Debug.Log("EnsureWoodAccessibility: Wood 통로 생성 완료");
@@ -1252,7 +1300,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             int randomIndex = _masterRng.Next(riverTilesOnPath.Count);
             Vector2Int tile = riverTilesOnPath[randomIndex];
             Map[tile.x, tile.y] = TileType.Grass;
-            RemoveTileFromCluster(tile);
+            ReassignTile(tile);
             convertedRiverTiles.Add(tile);
             riverTilesOnPath.RemoveAt(randomIndex);
         }
@@ -1267,7 +1315,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             foreach (Vector2Int tile in convertedRiverTiles)
             {
                 Map[tile.x, tile.y] = TileType.Wood;
-                RemoveTileFromCluster(tile);
+                ReassignTile(tile);
             }
         }
     }
@@ -1442,9 +1490,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
     private void ForceStartEndGrass()
     {
         Map[_posA.x, _posA.y] = TileType.Grass;
-        RemoveTileFromCluster(_posA);
+        ReassignTile(_posA);
         Map[_posB.x, _posB.y] = TileType.Grass;
-        RemoveTileFromCluster(_posB);
+        ReassignTile(_posB);
     }
 
     #endregion
@@ -1538,7 +1586,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (Map[cell.x, cell.y] == TileType.Mountain)
             {
                 Map[cell.x, cell.y] = TileType.Grass;
-                RemoveTileFromCluster(cell);
+                ReassignTile(cell);
             }
     }
 
@@ -1860,7 +1908,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
                     // 미할당 타일 그룹에 대해 새 클러스터 그룹 생성 후 할당
                     ClusterGroup newGroup = CreateClusterGroupFromTiles(unassignedGroupTiles);
-                    
+
                     //귀찮으니까 그냥 grass ClusterGroup에 할당. 별로 상관없을듯
                     _grassClusterGroups.Add(newGroup);
                 }
@@ -1873,7 +1921,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     {
         List<ClusterGroup> result = new List<ClusterGroup>();
         int totalCount = group.Tiles.Count;
-        
+
         int parts = totalCount / 20;
         if (parts < 2) parts = 1;
 
@@ -1942,36 +1990,149 @@ public class MapGenerator : SingletonManager<MapGenerator>
         return result;
     }
 
+    /// 모든 클러스터 그룹을 조사해서 연결되지 않은 그룹을 분할
+    private void SplitDisconnectedClusterGroups()
+    {
+        // 모든 그룹을 한 곳에 모읍니다.
+        List<ClusterGroup> allGroups = new List<ClusterGroup>();
+        allGroups.AddRange(_grassClusterGroups);
+        allGroups.AddRange(_mountainClusterGroups);
+        allGroups.AddRange(_riverClusterGroups);
+        allGroups.AddRange(_resourceClusterGroups);
+
+        // 분할 대상 그룹과 새로 생성된 그룹들을 보관할 리스트
+        List<ClusterGroup> groupsToRemove = new List<ClusterGroup>();
+        List<ClusterGroup> groupsToAdd = new List<ClusterGroup>();
+
+        foreach (var group in allGroups)
+        {
+            // 그룹 내 타일이 전부 연결되어 있으면 Flood Fill 결과가 1개의 컴포넌트가 됩니다.
+            List<ClusterGroup> splitGroups = SplitDisconnectedGroup(group);
+            if (splitGroups.Count > 1)
+            {
+                // 분리된 그룹이 2개 이상이면 원래 그룹은 삭제하고 새 그룹들을 추가합니다.
+                groupsToRemove.Add(group);
+                groupsToAdd.AddRange(splitGroups);
+            }
+        }
+
+        // 전역 리스트에서 old 그룹들을 삭제
+        foreach (var group in groupsToRemove)
+        {
+            RemoveGroup(group);
+        }
+
+        // 새 그룹들을 다시 전역 리스트에 추가(타입별로 추가)
+        foreach (var newGroup in groupsToAdd)
+        {
+            TileType type = DetermineGroupType(newGroup);
+            AddGroupToList(newGroup, type);
+        }
+    }
+
+    // 그룹 내에서 연결되지 않은 타일을 다른 그룹으로 분할
+    private List<ClusterGroup> SplitDisconnectedGroup(ClusterGroup group)
+    {
+        // 원래 그룹 내 타일 집합
+        HashSet<Vector2Int> remaining = new HashSet<Vector2Int>(group.Tiles);
+        List<ClusterGroup> newGroups = new List<ClusterGroup>();
+
+        // 4방향으로 연결되어 있는 타일 단위로 flood fill
+        while (remaining.Count > 0)
+        {
+            // 임의의 시작점 선택
+            Vector2Int seed = remaining.First();
+            Queue<Vector2Int> queue = new Queue<Vector2Int>();
+            List<Vector2Int> component = new List<Vector2Int>();
+
+            queue.Enqueue(seed);
+            remaining.Remove(seed);
+
+            while (queue.Count > 0)
+            {
+                Vector2Int cur = queue.Dequeue();
+                component.Add(cur);
+
+                foreach (Vector2Int nb in GetCardinalNeighbors(cur))
+                {
+                    // 만약 인접 타일이 원래 그룹의 구성원이라면 같은 컴포넌트로 묶음
+                    if (remaining.Contains(nb))
+                    {
+                        queue.Enqueue(nb);
+                        remaining.Remove(nb);
+                    }
+                }
+            }
+
+            // component가 하나라도 있으면 새 그룹 생성
+            if (component.Count > 0)
+            {
+                ClusterGroup newGroup = new ClusterGroup();
+                newGroup.Tiles.AddRange(component);
+                newGroup.RecalculateCenterAndDirection(height);
+                // 각 타일의 그룹 매핑을 업데이트
+                foreach (var tile in component)
+                {
+                    _tileClusterGroupMap[tile] = newGroup;
+                }
+
+                newGroups.Add(newGroup);
+            }
+        }
+
+        return newGroups;
+    }
+
+    //그룹 내의 랜덤 타일 반환
+    private TileType DetermineGroupType(ClusterGroup group)
+    {
+        if (group.Tiles.Count > 0)
+        {
+            Vector2Int tile = group.Tiles[0];
+            return Map[tile.x, tile.y];
+        }
+
+        return TileType.None;
+    }
+
     #endregion
 
     #region 맵 오브젝트 생성
 
     private void InstantiateMap()
     {
-        // 경로 보장 등 마지막 보정 작업 실행
+        // 마지막 보정 작업 실행
         EnsurePathConnectivity();
 
-        // mountain, river, resource, grass 클러스터 리스트를 하나의 리스트로 통합
-        List<ClusterGroup> allClusterGroups = new List<ClusterGroup>();
-        allClusterGroups.AddRange(_mountainClusterGroups);
-        allClusterGroups.AddRange(_riverClusterGroups);
-        allClusterGroups.AddRange(_resourceClusterGroups);
-        allClusterGroups.AddRange(_grassClusterGroups);
-
-        // 빈 클러스터 그룹은 제거
+        //클러스터 그룹 수집
+        List<ClusterGroup> allClusterGroups = _tileClusterGroupMap.Values.Distinct().ToList();
         allClusterGroups.RemoveAll(cg => cg.Tiles == null || cg.Tiles.Count == 0);
 
-        // 클러스터 그룹별로 clusterPrefab 인스턴스를 생성할 딕셔너리 생성
+        // 클러스터 그룹별로 clusterPrefab 인스턴스 생성 및 Cluster 컴포넌트에 그룹 정보 할당
         Dictionary<ClusterGroup, GameObject> clusterGameObjects = new Dictionary<ClusterGroup, GameObject>();
-
         foreach (ClusterGroup cg in allClusterGroups)
         {
-            // clusterPrefab을 인스턴스화하여 clusterParent의 자식으로 추가
             GameObject clusterGo = Instantiate(clusterPrefab, clusterParent);
-            
-            // 클러스터 이름 지정
             clusterGo.name = $"Cluster_{cg.Direction}_{cg.CenterTile.x}_{cg.CenterTile.y}";
             clusterGameObjects.Add(cg, clusterGo);
+
+            Cluster cluster = clusterGo.GetComponent<Cluster>();
+            if (cluster)
+            {
+                cluster.ClusterGroup = cg;
+                Debug.Log($"클러스터 생성 완료: clusterSize: {cg.Tiles.Count}");
+            }
+            else
+            {
+                Debug.LogWarning($"Cluster 컴포넌트가 {clusterGo.name}에 없습니다.");
+            }
+        }
+
+        // 클러스터 그룹들을 centerTile.x 기준 오름차순 정렬
+        List<ClusterGroup> sortedClusters = allClusterGroups.OrderBy(cg => cg.CenterTile.x).ToList();
+        for (int i = 0; i < sortedClusters.Count; i++)
+        {
+            clusterGameObjects[sortedClusters[i]].transform.SetSiblingIndex(i);
         }
 
         // 실제 타일 생성
@@ -1984,9 +2145,13 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 Vector2Int tilePos = new Vector2Int(x, y);
 
                 if (tilePos == _posA)
+                {
                     tileInstance = Instantiate(startPointPrefab, pos, Quaternion.identity);
+                }
                 else if (tilePos == _posB)
+                {
                     tileInstance = Instantiate(endPointPrefab, pos, Quaternion.identity);
+                }
                 else
                 {
                     switch (Map[x, y])
@@ -2009,17 +2174,39 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     }
                 }
 
-                if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group))
+                // 생성한 타일에 부모 및 클러스터 그룹 할당
+                if (tileInstance)
                 {
-                    if (tileInstance) tileInstance.transform.SetParent(clusterGameObjects[group].transform);
-                }
-                else
-                {
-                    if (tileInstance) tileInstance.transform.SetParent(clusterParent);
+                    Blocks blocks = tileInstance.GetComponent<Blocks>();
+                    if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group))
+                    {
+                        blocks.ClusterGroup = group;
+                        if (clusterGameObjects.ContainsKey(group))
+                            tileInstance.transform.SetParent(clusterGameObjects[group].transform);
+                        else
+                            tileInstance.transform.SetParent(clusterParent);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{pos.x}, {pos.y}에 클러스터 그룹이 할당되어 있지 않음.");
+                        blocks.ClusterGroup = null;
+                        tileInstance.transform.SetParent(clusterParent);
+                    }
                 }
             }
         }
+
         Debug.Log("맵 생성 완료");
+
+        // 클러스터 부모 아래의 각 clusterPrefab을 정렬된 순서대로 Spawn 호출
+        for (int i = 0; i < sortedClusters.Count; i++)
+        {
+            Cluster clusterComponent = clusterGameObjects[sortedClusters[i]].GetComponent<Cluster>();
+            if (clusterComponent)
+            {
+                clusterComponent.Spawn(i);
+            }
+        }
     }
 
     #endregion
@@ -2114,7 +2301,6 @@ public class MapGenerationException : Exception
 #endregion
 
 #region 클러스터 그룹 관련 enum 및 클래스
-
 
 public enum ClusterDirection
 {

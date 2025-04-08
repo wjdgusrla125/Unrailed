@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3258400204647497961}
   - component: {fileID: 3258400204647497962}
   - component: {fileID: 3258400204647497963}
+  - component: {fileID: -1079150667107878271}
   m_Layer: 31
   m_Name: WoodBlock 1
   m_TagString: Invisible
@@ -108,3 +109,17 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-1079150667107878271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bf6641ebeb74384aa73fde3f10cb4f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  envPrefab: []
+  fragPrefab: {fileID: 0}
