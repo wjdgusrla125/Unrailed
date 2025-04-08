@@ -1090,7 +1090,7 @@ public class MapGenerator : MonoBehaviour
         List<Vector2Int> simplePath = FindSimplePath(_posA, _posB, pos =>
         {
             TileType type = _map[pos.x, pos.y];
-            return type == TileType.Grass || type == TileType.Wood || type == TileType.Iron;
+            return type is TileType.Grass or TileType.Wood or TileType.Iron;
         });
         if (simplePath != null)
         {
@@ -1099,7 +1099,7 @@ public class MapGenerator : MonoBehaviour
         }
         else
         {
-            Debug.Log("Grass, Wood, Iron 만으로는 경로를 찾지 못했습니다. River를 포함한 경로를 보정합니다.");
+            // Debug.Log("Grass, Wood, Iron 만으로는 경로를 찾지 못했습니다. River를 포함한 경로를 보정합니다.");
         }
 
         Tuple<List<Vector2Int>, List<Vector2Int>> pathAndRivers = FindPathMinimizingRiver(_posA, _posB);
@@ -1112,8 +1112,8 @@ public class MapGenerator : MonoBehaviour
             return;
         }
 
-        Debug.Log("최소 River 경로에서 River 타일 개수: " + riverTilesOnPath.Count +
-                  ", 좌표: " + FormatVectorList(riverTilesOnPath));
+        // Debug.Log("최소 River 경로에서 River 타일 개수: " + riverTilesOnPath.Count +
+        //           ", 좌표: " + FormatVectorList(riverTilesOnPath));
 
         int counter = 0;
         List<Vector2Int> convertedRiverTiles = new List<Vector2Int>();
@@ -1124,7 +1124,7 @@ public class MapGenerator : MonoBehaviour
             Vector2Int tile = riverTilesOnPath[randomIndex];
             _map[tile.x, tile.y] = TileType.Grass;
             convertedRiverTiles.Add(tile);
-            Debug.Log("River 타일을 Grass로 변환: " + tile);
+            // Debug.Log("River 타일을 Grass로 변환: " + tile);
             riverTilesOnPath.RemoveAt(randomIndex);
         }
 
@@ -1132,18 +1132,18 @@ public class MapGenerator : MonoBehaviour
             throw new MapGenerationException("AdjustPathForRiverAndWood: River 변환 반복 최대치를 초과했습니다.");
 
         int reachableWoodCount = CountReachableWoodWithoutRiver(_posA);
-        Debug.Log("River 없이 도달 가능한 Wood 타일 개수: " + reachableWoodCount);
+        // Debug.Log("River 없이 도달 가능한 Wood 타일 개수: " + reachableWoodCount);
 
         if (reachableWoodCount >= 2)
         {
-            Debug.Log("River 없이 도달 가능한 Wood 타일이 2개 이상이므로 추가 작업 없이 종료.");
+            // Debug.Log("River 없이 도달 가능한 Wood 타일이 2개 이상이므로 추가 작업 없이 종료.");
         }
         else
         {
             foreach (Vector2Int tile in convertedRiverTiles)
             {
                 _map[tile.x, tile.y] = TileType.Wood;
-                Debug.Log("변환된 Grass 타일을 Wood로 전환: " + tile);
+                // Debug.Log("변환된 Grass 타일을 Wood로 전환: " + tile);
             }
         }
     }
@@ -1257,7 +1257,7 @@ public class MapGenerator : MonoBehaviour
 
         List<Vector2Int> path = new List<Vector2Int>();
         Vector2Int node = end;
-        while (!(node.x == -1 && node.y == -1))
+        while (node is not { x: -1, y: -1 })
         {
             path.Add(node);
             if (node == start)
@@ -1299,7 +1299,7 @@ public class MapGenerator : MonoBehaviour
                 if (IsInBounds(next) && !visited.Contains(next))
                 {
                     TileType type = _map[next.x, next.y];
-                    if (type == TileType.Grass || type == TileType.Wood || type == TileType.Iron)
+                    if (type is TileType.Grass or TileType.Wood or TileType.Iron)
                     {
                         visited.Add(next);
                         queue.Enqueue(next);
@@ -1616,13 +1616,13 @@ public class MapGenerator : MonoBehaviour
         return Mathf.Abs(cell.x - point.x) <= range && Mathf.Abs(cell.y - point.y) <= range;
     }
 
-    private string FormatVectorList(List<Vector2Int> list)
-    {
-        string s = "";
-        foreach (var v in list)
-            s += $"({v.x},{v.y}) ";
-        return s;
-    }
+    // private string FormatVectorList(List<Vector2Int> list)
+    // {
+    //     string s = "";
+    //     foreach (var v in list)
+    //         s += $"({v.x},{v.y}) ";
+    //     return s;
+    // }
 
     #endregion
 

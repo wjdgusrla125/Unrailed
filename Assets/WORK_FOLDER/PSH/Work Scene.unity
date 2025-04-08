@@ -459,7 +459,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: mapSeed
-      value: 638797488476984411
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: pathLength
