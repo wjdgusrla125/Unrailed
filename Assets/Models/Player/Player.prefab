@@ -998,13 +998,16 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   handPosition: {fileID: 4370802459825855843}
   twoHandPosition: {fileID: 6247121610456024132}
-  rayDistance: 1
+  detectionDistance: -1
+  boxSize: {x: 0.2, y: 1, z: 0.2}
   pickupLayerMask:
     serializedVersion: 2
     m_Bits: 64
   inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
   heldObject: {fileID: 0}
   playerInfo: {fileID: 8263613358351938457}
+  stackOffset: {x: 0, y: 0.2, z: 0}
+  dropOffset: {x: 0, y: 0.2, z: 0}
 --- !u!114 &8263613358351938457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1404,7 +1407,7 @@ Transform:
   m_GameObject: {fileID: 6812558571170121476}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -0.004, y: -0.427, z: 0.672}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0.65}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

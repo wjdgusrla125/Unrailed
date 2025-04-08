@@ -4,6 +4,7 @@ public class Item : MonoBehaviour
 {
     [SerializeField] private ItemType itemType;
     [SerializeField] private bool withTwoHanded;
+    [SerializeField] private bool isStackable;
 
     public ItemType ItemType
     {
@@ -15,5 +16,11 @@ public class Item : MonoBehaviour
     {
         get => withTwoHanded;
         set => withTwoHanded = value;
+    }
+
+    public bool IsStackable
+    {
+        get => isStackable;
+        set => isStackable = value;
     }
 }
