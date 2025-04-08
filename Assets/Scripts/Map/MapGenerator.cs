@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class MapGenerator : MonoBehaviour
+public class MapGenerator : SingletonManager<MapGenerator>
 {
     #region 변수 선언 및 직렬화 필드
 
@@ -37,13 +37,14 @@ public class MapGenerator : MonoBehaviour
 
     [Header("강 관련 설정")] [SerializeField] private int minRiverCount = 2; // 최소 강 개수
     [SerializeField] private int maxRiverCount = 3; // 최대 강 개수
-    [SerializeField] private int minRiverLength = 8; // 강의 최소 크기
+    [SerializeField] private int minRiverLength = 8; // 강의 최소 셀 크기
     [SerializeField] private int maxRiverCellsAllowed = 35; // 강의 최대 셀 크기
     [SerializeField] private float lateralSpreadProbability = 0.4f; // 강 확산 확률
-    [SerializeField] private int elongatedRiverMinWidth = 1; // 강 최소 폭
-    [SerializeField] private int elongatedRiverMaxWidth = 2; // 강 최대 폭
+    // [SerializeField] private int elongatedRiverMinWidth = 1; // 강 최소 폭
+    // [SerializeField] private int elongatedRiverMaxWidth = 2; // 강 최대 폭
 
-    [Header("프리팹")] [SerializeField] private Transform blockParent; // 생성된 블럭들을 담을 오브젝트
+    [Header("프리팹")] [SerializeField] private Transform clusterParent; // 생성된 클러스터들을 담을 오브젝트
+    [SerializeField] private GameObject clusterPrefab; //생성된 블럭들을 클러스터별로 정리할 빈 프리팹
     [SerializeField] private GameObject tilePrefab;
     [SerializeField] private GameObject woodPrefab;
     [SerializeField] private GameObject ironPrefab;
@@ -52,7 +53,8 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private GameObject startPointPrefab;
     [SerializeField] private GameObject endPointPrefab;
 
-    private enum TileType
+    // 기존 타일 타입 열거형
+    public enum TileType
     {
         None,
         Grass,
@@ -62,7 +64,7 @@ public class MapGenerator : MonoBehaviour
         River
     }
 
-    private TileType[,] _map;
+    public TileType[,] Map;
     private Vector2Int _posA; // 시작점
     private Vector2Int _posB; // 도착점
 
@@ -72,6 +74,81 @@ public class MapGenerator : MonoBehaviour
 
     // 반복 최대 횟수 상수
     private const int MAX_ITERATIONS = 10000;
+
+    #endregion
+
+    #region 클러스터 그룹 관련 자료구조 및 헬퍼 변수
+
+    // 타일 좌표별 클러스터 그룹 할당 (각 타일은 반드시 단 하나의 클러스터 그룹에만 속함)
+    private Dictionary<Vector2Int, ClusterGroup> _tileClusterGroupMap = new();
+
+    // 종류별 클러스터 그룹 리스트
+    private List<ClusterGroup> _mountainClusterGroups = new();
+    private List<ClusterGroup> _riverClusterGroups = new();
+    private List<ClusterGroup> _resourceClusterGroups = new(); // Wood, Iron 클러스터
+    private List<ClusterGroup> _grassClusterGroups = new();
+
+    /// <summary>
+    /// 타일을 새 클러스터 그룹에 할당(이미 다른 그룹에 속해있다면 해당 그룹에서 제거 후 재할당)
+    /// </summary>
+    private void AssignTileToCluster(Vector2Int tile, ClusterGroup newGroup)
+    {
+        // 만약 이미 그룹에 할당되어 있다면 제거
+        if (_tileClusterGroupMap.TryGetValue(tile, out ClusterGroup oldGroup))
+        {
+            oldGroup.Tiles.Remove(tile);
+            // 그룹 크기가 변경되었으므로 필요시 중앙 타일을 재계산
+            oldGroup.RecalculateCenterAndDirection(height);
+        }
+
+        // 새 그룹에 추가
+        newGroup.Tiles.Add(tile);
+        _tileClusterGroupMap[tile] = newGroup;
+    }
+
+    /// <summary>
+    /// 여러 타일을 모아서 새 클러스터 그룹으로 생성한 후 반환.
+    /// </summary>
+    private ClusterGroup CreateClusterGroupFromTiles(List<Vector2Int> tiles)
+    {
+        ClusterGroup group = new ClusterGroup();
+        foreach (var tile in tiles)
+        {
+            AssignTileToCluster(tile, group);
+        }
+
+        group.RecalculateCenterAndDirection(height);
+        return group;
+    }
+
+    /// <summary>
+    /// 타일의 클러스터 그룹에서 제거 (타입 변경 등으로 인해 그룹 재할당 필요 시 호출)
+    /// </summary>
+    private void RemoveTileFromCluster(Vector2Int tile)
+    {
+        if (_tileClusterGroupMap.TryGetValue(tile, out ClusterGroup group))
+        {
+            group.Tiles.Remove(tile);
+            _tileClusterGroupMap.Remove(tile);
+            group.RecalculateCenterAndDirection(height);
+        }
+    }
+
+    /// <summary>
+    /// 주어진 그룹이 Upper/Under 및 중앙 타일 정보를 반환
+    /// </summary>
+    public (ClusterDirection direction, Vector2Int centerTile) GetClusterInfo(ClusterGroup group)
+    {
+        return (group.Direction, group.CenterTile);
+    }
+
+    /// <summary>
+    /// 타일 좌표를 인자로 받아 해당 타일이 속한 클러스터 그룹을 반환
+    /// </summary>
+    public ClusterGroup GetClusterInfo(Vector2Int tile)
+    {
+        return _tileClusterGroupMap.GetValueOrDefault(tile);
+    }
 
     #endregion
 
@@ -88,8 +165,8 @@ public class MapGenerator : MonoBehaviour
         {
             _lastQTime = Time.time;
             Debug.Log("Q입력, 시드 랜덤화 후 맵 생성");
-            for (int i = blockParent.childCount - 1; i >= 0; i--)
-                Destroy(blockParent.GetChild(i).gameObject);
+            for (int i = clusterParent.childCount - 1; i >= 0; i--)
+                Destroy(clusterParent.GetChild(i).gameObject);
             mapSeed = string.Empty;
             StartCoroutine(GenerateMapCoroutine());
         }
@@ -98,8 +175,8 @@ public class MapGenerator : MonoBehaviour
         {
             _lastQTime = Time.time;
             Debug.Log("E입력, 시드 유지 맵 생성");
-            for (int i = blockParent.childCount - 1; i >= 0; i--)
-                Destroy(blockParent.GetChild(i).gameObject);
+            for (int i = clusterParent.childCount - 1; i >= 0; i--)
+                Destroy(clusterParent.GetChild(i).gameObject);
             StartCoroutine(GenerateMapCoroutine());
         }
 
@@ -142,6 +219,8 @@ public class MapGenerator : MonoBehaviour
             FinalAdjustments();
             EnsureStartEndInnerClear();
             AdjustPathForRiverAndWood();
+            FinalizeGrassClusters();
+            FinalizeUnassignedClusters();
             InstantiateMap();
 
             _isMapGenerating = false;
@@ -173,10 +252,10 @@ public class MapGenerator : MonoBehaviour
 
     private void InitializeMap()
     {
-        _map = new TileType[width, height];
+        Map = new TileType[width, height];
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
-            _map[x, y] = TileType.Grass;
+            Map[x, y] = TileType.Grass;
     }
 
     #endregion
@@ -227,7 +306,8 @@ public class MapGenerator : MonoBehaviour
                 current.x += (_posB.x > current.x) ? 1 : -1;
             else if (current.y != _posB.y)
                 current.y += (_posB.y > current.y) ? 1 : -1;
-            _map[current.x, current.y] = TileType.Grass;
+            Map[current.x, current.y] = TileType.Grass;
+            RemoveTileFromCluster(current); // 타입 변경 시 기존 클러스터 그룹 해제
         }
 
         if (iterations >= maxIterations)
@@ -274,9 +354,14 @@ public class MapGenerator : MonoBehaviour
             }
 
             int clusterSize = localRng.Next(mountainClusterSizeMin, mountainClusterSizeMax + 1);
+            List<Vector2Int> mountainClusterTiles = new List<Vector2Int>();
             Queue<Vector2Int> mountainQueue = new Queue<Vector2Int>();
-            mountainQueue.Enqueue(new Vector2Int(startX, startY));
-            _map[startX, startY] = TileType.Mountain;
+            Vector2Int startPos = new Vector2Int(startX, startY);
+            mountainQueue.Enqueue(startPos);
+            Map[startX, startY] = TileType.Mountain;
+            mountainClusterTiles.Add(startPos);
+            RemoveTileFromCluster(startPos); // 혹시 기존 할당 있으면 해제
+
             int count = 1;
             int iterations = 0;
             int maxIterations = MAX_ITERATIONS;
@@ -286,7 +371,7 @@ public class MapGenerator : MonoBehaviour
                 Vector2Int cur = mountainQueue.Dequeue();
                 foreach (var n in GetNeighbors8(cur))
                 {
-                    if (IsInBounds(n) && _map[n.x, n.y] == TileType.Grass)
+                    if (IsInBounds(n) && Map[n.x, n.y] == TileType.Grass)
                     {
                         if (n == _posA || n == _posB)
                             continue;
@@ -294,8 +379,10 @@ public class MapGenerator : MonoBehaviour
                         float chance = 0.7f * (1f - (float)count / clusterSize);
                         if (localRng.NextDouble() < chance)
                         {
-                            _map[n.x, n.y] = TileType.Mountain;
+                            Map[n.x, n.y] = TileType.Mountain;
+                            RemoveTileFromCluster(n);
                             mountainQueue.Enqueue(n);
+                            mountainClusterTiles.Add(n);
                             count++;
                         }
                     }
@@ -304,6 +391,10 @@ public class MapGenerator : MonoBehaviour
 
             if (iterations >= maxIterations)
                 throw new MapGenerationException("GenerateMountains: 반복 최대치를 초과했습니다.");
+
+            // 산 클러스터 그룹 생성 및 할당
+            ClusterGroup mountainGroup = CreateClusterGroupFromTiles(mountainClusterTiles);
+            _mountainClusterGroups.Add(mountainGroup);
         }
 
         ForceStartEndGrass();
@@ -325,12 +416,10 @@ public class MapGenerator : MonoBehaviour
             List<Vector2Int> riverCells;
             if (riversGenerated == 0)
             {
-                Debug.Log("길쭉한 River 생성 시도");
                 riverCells = GenerateElongatedRiver();
             }
             else
             {
-                Debug.Log("둥근 River 생성 시도");
                 riverCells = GenerateRoundedRiver();
             }
 
@@ -341,8 +430,13 @@ public class MapGenerator : MonoBehaviour
 
                 foreach (var cell in riverCells)
                 {
-                    _map[cell.x, cell.y] = TileType.River;
+                    Map[cell.x, cell.y] = TileType.River;
+                    RemoveTileFromCluster(cell);
                 }
+
+                // 강 클러스터 그룹 생성 및 할당
+                ClusterGroup riverGroup = CreateClusterGroupFromTiles(riverCells);
+                _riverClusterGroups.Add(riverGroup);
 
                 riversGenerated++;
             }
@@ -464,7 +558,7 @@ public class MapGenerator : MonoBehaviour
 
             if (candidateRiver.Count >= minRiverLength && candidateRiver.Count <= maxRiverCellsAllowed)
             {
-                Debug.Log($"강 생성 완료, 시도 횟수: {attempt}");
+                // Debug.Log($"강 생성 완료, 시도 횟수: {attempt}");
                 return new List<Vector2Int>(candidateRiver);
             }
         }
@@ -525,7 +619,7 @@ public class MapGenerator : MonoBehaviour
                 {
                     if (candidateRiver.Count >= maxRiverCellsAllowed)
                         break;
-                    if (IsInBounds(n) && _map[n.x, n.y] == TileType.Grass && !candidateRiver.Contains(n))
+                    if (IsInBounds(n) && Map[n.x, n.y] == TileType.Grass && !candidateRiver.Contains(n))
                     {
                         if (localRng.NextDouble() < 0.5f)
                         {
@@ -546,7 +640,7 @@ public class MapGenerator : MonoBehaviour
 
             if (candidateRiver.Count >= desiredCount && candidateRiver.Count <= maxRiverCellsAllowed)
             {
-                Debug.Log($"강 생성 완료, 시도 횟수: {attempt}");
+                // Debug.Log($"강 생성 완료, 시도 횟수: {attempt}");
                 return candidateRiver;
             }
         }
@@ -573,7 +667,7 @@ public class MapGenerator : MonoBehaviour
             {
                 if (candidateRiver.Count >= maxRiverCellsAllowed)
                     break;
-                if (IsInBounds(n) && _map[n.x, n.y] == TileType.Grass && !candidateRiver.Contains(n))
+                if (IsInBounds(n) && Map[n.x, n.y] == TileType.Grass && !candidateRiver.Contains(n))
                 {
                     if (rng.NextDouble() < lateralSpreadProbability)
                     {
@@ -622,7 +716,7 @@ public class MapGenerator : MonoBehaviour
                 List<Vector2Int> candidates = new List<Vector2Int>();
                 foreach (var c in GetCardinalNeighbors(cell))
                 {
-                    if (IsInBounds(c) && _map[c.x, c.y] == TileType.Grass && !candidateRiver.Contains(c))
+                    if (IsInBounds(c) && Map[c.x, c.y] == TileType.Grass && !candidateRiver.Contains(c))
                         candidates.Add(c);
                 }
 
@@ -650,7 +744,7 @@ public class MapGenerator : MonoBehaviour
         {
             int x = localRng.Next(0, width);
             int y = localRng.Next(0, height);
-            if (_map[x, y] != TileType.Grass)
+            if (Map[x, y] != TileType.Grass)
                 continue;
 
             Vector2Int startPos = new Vector2Int(x, y);
@@ -679,15 +773,20 @@ public class MapGenerator : MonoBehaviour
 
             foreach (var cell in cluster)
             {
-                if (_map[cell.x, cell.y] == TileType.Grass)
+                if (Map[cell.x, cell.y] == TileType.Grass)
                 {
-                    _map[cell.x, cell.y] = obstacleType;
+                    Map[cell.x, cell.y] = obstacleType;
+                    RemoveTileFromCluster(cell);
                     if (obstacleType == TileType.Wood)
                         totalWood++;
                     else
                         totalIron++;
                 }
             }
+
+            // 자원 클러스터 그룹 생성 및 할당 (동일 메소드 내에서 생성된 모든 클러스터는 개별 그룹)
+            ClusterGroup resourceGroup = CreateClusterGroupFromTiles(cluster);
+            _resourceClusterGroups.Add(resourceGroup);
         }
     }
 
@@ -713,7 +812,7 @@ public class MapGenerator : MonoBehaviour
             List<Vector2Int> randomGrassTiles = new List<Vector2Int>();
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
-                if (_map[x, y] == TileType.Grass)
+                if (Map[x, y] == TileType.Grass)
                     randomGrassTiles.Add(new Vector2Int(x, y));
 
             if (randomGrassTiles.Count == 0)
@@ -726,7 +825,9 @@ public class MapGenerator : MonoBehaviour
             int clusterSize = localRng.Next(mountainClusterSizeMin, mountainClusterSizeMax + 1);
             Queue<Vector2Int> mountainQueue = new Queue<Vector2Int>();
             mountainQueue.Enqueue(start);
-            _map[start.x, start.y] = TileType.Mountain;
+            Map[start.x, start.y] = TileType.Mountain;
+            RemoveTileFromCluster(start);
+            List<Vector2Int> mountainClusterTiles = new List<Vector2Int> { start };
             int count = 1;
             int iterations = 0;
             int maxIterations = MAX_ITERATIONS;
@@ -736,13 +837,15 @@ public class MapGenerator : MonoBehaviour
                 Vector2Int cur = mountainQueue.Dequeue();
                 foreach (var n in GetNeighbors8(cur))
                 {
-                    if (IsInBounds(n) && _map[n.x, n.y] == TileType.Grass)
+                    if (IsInBounds(n) && Map[n.x, n.y] == TileType.Grass)
                     {
                         float chance = 0.7f * (1f - (float)count / clusterSize);
                         if (localRng.NextDouble() < chance)
                         {
-                            _map[n.x, n.y] = TileType.Mountain;
+                            Map[n.x, n.y] = TileType.Mountain;
+                            RemoveTileFromCluster(n);
                             mountainQueue.Enqueue(n);
+                            mountainClusterTiles.Add(n);
                             count++;
                             if (count >= clusterSize)
                                 break;
@@ -753,6 +856,10 @@ public class MapGenerator : MonoBehaviour
 
             if (iterations >= maxIterations)
                 throw new MapGenerationException("GenerateGrassToMountainClusters: 반복 최대치를 초과했습니다.");
+
+            // 산 클러스터 그룹 생성 및 할당 (이미 생성된 그룹과 별도)
+            ClusterGroup mountainGroup = CreateClusterGroupFromTiles(mountainClusterTiles);
+            _mountainClusterGroups.Add(mountainGroup);
         }
 
         if (loopCounter >= MAX_ITERATIONS)
@@ -768,7 +875,10 @@ public class MapGenerator : MonoBehaviour
         {
             int nx = _posA.x + dx, ny = _posA.y + dy;
             if (IsInBounds(new Vector2Int(nx, ny)))
-                _map[nx, ny] = TileType.Grass;
+            {
+                Map[nx, ny] = TileType.Grass;
+                RemoveTileFromCluster(new Vector2Int(nx, ny));
+            }
         }
 
         for (int dx = -2; dx <= 2; dx++)
@@ -776,7 +886,10 @@ public class MapGenerator : MonoBehaviour
         {
             int nx = _posB.x + dx, ny = _posB.y + dy;
             if (IsInBounds(new Vector2Int(nx, ny)))
-                _map[nx, ny] = TileType.Grass;
+            {
+                Map[nx, ny] = TileType.Grass;
+                RemoveTileFromCluster(new Vector2Int(nx, ny));
+            }
         }
     }
 
@@ -790,15 +903,15 @@ public class MapGenerator : MonoBehaviour
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
         {
-            if (_map[x, y] == TileType.Mountain)
+            if (Map[x, y] == TileType.Mountain)
             {
                 Vector2Int pos = new Vector2Int(x, y);
                 foreach (Vector2Int n in GetCardinalNeighbors(pos))
                 {
                     if (IsInBounds(n) &&
-                        (_map[n.x, n.y] == TileType.Grass ||
-                         _map[n.x, n.y] == TileType.Wood ||
-                         _map[n.x, n.y] == TileType.Iron))
+                        (Map[n.x, n.y] == TileType.Grass ||
+                         Map[n.x, n.y] == TileType.Wood ||
+                         Map[n.x, n.y] == TileType.Iron))
                     {
                         candidates.Add(pos);
                         break;
@@ -815,10 +928,11 @@ public class MapGenerator : MonoBehaviour
             iterations++;
             int index = localRng.Next(0, candidates.Count);
             Vector2Int candidate = candidates[index];
-            if (_map[candidate.x, candidate.y] == TileType.Mountain)
+            if (Map[candidate.x, candidate.y] == TileType.Mountain)
             {
-                _map[candidate.x, candidate.y] = TileType.Grass;
+                Map[candidate.x, candidate.y] = TileType.Grass;
                 currentGrass++;
+                RemoveTileFromCluster(candidate);
                 candidates.RemoveAt(index);
             }
         }
@@ -854,7 +968,7 @@ public class MapGenerator : MonoBehaviour
                 Vector2Int next = cur + d;
                 if (IsInBounds(next) && !visited[next.x][next.y])
                 {
-                    if (_map[next.x, next.y] != TileType.Mountain)
+                    if (Map[next.x, next.y] != TileType.Mountain)
                     {
                         visited[next.x][next.y] = true;
                         queue.Enqueue(next);
@@ -866,7 +980,10 @@ public class MapGenerator : MonoBehaviour
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
             if (!visited[x][y])
-                _map[x, y] = TileType.Mountain;
+            {
+                Map[x, y] = TileType.Mountain;
+                RemoveTileFromCluster(new Vector2Int(x, y));
+            }
     }
 
     // 부족 자원 보충 및 인접 Grass 확보
@@ -903,7 +1020,7 @@ public class MapGenerator : MonoBehaviour
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
             {
-                if (_map[x, y] == TileType.Mountain)
+                if (Map[x, y] == TileType.Mountain)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
                     if (IsCellNear(pos, _posA, 2) || IsCellNear(pos, _posB, 2))
@@ -913,7 +1030,7 @@ public class MapGenerator : MonoBehaviour
                     {
                         if (IsInBounds(neighbor))
                         {
-                            TileType neighborType = _map[neighbor.x, neighbor.y];
+                            TileType neighborType = Map[neighbor.x, neighbor.y];
                             if (neighborType == TileType.Grass || neighborType == TileType.Wood ||
                                 neighborType == TileType.Iron || neighborType == TileType.River)
                             {
@@ -940,9 +1057,12 @@ public class MapGenerator : MonoBehaviour
 
             foreach (Vector2Int cell in cluster)
             {
-                TileType cellType = _map[cell.x, cell.y];
+                TileType cellType = Map[cell.x, cell.y];
                 if (cellType == TileType.Mountain || cellType == TileType.Grass || cellType == TileType.River)
-                    _map[cell.x, cell.y] = targetResource;
+                {
+                    Map[cell.x, cell.y] = targetResource;
+                    RemoveTileFromCluster(cell);
+                }
             }
 
             currentWood = CountTiles(TileType.Wood);
@@ -964,12 +1084,12 @@ public class MapGenerator : MonoBehaviour
             _masterRng,
             (pos) =>
             {
-                TileType type = _map[pos.x, pos.y];
+                TileType type = Map[pos.x, pos.y];
                 return type is TileType.Grass or TileType.Mountain or TileType.River;
             },
             (pos) =>
             {
-                TileType type = _map[pos.x, pos.y];
+                TileType type = Map[pos.x, pos.y];
                 return type is TileType.Grass or TileType.Mountain or TileType.River;
             }
         );
@@ -980,15 +1100,24 @@ public class MapGenerator : MonoBehaviour
     {
         int row = _posB.y;
         for (int x = _posB.x; x < width; x++)
-            _map[x, row] = TileType.Grass;
+        {
+            Map[x, row] = TileType.Grass;
+            RemoveTileFromCluster(new Vector2Int(x, row));
+        }
 
         if (row - 1 >= 0)
             for (int x = _posB.x; x < width; x++)
-                _map[x, row - 1] = TileType.Grass;
+            {
+                Map[x, row - 1] = TileType.Grass;
+                RemoveTileFromCluster(new Vector2Int(x, row - 1));
+            }
 
         if (row + 1 < height)
             for (int x = _posB.x; x < width; x++)
-                _map[x, row + 1] = TileType.Grass;
+            {
+                Map[x, row + 1] = TileType.Grass;
+                RemoveTileFromCluster(new Vector2Int(x, row + 1));
+            }
     }
 
     // 시작점에서 최소한 하나의 Wood 클러스터 접근 통로 생성
@@ -1004,19 +1133,19 @@ public class MapGenerator : MonoBehaviour
         while (queue.Count > 0)
         {
             Vector2Int cur = queue.Dequeue();
-            if (_map[cur.x, cur.y] == TileType.Wood)
+            if (Map[cur.x, cur.y] == TileType.Wood)
             {
                 targetWood = cur;
                 foundWood = true;
                 break;
             }
 
-            foreach (var d in new Vector2Int[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) }) 
+            foreach (var d in new Vector2Int[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) })
             {
                 Vector2Int nxt = cur + d;
                 if (IsInBounds(nxt) && !visited.Contains(nxt))
                 {
-                    if (_map[nxt.x, nxt.y] != TileType.Mountain && _map[nxt.x, nxt.y] != TileType.River)
+                    if (Map[nxt.x, nxt.y] != TileType.Mountain && Map[nxt.x, nxt.y] != TileType.River)
                     {
                         queue.Enqueue(nxt);
                         visited.Add(nxt);
@@ -1033,7 +1162,7 @@ public class MapGenerator : MonoBehaviour
             for (int i = 0; i < width; i++)
             for (int j = 0; j < height; j++)
             {
-                if (_map[i, j] == TileType.Wood)
+                if (Map[i, j] == TileType.Wood)
                 {
                     int dist = Mathf.Abs(i - _posA.x) + Mathf.Abs(j - _posA.y);
                     if (dist < bestDist)
@@ -1079,9 +1208,12 @@ public class MapGenerator : MonoBehaviour
         }
 
         foreach (var cell in path)
-            _map[cell.x, cell.y] = TileType.Grass;
+        {
+            Map[cell.x, cell.y] = TileType.Grass;
+            RemoveTileFromCluster(cell);
+        }
 
-        Debug.Log("EnsureWoodAccessibility: Wood 통로 생성 완료");
+        // Debug.Log("EnsureWoodAccessibility: Wood 통로 생성 완료");
     }
 
     // InstantiateMap() 호출 직전에 실행할 보정 함수
@@ -1089,18 +1221,18 @@ public class MapGenerator : MonoBehaviour
     {
         List<Vector2Int> simplePath = FindSimplePath(_posA, _posB, pos =>
         {
-            TileType type = _map[pos.x, pos.y];
+            TileType type = Map[pos.x, pos.y];
             return type is TileType.Grass or TileType.Wood or TileType.Iron;
         });
         if (simplePath != null)
         {
-            Debug.Log("경로가 Grass, Wood, Iron 만으로 구성되어 있으므로 추가 보정이 필요 없음.");
+            // Debug.Log("경로가 Grass, Wood, Iron 만으로 구성되어 있으므로 추가 보정이 필요 없음.");
             return;
         }
-        else
-        {
-            // Debug.Log("Grass, Wood, Iron 만으로는 경로를 찾지 못했습니다. River를 포함한 경로를 보정합니다.");
-        }
+        // else
+        // {
+        //     Debug.Log("Grass, Wood, Iron 만으로는 경로를 찾지 못했습니다. River를 포함한 경로를 보정합니다.");
+        // }
 
         Tuple<List<Vector2Int>, List<Vector2Int>> pathAndRivers = FindPathMinimizingRiver(_posA, _posB);
         List<Vector2Int> riverMinPath = pathAndRivers.Item1;
@@ -1112,9 +1244,6 @@ public class MapGenerator : MonoBehaviour
             return;
         }
 
-        // Debug.Log("최소 River 경로에서 River 타일 개수: " + riverTilesOnPath.Count +
-        //           ", 좌표: " + FormatVectorList(riverTilesOnPath));
-
         int counter = 0;
         List<Vector2Int> convertedRiverTiles = new List<Vector2Int>();
         while (riverTilesOnPath.Count > 2 && counter < MAX_ITERATIONS)
@@ -1122,9 +1251,9 @@ public class MapGenerator : MonoBehaviour
             counter++;
             int randomIndex = _masterRng.Next(riverTilesOnPath.Count);
             Vector2Int tile = riverTilesOnPath[randomIndex];
-            _map[tile.x, tile.y] = TileType.Grass;
+            Map[tile.x, tile.y] = TileType.Grass;
+            RemoveTileFromCluster(tile);
             convertedRiverTiles.Add(tile);
-            // Debug.Log("River 타일을 Grass로 변환: " + tile);
             riverTilesOnPath.RemoveAt(randomIndex);
         }
 
@@ -1132,18 +1261,13 @@ public class MapGenerator : MonoBehaviour
             throw new MapGenerationException("AdjustPathForRiverAndWood: River 변환 반복 최대치를 초과했습니다.");
 
         int reachableWoodCount = CountReachableWoodWithoutRiver(_posA);
-        // Debug.Log("River 없이 도달 가능한 Wood 타일 개수: " + reachableWoodCount);
 
-        if (reachableWoodCount >= 2)
-        {
-            // Debug.Log("River 없이 도달 가능한 Wood 타일이 2개 이상이므로 추가 작업 없이 종료.");
-        }
-        else
+        if (reachableWoodCount < 2)
         {
             foreach (Vector2Int tile in convertedRiverTiles)
             {
-                _map[tile.x, tile.y] = TileType.Wood;
-                // Debug.Log("변환된 Grass 타일을 Wood로 전환: " + tile);
+                Map[tile.x, tile.y] = TileType.Wood;
+                RemoveTileFromCluster(tile);
             }
         }
     }
@@ -1238,9 +1362,9 @@ public class MapGenerator : MonoBehaviour
             foreach (var d in directions)
             {
                 Vector2Int next = current + d;
-                if (IsInBounds(next) && _map[next.x, next.y] != TileType.Mountain)
+                if (IsInBounds(next) && Map[next.x, next.y] != TileType.Mountain)
                 {
-                    int tileCost = (_map[next.x, next.y] == TileType.River) ? 1 : 0;
+                    int tileCost = (Map[next.x, next.y] == TileType.River) ? 1 : 0;
                     int newCost = cost[current.x][current.y] + tileCost;
                     if (newCost < cost[next.x][next.y])
                     {
@@ -1257,7 +1381,7 @@ public class MapGenerator : MonoBehaviour
 
         List<Vector2Int> path = new List<Vector2Int>();
         Vector2Int node = end;
-        while (node is not { x: -1, y: -1 })
+        while (node.x != -1 && node.y != -1)
         {
             path.Add(node);
             if (node == start)
@@ -1269,7 +1393,7 @@ public class MapGenerator : MonoBehaviour
 
         List<Vector2Int> riverTiles = new List<Vector2Int>();
         foreach (var pos in path)
-            if (_map[pos.x, pos.y] == TileType.River)
+            if (Map[pos.x, pos.y] == TileType.River)
                 riverTiles.Add(pos);
 
         return new Tuple<List<Vector2Int>, List<Vector2Int>>(path, riverTiles);
@@ -1291,14 +1415,14 @@ public class MapGenerator : MonoBehaviour
         while (queue.Count > 0)
         {
             Vector2Int cur = queue.Dequeue();
-            if (_map[cur.x, cur.y] == TileType.Wood)
+            if (Map[cur.x, cur.y] == TileType.Wood)
                 woodCount++;
             foreach (var d in directions)
             {
                 Vector2Int next = cur + d;
                 if (IsInBounds(next) && !visited.Contains(next))
                 {
-                    TileType type = _map[next.x, next.y];
+                    TileType type = Map[next.x, next.y];
                     if (type is TileType.Grass or TileType.Wood or TileType.Iron)
                     {
                         visited.Add(next);
@@ -1317,8 +1441,10 @@ public class MapGenerator : MonoBehaviour
 
     private void ForceStartEndGrass()
     {
-        _map[_posA.x, _posA.y] = TileType.Grass;
-        _map[_posB.x, _posB.y] = TileType.Grass;
+        Map[_posA.x, _posA.y] = TileType.Grass;
+        RemoveTileFromCluster(_posA);
+        Map[_posB.x, _posB.y] = TileType.Grass;
+        RemoveTileFromCluster(_posB);
     }
 
     #endregion
@@ -1376,7 +1502,7 @@ public class MapGenerator : MonoBehaviour
                 Vector2Int next = current + d;
                 if (IsInBounds(next))
                 {
-                    int tileCost = (_map[next.x, next.y] == TileType.Mountain) ? 1 : 0;
+                    int tileCost = (Map[next.x, next.y] == TileType.Mountain) ? 1 : 0;
                     int newCost = cost[current.x][current.y] + tileCost;
                     if (newCost < cost[next.x][next.y])
                     {
@@ -1409,8 +1535,11 @@ public class MapGenerator : MonoBehaviour
         path.Reverse();
 
         foreach (var cell in path)
-            if (_map[cell.x, cell.y] == TileType.Mountain)
-                _map[cell.x, cell.y] = TileType.Grass;
+            if (Map[cell.x, cell.y] == TileType.Mountain)
+            {
+                Map[cell.x, cell.y] = TileType.Grass;
+                RemoveTileFromCluster(cell);
+            }
     }
 
     #endregion
@@ -1427,7 +1556,7 @@ public class MapGenerator : MonoBehaviour
         int count = 0;
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
-            if (_map[x, y] == TileType.Grass)
+            if (Map[x, y] == TileType.Grass)
                 count++;
         return count;
     }
@@ -1437,7 +1566,7 @@ public class MapGenerator : MonoBehaviour
         int count = 0;
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
-            if (_map[x, y] == type)
+            if (Map[x, y] == type)
                 count++;
         return count;
     }
@@ -1616,13 +1745,202 @@ public class MapGenerator : MonoBehaviour
         return Mathf.Abs(cell.x - point.x) <= range && Mathf.Abs(cell.y - point.y) <= range;
     }
 
-    // private string FormatVectorList(List<Vector2Int> list)
-    // {
-    //     string s = "";
-    //     foreach (var v in list)
-    //         s += $"({v.x},{v.y}) ";
-    //     return s;
-    // }
+    #endregion
+
+    #region Grass 클러스터 그룹 최종화 및 분할
+
+    //ClusterGroup이 없는 Grass타일들을 그룹화 또는 분할
+    private void FinalizeGrassClusters()
+    {
+        // 아직 클러스터 그룹에 할당되지 않은 Grass 타일 목록 수집
+        bool[][] visited = new bool[width][];
+        for (int index = 0; index < width; index++)
+        {
+            visited[index] = new bool[height];
+        }
+
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            // 단, Grass 타입이고 클러스터 할당이 없으면 최종 그룹화 대상
+            Vector2Int pos = new Vector2Int(x, y);
+            if (Map[x, y] == TileType.Grass && !_tileClusterGroupMap.ContainsKey(pos))
+                visited[x][y] = false;
+            else
+                visited[x][y] = true;
+        }
+
+        // Flood fill로 인접한 Grass 타일 그룹 찾기
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (!visited[x][y])
+                {
+                    List<Vector2Int> groupTiles = new List<Vector2Int>();
+                    Queue<Vector2Int> queue = new Queue<Vector2Int>();
+                    Vector2Int start = new Vector2Int(x, y);
+                    queue.Enqueue(start);
+                    visited[x][y] = true;
+
+                    while (queue.Count > 0)
+                    {
+                        Vector2Int cur = queue.Dequeue();
+                        groupTiles.Add(cur);
+                        foreach (var nb in GetCardinalNeighbors(cur))
+                        {
+                            if (IsInBounds(nb) && !visited[nb.x][nb.y] && Map[nb.x, nb.y] == TileType.Grass)
+                            {
+                                visited[nb.x][nb.y] = true;
+                                queue.Enqueue(nb);
+                            }
+                        }
+                    }
+
+                    // 그룹 생성
+                    ClusterGroup grassGroup = CreateClusterGroupFromTiles(groupTiles);
+                    // 그룹 분할
+                    if (grassGroup.Tiles.Count >= 40)
+                    {
+                        List<ClusterGroup> splitGroups = SplitGrassClusterGroup(grassGroup);
+                        foreach (var sg in splitGroups)
+                        {
+                            _grassClusterGroups.Add(sg);
+                        }
+                    }
+                    else
+                    {
+                        _grassClusterGroups.Add(grassGroup);
+                    }
+                }
+            }
+        }
+    }
+
+    //Grass 외의 다른 미할당 타일들도 그룹화
+    private void FinalizeUnassignedClusters()
+    {
+        // 모든 좌표에 대해 미할당 타일을 찾기 위한 방문 배열 생성
+        bool[][] visited = new bool[width][];
+        for (int i = 0; i < width; i++)
+        {
+            visited[i] = new bool[height];
+        }
+
+        // 맵 전체를 순회하면서 미할당 타일을 그룹화
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Vector2Int pos = new Vector2Int(x, y);
+                // 만약 아직 방문하지 않았고, tileClusterGroupMap에 등록되어 있지 않다면
+                if (!visited[x][y] && !_tileClusterGroupMap.ContainsKey(pos))
+                {
+                    List<Vector2Int> unassignedGroupTiles = new List<Vector2Int>();
+                    Queue<Vector2Int> queue = new Queue<Vector2Int>();
+                    queue.Enqueue(pos);
+                    visited[x][y] = true;
+
+                    // BFS(또는 Flood Fill)를 통해 인접 미할당 타일들을 수집
+                    while (queue.Count > 0)
+                    {
+                        Vector2Int current = queue.Dequeue();
+                        unassignedGroupTiles.Add(current);
+
+                        foreach (var neighbor in GetCardinalNeighbors(current))
+                        {
+                            if (IsInBounds(neighbor) && !visited[neighbor.x][neighbor.y] &&
+                                !_tileClusterGroupMap.ContainsKey(neighbor))
+                            {
+                                visited[neighbor.x][neighbor.y] = true;
+                                queue.Enqueue(neighbor);
+                            }
+                        }
+                    }
+
+                    // 미할당 타일 그룹에 대해 새 클러스터 그룹 생성 후 할당
+                    ClusterGroup newGroup = CreateClusterGroupFromTiles(unassignedGroupTiles);
+                    
+                    //귀찮으니까 그냥 grass ClusterGroup에 할당. 별로 상관없을듯
+                    _grassClusterGroups.Add(newGroup);
+                }
+            }
+        }
+    }
+
+    // 인자로 받아온 클러스터 그룹을 분할한다.
+    private List<ClusterGroup> SplitGrassClusterGroup(ClusterGroup group)
+    {
+        List<ClusterGroup> result = new List<ClusterGroup>();
+        int totalCount = group.Tiles.Count;
+        
+        int parts = totalCount / 20;
+        if (parts < 2) parts = 1;
+
+        // 남은 타일 집합
+        HashSet<Vector2Int> remaining = new HashSet<Vector2Int>(group.Tiles);
+
+        int baseSize = totalCount / parts;
+        int remainder = totalCount % parts;
+
+        for (int i = 0; i < parts; i++)
+        {
+            int targetSize = baseSize + (i < remainder ? 1 : 0);
+            List<Vector2Int> subGroupTiles = new List<Vector2Int>();
+
+            // 임의의 시작점 선택
+            Vector2Int seed = Vector2Int.zero;
+            foreach (var pos in remaining)
+            {
+                seed = pos;
+                break;
+            }
+
+            if (seed == Vector2Int.zero) break;
+
+            // BFS로 targetSize만큼의 연결된 타일 수집
+            Queue<Vector2Int> q = new Queue<Vector2Int>();
+            HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+            q.Enqueue(seed);
+            visited.Add(seed);
+
+            while (q.Count > 0 && subGroupTiles.Count < targetSize)
+            {
+                Vector2Int cur = q.Dequeue();
+                if (remaining.Contains(cur))
+                {
+                    subGroupTiles.Add(cur);
+                    remaining.Remove(cur);
+                }
+
+                foreach (var nb in GetCardinalNeighbors(cur))
+                {
+                    if (IsInBounds(nb) && !visited.Contains(nb) && remaining.Contains(nb))
+                    {
+                        visited.Add(nb);
+                        q.Enqueue(nb);
+                    }
+                }
+            }
+
+            // 생성된 부분 그룹이 비어있지 않다면 클러스터 그룹 생성
+            if (subGroupTiles.Count > 0)
+            {
+                ClusterGroup subGroup = CreateClusterGroupFromTiles(subGroupTiles);
+                result.Add(subGroup);
+            }
+        }
+
+        // 남은 타일이 있다면 하나의 그룹으로 추가
+        if (remaining.Count > 0)
+        {
+            List<Vector2Int> leftover = new List<Vector2Int>(remaining);
+            ClusterGroup subGroup = CreateClusterGroupFromTiles(leftover);
+            result.Add(subGroup);
+        }
+
+        return result;
+    }
 
     #endregion
 
@@ -1630,53 +1948,78 @@ public class MapGenerator : MonoBehaviour
 
     private void InstantiateMap()
     {
+        // 경로 보장 등 마지막 보정 작업 실행
         EnsurePathConnectivity();
-        int grassCount = 0, woodCount = 0, ironCount = 0, mountainCount = 0, riverCount = 0;
 
+        // mountain, river, resource, grass 클러스터 리스트를 하나의 리스트로 통합
+        List<ClusterGroup> allClusterGroups = new List<ClusterGroup>();
+        allClusterGroups.AddRange(_mountainClusterGroups);
+        allClusterGroups.AddRange(_riverClusterGroups);
+        allClusterGroups.AddRange(_resourceClusterGroups);
+        allClusterGroups.AddRange(_grassClusterGroups);
+
+        // 빈 클러스터 그룹은 제거
+        allClusterGroups.RemoveAll(cg => cg.Tiles == null || cg.Tiles.Count == 0);
+
+        // 클러스터 그룹별로 clusterPrefab 인스턴스를 생성할 딕셔너리 생성
+        Dictionary<ClusterGroup, GameObject> clusterGameObjects = new Dictionary<ClusterGroup, GameObject>();
+
+        foreach (ClusterGroup cg in allClusterGroups)
+        {
+            // clusterPrefab을 인스턴스화하여 clusterParent의 자식으로 추가
+            GameObject clusterGo = Instantiate(clusterPrefab, clusterParent);
+            
+            // 클러스터 이름 지정
+            clusterGo.name = $"Cluster_{cg.Direction}_{cg.CenterTile.x}_{cg.CenterTile.y}";
+            clusterGameObjects.Add(cg, clusterGo);
+        }
+
+        // 실제 타일 생성
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 Vector3 pos = new Vector3(x, 0, y);
-                if (x == _posA.x && y == _posA.y)
-                    Instantiate(startPointPrefab, pos, Quaternion.identity, blockParent);
-                else if (x == _posB.x && y == _posB.y)
-                    Instantiate(endPointPrefab, pos, Quaternion.identity, blockParent);
+                GameObject tileInstance = null;
+                Vector2Int tilePos = new Vector2Int(x, y);
+
+                if (tilePos == _posA)
+                    tileInstance = Instantiate(startPointPrefab, pos, Quaternion.identity);
+                else if (tilePos == _posB)
+                    tileInstance = Instantiate(endPointPrefab, pos, Quaternion.identity);
                 else
                 {
-                    switch (_map[x, y])
+                    switch (Map[x, y])
                     {
                         case TileType.Grass:
-                            grassCount++;
-                            Instantiate(tilePrefab, pos, Quaternion.identity, blockParent);
+                            tileInstance = Instantiate(tilePrefab, pos, Quaternion.identity);
                             break;
                         case TileType.Wood:
-                            woodCount++;
-                            Instantiate(woodPrefab, pos, Quaternion.identity, blockParent);
+                            tileInstance = Instantiate(woodPrefab, pos, Quaternion.identity);
                             break;
                         case TileType.Iron:
-                            ironCount++;
-                            Instantiate(ironPrefab, pos, Quaternion.identity, blockParent);
+                            tileInstance = Instantiate(ironPrefab, pos, Quaternion.identity);
                             break;
                         case TileType.Mountain:
-                            mountainCount++;
-                            Instantiate(mountainPrefab, pos, Quaternion.identity, blockParent);
+                            tileInstance = Instantiate(mountainPrefab, pos, Quaternion.identity);
                             break;
                         case TileType.River:
-                            riverCount++;
-                            Instantiate(riverPrefab, pos, Quaternion.identity, blockParent);
+                            tileInstance = Instantiate(riverPrefab, pos, Quaternion.identity);
                             break;
                     }
                 }
+
+                if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group))
+                {
+                    if (tileInstance) tileInstance.transform.SetParent(clusterGameObjects[group].transform);
+                }
+                else
+                {
+                    if (tileInstance) tileInstance.transform.SetParent(clusterParent);
+                }
             }
         }
-
-        Debug.Log(
-            $"맵 생성 완료, grassCount: {grassCount}, woodCount: {woodCount}, ironCount: {ironCount}, mountainCount: {mountainCount}, riverCount: {riverCount}\n" +
-            "생성 파라미터\n" +
-            $"minRiverCount: {minRiverCount}, maxRiverCount: {maxRiverCount}, minRiverLength: {minRiverLength}, maxRiverCellsAllowed: {maxRiverCellsAllowed}, lateralSpreadProbability: {lateralSpreadProbability}, elongatedRiverMinWidth: {elongatedRiverMinWidth}, elongatedRiverMaxWidth: {elongatedRiverMaxWidth}\n" +
-            $"minGrassTileCount: {minGrassTileCount}, maxGrassTileCount: {maxGrassTileCount}, minWoodCount: {minWoodCount}, minIronCount: {minIronCount}"
-        );
+        Debug.Log("맵 생성 완료");
     }
 
     #endregion
@@ -1713,12 +2056,12 @@ public class MapGenerator : MonoBehaviour
                 break;
             }
 
-            foreach (var d in new Vector2Int[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) }) 
+            foreach (var d in new Vector2Int[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) })
             {
                 Vector2Int next = cur + d;
                 if (IsInBounds(next) && !visited.Contains(next))
                 {
-                    if (_map[next.x, next.y] != TileType.Mountain)
+                    if (Map[next.x, next.y] != TileType.Mountain)
                     {
                         queue.Enqueue(next);
                         visited.Add(next);
@@ -1746,11 +2089,11 @@ public class MapGenerator : MonoBehaviour
                 pathStr += $"({step.x},{step.y}) -> ";
             pathStr = pathStr.Substring(0, pathStr.Length - 4);
             Debug.Log(
-                $"CheckVisit: [{_checkCount}] ({visitX},{visitY})에 도달 가능합니다. 해당 좌표의 타일 타입: {_map[visitX, visitY]}, {pathStr}");
+                $"CheckVisit: [{_checkCount}] ({visitX},{visitY})에 도달 가능합니다. 해당 좌표의 타일 타입: {Map[visitX, visitY]}, {pathStr}");
         }
         else
         {
-            Debug.Log($"CheckVisit: [{_checkCount}] 해당 좌표에 도달할 수 없습니다. 해당 좌표의 타일 타입: {_map[visitX, visitY]}");
+            Debug.Log($"CheckVisit: [{_checkCount}] 해당 좌표에 도달할 수 없습니다. 해당 좌표의 타일 타입: {Map[visitX, visitY]}");
         }
 
         _checkCount++;
@@ -1765,6 +2108,65 @@ public class MapGenerationException : Exception
 {
     public MapGenerationException(string message) : base(message)
     {
+    }
+}
+
+#endregion
+
+#region 클러스터 그룹 관련 enum 및 클래스
+
+
+public enum ClusterDirection
+{
+    Upper,
+    Under
+}
+
+public class ClusterGroup
+{
+    public List<Vector2Int> Tiles;
+    public ClusterDirection Direction;
+    public Vector2Int CenterTile;
+
+    public ClusterGroup()
+    {
+        Tiles = new List<Vector2Int>();
+    }
+
+
+    //해당 클러스터 그룹의 방향(Under, Upper를 설정)
+    public void RecalculateCenterAndDirection(int mapHeight)
+    {
+        if (Tiles.Count == 0)
+            return;
+
+        int minY = int.MaxValue;
+        int maxY = int.MinValue;
+        foreach (var cell in Tiles)
+        {
+            if (cell.y < minY) minY = cell.y;
+            if (cell.y > maxY) maxY = cell.y;
+        }
+
+        float centerY = (minY + maxY) / 2f;
+
+        // 중앙에 가장 가까운 타일 선택
+        Vector2Int closest = Tiles[0];
+        float bestDiff = Math.Abs(closest.y - centerY);
+        foreach (var cell in Tiles)
+        {
+            float diff = Math.Abs(cell.y - centerY);
+            if (diff < bestDiff)
+            {
+                bestDiff = diff;
+                closest = cell;
+            }
+        }
+
+        CenterTile = closest;
+
+        // 전체 맵 높이의 절반보다 크면 Upper, 그렇지 않으면 Under (요구사항에 따라 조정 가능)
+        Direction = CenterTile.y > mapHeight / 2 ? ClusterDirection.Upper : ClusterDirection.Under;
     }
 }
 

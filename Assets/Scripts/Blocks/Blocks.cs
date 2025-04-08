@@ -8,6 +8,7 @@ public abstract class Blocks: MonoBehaviour
     [SerializeField, Header("오브젝트가 파괴될 때 주변에 튈 파편 오브젝트")] private GameObject fragPrefab;
 
     [NonSerialized] private GameObject _selectedPrefab;
+    public ClusterGroup ClusterGroup;
 
     private void Awake()
     {
