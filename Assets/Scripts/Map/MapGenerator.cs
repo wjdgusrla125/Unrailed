@@ -475,15 +475,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         while (riversGenerated < riverCount && outerAttempts < MAX_ITERATIONS)
         {
             outerAttempts++;
-            List<Vector2Int> riverCells;
-            if (riversGenerated == 0)
-            {
-                riverCells = GenerateElongatedRiver();
-            }
-            else
-            {
-                riverCells = GenerateRoundedRiver();
-            }
+            var riverCells = riversGenerated == 0 ? GenerateElongatedRiver() : GenerateRoundedRiver();
 
             if (riverCells.Count >= minRiverLength)
             {
@@ -2320,7 +2312,6 @@ public class MapGenerator : SingletonManager<MapGenerator>
                                     waterComponent.ActivateWaterFall(7);
                             }
                             break;
-                            break;
                     }
                 }
 
@@ -2377,7 +2368,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                             else
                             {
                                 int d = GetDistanceToNonMountain(tilePos);
-                                float factor = Mathf.Clamp01((float)d / 5f);
+                                float factor = Mathf.Clamp01(d / 5f);
                                 float baseRandom = Random.Range(0.25f, 1.0f);
                                 float mountain1Scale = Mathf.Lerp(baseRandom, 1.5f, factor);
                                 blocks.SetEnvScale(mountain1Scale);
@@ -2446,19 +2437,6 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public int visitX;
     public int visitY;
     private int _checkCount;
-
-    //스페셜 클러스터의 개수와 총 셀 수를 출력
-    private void CheckSpecialCluster(int i = -1)
-    {
-        int totalSpecialCells = 0;
-        foreach (ClusterGroup special in _specialClusterGroups)
-        {
-            totalSpecialCells += special.Tiles.Count;
-        }
-
-        var str = i == -1 ? "(마지막)" : $"({i})";
-        Debug.Log($"{str} 스페셜 클러스터 그룹 개수: {_specialClusterGroups.Count}, 스페셜 클러스터 총 셀 수: {totalSpecialCells}");
-    }
 
     private void CheckVisit()
     {
@@ -2553,14 +2531,9 @@ public enum ClusterDirection
 
 public class ClusterGroup
 {
-    public List<Vector2Int> Tiles;
+    public readonly List<Vector2Int> Tiles = new();
     public ClusterDirection Direction;
     public Vector2Int CenterTile;
-
-    public ClusterGroup()
-    {
-        Tiles = new List<Vector2Int>();
-    }
 
 
     //해당 클러스터 그룹의 방향(Under, Upper를 설정)
@@ -2594,7 +2567,7 @@ public class ClusterGroup
 
         CenterTile = closest;
 
-        // 전체 맵 높이의 절반보다 크면 Upper, 그렇지 않으면 Under (요구사항에 따라 조정 가능)
+        // 전체 맵 높이의 절반보다 크면 Upper, 그렇지 않으면 Under
         Direction = CenterTile.y > mapHeight / 2 ? ClusterDirection.Upper : ClusterDirection.Under;
     }
 }

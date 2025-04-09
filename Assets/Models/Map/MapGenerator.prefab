@@ -44,23 +44,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d204d1c0f02cc594aa49a35050b0882c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSeed: 
+  mapSeed: 638798434893155023
   width: 43
   height: 19
   pathLength: 39
   minHorizontalDistance: 35
-  maxGrassTileCount: 400
-  minGrassTileCount: 350
+  maxGrassTileCount: 350
+  minGrassTileCount: 250
   destructibleClusterCount: 5
   minDestructibleClusterSize: 20
-  minWoodCount: 80
-  minIronCount: 80
+  minWoodCount: 150
+  minIronCount: 115
   mountainClusterCountMin: 1
   mountainClusterCountMax: 2
   mountainClusterSizeMin: 14
   mountainClusterSizeMax: 16
-  minRiverCount: 2
-  maxRiverCount: 3
+  minRiverCount: 3
+  maxRiverCount: 4
   minRiverLength: 20
   maxRiverCellsAllowed: 45
   lateralSpreadProbability: 0.4

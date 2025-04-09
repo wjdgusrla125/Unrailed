@@ -529,37 +529,9 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: mapSeed
-      value: 638798434893155023
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minIronCount
-      value: 115
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minWoodCount
-      value: 150
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: clusterParent
       value: 
       objectReference: {fileID: 1740313673}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: maxRiverCount
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minRiverCount
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: maxGrassTileCount
-      value: 350
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: minGrassTileCount
-      value: 250
-      objectReference: {fileID: 0}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator
