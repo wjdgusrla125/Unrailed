@@ -9,5 +9,7 @@ public enum BlockType
     
     CraftingTable,
 
+    DeskTable,
+
     Enemy   //도둑
 }

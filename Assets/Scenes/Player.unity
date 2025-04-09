@@ -894,6 +894,41 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 75520771}
   m_SourcePrefab: {fileID: 100100000, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
+--- !u!1 &465163419 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4472484093875932105, guid: e0c72900efefc75459f6d7ec77e24bfb, type: 3}
+  m_PrefabInstance: {fileID: 1461547456}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &465163420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 465163419}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79c013358ba08cc41ac8fe5801435c8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RailCount: 0
+  CanCreateRail: 1
+  RailObject: {fileID: 7402043901895155594, guid: 1c3fcc82479a1c540aa989011f27cf38, type: 3}
+--- !u!114 &465163424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 465163419}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 0
+  blockType: 5
+  DropGameObject: []
 --- !u!1001 &511636826
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1334,6 +1369,7 @@ MonoBehaviour:
   IronObjects: []
   WoodPos: {fileID: 1738710143}
   IronPos: {fileID: 1079723164}
+  CraftingDesk: {fileID: 465163419}
 --- !u!114 &849893360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2203,6 +2239,12 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4472484093875932105, guid: e0c72900efefc75459f6d7ec77e24bfb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 465163424}
+    - targetCorrespondingSourceObject: {fileID: 4472484093875932105, guid: e0c72900efefc75459f6d7ec77e24bfb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 465163420}
     - targetCorrespondingSourceObject: {fileID: 4654451409573904519, guid: e0c72900efefc75459f6d7ec77e24bfb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 849893360}
