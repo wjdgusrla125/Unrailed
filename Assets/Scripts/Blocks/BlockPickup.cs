@@ -200,9 +200,9 @@ public class BlockPickup : NetworkBehaviour
     {
         if (!pressed) return;
         if (!IsOwner) return;
-        
 
-        /*if (playerInfo.hitBlock == BlockType.CraftingTable)
+
+        if (playerInfo.hitBlock == BlockType.CraftingTable)
         {
             if (playerInfo.itemType == ItemType.WoodPlank && playerInfo.CraftingTableObject.AbleInTableWood)
             {
@@ -259,9 +259,9 @@ public class BlockPickup : NetworkBehaviour
                 }
             }
             return;
-        }*/
+        }
 
-        /*if (playerInfo.hitBlock == BlockType.DeskTable && playerInfo.itemType == ItemType.None && deskInfo.RailCount != 0)
+        if (playerInfo.hitBlock == BlockType.DeskTable && playerInfo.itemType == ItemType.None && deskInfo.RailCount != 0)
         {
             switch (deskInfo.RailCount)
             {
@@ -276,7 +276,7 @@ public class BlockPickup : NetworkBehaviour
                     break;
             }
             return;
-        }*/
+        }
 
 
         if (heldObject != null && canPickup) 

@@ -394,7 +394,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BlockHpCount: 3
   blockType: 1
-  DropGameObject: []
+  DropGameObject:
+  - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
+  - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
 --- !u!1 &5019990921733027023
 GameObject:
   m_ObjectHideFlags: 0

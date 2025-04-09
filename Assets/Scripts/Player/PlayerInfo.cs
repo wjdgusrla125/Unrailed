@@ -17,8 +17,10 @@ public class PlayerInfo : MonoBehaviour
     
     [Header("앞에 인식된 블럭 타입")]
     public BlockType hitBlock;
+    public GameObject hitObject;
     [HideInInspector]
     public CraftingTable CraftingTableObject;
+
 
     public void Awake()
     {
@@ -74,9 +76,14 @@ public class PlayerInfo : MonoBehaviour
             if (hit.collider.gameObject.GetComponent<BreakableObject>() != null)
                 blockType = hit.collider.gameObject.GetComponent<BreakableObject>().BlockTypeProperty;
 
-            if (blockType == BlockType.None) return;
-            
+            if (blockType == BlockType.None)
+            {
+                hitObject = null;
+                return;
+            }
             hitBlock = blockType;
+            hitObject = hit.collider.gameObject;
+
             if (!IsDig)
                 StartCoroutine(DigBlockCorutine());
         }
@@ -84,11 +91,17 @@ public class PlayerInfo : MonoBehaviour
         {
             hitBlock = BlockType.None;
         }
-        
+        if (hitObject == null)
+            IsDig = false;
         // 디버그용 레이 시각화.
         Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
     }
     
+    public void DigDone()
+    {
+        hitObject.GetComponent<BreakableObject>().CheckRay(itemType);
+    }
+
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(1f);
