@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System;
 
 public class BlockPickup : NetworkBehaviour
 {
@@ -15,7 +16,7 @@ public class BlockPickup : NetworkBehaviour
     private bool canPickup = false;
     private NetworkObject targetObject = null;
     [SerializeField] private PlayerInfo playerInfo;
-    
+    [SerializeField] private DeskInfo deskInfo;
     // 스택 관련 변수 추가
     private int stackCount = 0;
     private const int maxStackSize = 3;
@@ -23,7 +24,7 @@ public class BlockPickup : NetworkBehaviour
     // 스택된 아이템의 오프셋 (아이템간 간격)
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.1f, 0);
     [SerializeField] private Vector3 dropOffset = new Vector3(0, 0.1f, 0); // 버릴 때 쌓임 간격
-    
+
     // 스택된 오브젝트 저장 리스트
     private List<NetworkObject> stackedObjects = new List<NetworkObject>();
     
@@ -47,6 +48,10 @@ public class BlockPickup : NetworkBehaviour
         }
     }
 
+    public void Start()
+    {
+        deskInfo = FindObjectOfType<DeskInfo>();
+    }
     void Update()
     {
         if (!IsOwner) return;
@@ -195,6 +200,84 @@ public class BlockPickup : NetworkBehaviour
     {
         if (!pressed) return;
         if (!IsOwner) return;
+        
+
+        /*if (playerInfo.hitBlock == BlockType.CraftingTable)
+        {
+            if (playerInfo.itemType == ItemType.WoodPlank && playerInfo.CraftingTableObject.AbleInTableWood)
+            {
+                if (stackedObjects.Count >= 1)
+                {
+                    if (playerInfo.CraftingTableObject.WoodObjects.Count + (stackedObjects.Count + 1) > 3)
+                        return;
+                    Debug.Log("나무 2개 이상");
+                    playerInfo.CraftingTableObject.OnTableItem(heldObject);
+                    // 스택된 아이템들 드롭
+                    for (int i = 0; i < stackedObjects.Count; i++)
+                    {
+                        if (stackedObjects[i] != null)
+                        {
+                            playerInfo.CraftingTableObject.OnTableItem(stackedObjects[i]);
+                        }
+                    }
+                    stackedObjects.Clear();
+                    heldObject.RemoveOwnership();
+                    RequestDropServerRpc(heldObject.NetworkObjectId);
+                }
+                else
+                {
+                    playerInfo.CraftingTableObject.OnTableItem(heldObject);
+                    heldObject.RemoveOwnership();
+                    RequestDropServerRpc(heldObject.NetworkObjectId);
+                }
+            }
+            else if (playerInfo.itemType == ItemType.Iron && playerInfo.CraftingTableObject.AbleInTableIron)
+            {
+                if (stackedObjects.Count >= 1)
+                {
+                    if (playerInfo.CraftingTableObject.IronObjects.Count + (stackedObjects.Count + 1) > 3)
+                        return;
+                    Debug.Log("철 2개 이상");
+                    playerInfo.CraftingTableObject.OnTableItem(heldObject);
+                    // 스택된 아이템들 드롭
+                    for (int i = 0; i < stackedObjects.Count; i++)
+                    {
+                        if (stackedObjects[i] != null)
+                        {
+                            playerInfo.CraftingTableObject.OnTableItem(stackedObjects[i]);
+                        }
+                    }
+                    stackedObjects.Clear();
+                    heldObject.RemoveOwnership();
+                    RequestDropServerRpc(heldObject.NetworkObjectId);
+                }
+                else
+                {
+                    playerInfo.CraftingTableObject.OnTableItem(heldObject);
+                    heldObject.RemoveOwnership();
+                    RequestDropServerRpc(heldObject.NetworkObjectId);
+                }
+            }
+            return;
+        }*/
+
+        /*if (playerInfo.hitBlock == BlockType.DeskTable && playerInfo.itemType == ItemType.None && deskInfo.RailCount != 0)
+        {
+            switch (deskInfo.RailCount)
+            {
+                case 1:
+                    GameObject temp = GameObject.Instantiate(deskInfo.GetRailObject());
+                    temp.gameObject.transform.position = playerInfo.gameObject.transform.position;
+                    RequestPickUpServerRpc(temp.GetComponent<NetworkObject>().NetworkObjectId);
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+            }
+            return;
+        }*/
+
 
         if (heldObject != null && canPickup) 
         {

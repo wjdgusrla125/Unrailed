@@ -1006,6 +1006,7 @@ MonoBehaviour:
   inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
   heldObject: {fileID: 0}
   playerInfo: {fileID: 8263613358351938457}
+  player: {fileID: 8263613358351938457}
   stackOffset: {x: 0, y: 0.2, z: 0}
   dropOffset: {x: 0, y: 0.2, z: 0}
 --- !u!114 &8263613358351938457
@@ -1025,6 +1026,7 @@ MonoBehaviour:
   itemType: 0
   IsDig: 0
   hitBlock: 0
+  CraftingTableObject: {fileID: 0}
 --- !u!1 &5496825195806496656
 GameObject:
   m_ObjectHideFlags: 0
