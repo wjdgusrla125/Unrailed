@@ -22,14 +22,9 @@ public class BlockPickup : NetworkBehaviour
     
     // 스택된 아이템의 오프셋 (아이템간 간격)
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.1f, 0);
-    [SerializeField] private Vector3 dropOffset = new Vector3(0, 0.1f, 0); // 버릴 때 쌓임 간격
     
     // 스택된 오브젝트 저장 리스트
     private List<NetworkObject> stackedObjects = new List<NetworkObject>();
-    
-    // 새로 추가: 바닥에 쌓인 오브젝트들을 감지하기 위한 변수
-    private List<NetworkObject> detectedStackedObjects = new List<NetworkObject>();
-    private float stackDetectionRadius = 0.5f; // 스택 감지 반경
 
     private void OnEnable()
     {
@@ -81,22 +76,17 @@ public class BlockPickup : NetworkBehaviour
             {
                 targetObject = closestNetObj;
                 canPickup = true;
-                
-                // 새로 추가: 감지된 오브젝트 주변의 스택된 오브젝트들 찾기
-                FindStackedObjectsAround(targetObject);
             }
             else
             {
                 canPickup = false;
                 targetObject = null;
-                detectedStackedObjects.Clear();
             }
         }
         else
         {
             canPickup = false;
             targetObject = null;
-            detectedStackedObjects.Clear();
         }
 
         if (heldObject != null)
@@ -117,63 +107,6 @@ public class BlockPickup : NetworkBehaviour
             // 스택된 아이템들의 위치 업데이트
             UpdateStackedItemPositions(holdPosition);
         }
-    }
-    
-    // 새로 추가: 대상 오브젝트 주변의 스택된 오브젝트들을 찾는 함수
-    private void FindStackedObjectsAround(NetworkObject baseObject)
-    {
-        detectedStackedObjects.Clear();
-        
-        if (baseObject == null) return;
-        
-        // 기본 위치는 대상 오브젝트의 위치
-        Vector3 basePosition = baseObject.transform.position;
-        
-        // 쌓여있는 물체 감지를 위해 주변 Collider 검사
-        Collider[] nearbyColliders = Physics.OverlapSphere(
-            basePosition, stackDetectionRadius, pickupLayerMask);
-        
-        // 대상 오브젝트의 아이템 타입 확인
-        Item baseItem = baseObject.GetComponent<Item>();
-        if (baseItem == null || !baseItem.IsStackable) return;
-        
-        // 먼저 기본 오브젝트를 리스트에 추가
-        detectedStackedObjects.Add(baseObject);
-        
-        // 높이 정렬을 위한 임시 리스트
-        List<NetworkObject> tempObjects = new List<NetworkObject>();
-        
-        foreach (Collider collider in nearbyColliders)
-        {
-            NetworkObject netObj = collider.GetComponent<NetworkObject>();
-            Item item = collider.GetComponent<Item>();
-            
-            // 기본 오브젝트와 다른 오브젝트이고, 같은 타입의 스택 가능한 아이템이면 추가
-            if (netObj != null && netObj != baseObject && item != null && 
-                item.IsStackable && item.ItemType == baseItem.ItemType)
-            {
-                tempObjects.Add(netObj);
-            }
-        }
-        
-        // 높이에 따라 정렬 (낮은 것부터 높은 순으로)
-        tempObjects.Sort((obj1, obj2) => 
-            obj1.transform.position.y.CompareTo(obj2.transform.position.y));
-        
-        // 정렬된 오브젝트들을 감지 리스트에 추가 (최대 maxStackSize-1개 추가 가능)
-        foreach (NetworkObject obj in tempObjects)
-        {
-            if (detectedStackedObjects.Count < maxStackSize)
-            {
-                detectedStackedObjects.Add(obj);
-            }
-            else
-            {
-                break;
-            }
-        }
-        
-        Debug.Log($"Found {detectedStackedObjects.Count} stacked objects");
     }
     
     // 스택된 아이템들의 위치 업데이트
@@ -218,95 +151,12 @@ public class BlockPickup : NetworkBehaviour
         }
         else if (heldObject == null && canPickup)
         {
-            // 새로 추가: 스택된 오브젝트들이 있으면 모두 집도록 처리
-            if (detectedStackedObjects.Count > 1)
-            {
-                RequestPickUpStackServerRpc(targetObject.NetworkObjectId);
-            }
-            else
-            {
-                // 기존 로직 유지
-                RequestPickUpServerRpc(targetObject.NetworkObjectId);
-            }
+            RequestPickUpServerRpc(targetObject.NetworkObjectId);
         }
         else if (heldObject != null)
         {
             RequestDropServerRpc(heldObject.NetworkObjectId);
         }
-    }
-
-    // 새로 추가: 스택된 오브젝트들을 한번에 집는 함수
-    [ServerRpc]
-    void RequestPickUpStackServerRpc(ulong targetId, ServerRpcParams rpcParams = default)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetId, out NetworkObject netObj))
-            return;
-
-        // 첫 번째 오브젝트(가장 아래 있는)를 메인 아이템으로 설정
-        netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
-        PickUpStackClientRpc(targetId, NetworkObjectId);
-    }
-    
-    [ClientRpc]
-    void PickUpStackClientRpc(ulong objectId, ulong playerId)
-    {
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) &&
-            NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerId, out NetworkObject playerObj))
-        {
-            BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
-            if (playerPickup != null && playerPickup.IsOwner)
-            {
-                // 첫 번째 아이템 설정
-                playerPickup.heldObject = netObj;
-                playerPickup.stackCount = 1;
-                playerPickup.stackedObjects.Clear();
-                
-                // 감지된 스택 아이템 처리
-                List<NetworkObject> stackList = new List<NetworkObject>(playerPickup.detectedStackedObjects);
-                
-                // 첫 번째는 이미 메인 아이템으로 설정했으므로 제외
-                stackList.RemoveAt(0);
-                
-                // 나머지 아이템들을 스택에 추가
-                foreach (NetworkObject stackObj in stackList)
-                {
-                    if (playerPickup.stackCount < maxStackSize)
-                    {
-                        playerPickup.stackedObjects.Add(stackObj);
-                        playerPickup.stackCount++;
-                        
-                        // 서버에 소유권 변경 요청
-                        playerPickup.RequestStackItemOwnershipServerRpc(stackObj.NetworkObjectId);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                
-                // 플레이어 아이템 타입 업데이트
-                Item heldItem = netObj.GetComponent<Item>();
-                if (heldItem != null && playerPickup.playerInfo != null)
-                {
-                    playerPickup.UpdatePlayerItemType(heldItem.ItemType);
-                }
-                else
-                {
-                    playerPickup.UpdatePlayerItemType(ItemType.None);
-                }
-                
-                Debug.Log($"Picked up stack. Total count: {playerPickup.stackCount}");
-            }
-        }
-    }
-    
-    [ServerRpc]
-    void RequestStackItemOwnershipServerRpc(ulong objectId, ServerRpcParams rpcParams = default)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
-            return;
-            
-        netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
     }
 
     [ServerRpc]
@@ -356,23 +206,22 @@ public class BlockPickup : NetworkBehaviour
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
             return;
 
-        // 스택된 아이템 및 메인 아이템 드롭
-        DropAllItemsClientRpc(transform.position);
+        // 먼저 스택된 아이템들 드롭
+        DropStackedItemsClientRpc();
 
+        // 메인 아이템 드롭
         netObj.RemoveOwnership();
         ClearHeldObjectClientRpc(objectId);
     }
 
     [ClientRpc]
-    void DropAllItemsClientRpc(Vector3 dropPosition)
+    void DropStackedItemsClientRpc()
     {
         if (!IsOwner) return;
         
-        // 기준 위치 설정 - 플레이어 앞쪽 약간 떨어진 곳
-        Vector3 basePosition = dropPosition + transform.forward * 0.5f;
-        basePosition.y = 0.1f; // 바닥에 위치하도록 높이 조정
+        // 스택된 아이템들 드롭
+        float dropOffset = 0.2f; // 아이템 간 간격
         
-        // 스택된 아이템들 드롭 - 수직으로 쌓이게 배치
         for (int i = 0; i < stackedObjects.Count; i++)
         {
             if (stackedObjects[i] != null)
@@ -381,18 +230,19 @@ public class BlockPickup : NetworkBehaviour
                 netObj.gameObject.SetActive(true);
                 netObj.transform.SetParent(null);
                 
-                // 아이템을 수직으로 쌓아서 배치
-                Vector3 stackPosition = basePosition + dropOffset * (i + 1);
-                netObj.transform.position = stackPosition;
+                // 아이템을 주변에 드롭
+                Vector3 position = transform.position;
+                position.y = 0.1f;
+                // 각 아이템이 다른 위치에 떨어지도록 오프셋 추가
+                position += new Vector3(
+                    Random.Range(-dropOffset, dropOffset),
+                    0,
+                    Random.Range(-dropOffset, dropOffset)
+                );
+                
+                netObj.transform.position = position;
                 netObj.transform.rotation = Quaternion.identity;
             }
-        }
-        
-        // 메인 아이템도 같은 위치에 배치 (가장 아래)
-        if (heldObject != null)
-        {
-            heldObject.transform.position = basePosition;
-            heldObject.transform.rotation = Quaternion.identity;
         }
         
         // 스택 리스트 초기화
@@ -406,8 +256,11 @@ public class BlockPickup : NetworkBehaviour
         {
             netObj.transform.SetParent(null);
             
-            // ClearHeldObject는 이제 위치 조정을 하지 않음 (DropAllItemsClientRpc에서 처리)
-            
+            Vector3 position = netObj.transform.position;
+            position.y = 0.1f;
+            netObj.transform.position = position;
+            netObj.transform.rotation = Quaternion.identity;
+
             if (IsOwner)
             {
                 heldObject = null;
@@ -430,7 +283,7 @@ public class BlockPickup : NetworkBehaviour
         ulong clientId = rpcParams.Receive.SenderClientId;
         
         // 스택된 아이템들 드롭
-        DropAllItemsClientRpc(heldNetObj.transform.position);
+        DropStackedItemsClientRpc();
         
         heldNetObj.RemoveOwnership();
         ClearHeldObjectClientRpc(heldObjectId);
@@ -446,7 +299,6 @@ public class BlockPickup : NetworkBehaviour
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetId, out NetworkObject netObj))
             return;
         
-        // 스택 처리 - 이제 비활성화하지 않고 보이게 스택함
         AddToStackClientRpc(targetId, NetworkObjectId);
     }
     
@@ -505,12 +357,5 @@ public class BlockPickup : NetworkBehaviour
         Vector3 boxCenter = transform.position + Vector3.down * detectionDistance * 0.5f;
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(boxCenter, boxSize);
-        
-        // 스택 감지 반경 시각화 (선택한 오브젝트가 있을 때)
-        if (targetObject != null)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(targetObject.transform.position, stackDetectionRadius);
-        }
     }
 }
