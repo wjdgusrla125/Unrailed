@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8280358735311311048}
   - component: {fileID: 8357184632128704375}
   - component: {fileID: 3983181616050225763}
-  m_Layer: 27
+  m_Layer: 6
   m_Name: Cube (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -97,7 +97,7 @@ GameObject:
   - component: {fileID: 2055141814125237708}
   - component: {fileID: 6575052248517486097}
   - component: {fileID: 2491451544135060113}
-  m_Layer: 27
+  m_Layer: 6
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -183,7 +183,7 @@ GameObject:
   - component: {fileID: 1608676779807837807}
   - component: {fileID: 340382579609816683}
   - component: {fileID: 1647188786620905275}
-  m_Layer: 27
+  m_Layer: 6
   m_Name: Cube (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -267,7 +267,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9062364316538547725}
-  m_Layer: 27
+  m_Layer: 6
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -304,7 +304,7 @@ GameObject:
   - component: {fileID: 5713967278716457871}
   - component: {fileID: 2376202070557907311}
   - component: {fileID: 2734421037724329896}
-  m_Layer: 27
+  m_Layer: 6
   m_Name: Cube (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -388,9 +388,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6337666441607593902}
+  - component: {fileID: 1676454002654509299}
   - component: {fileID: 6907551772753369253}
-  - component: {fileID: 4585495523681531982}
-  m_Layer: 11
+  - component: {fileID: 7245586504999030692}
+  - component: {fileID: 3001699802972679436}
+  m_Layer: 6
   m_Name: ItemSteel
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -413,6 +415,27 @@ Transform:
   - {fileID: 9062364316538547725}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1676454002654509299
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9043740789192840749}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6, y: 0.3, z: 0.6}
+  m_Center: {x: 0, y: 0.1, z: 0}
 --- !u!114 &6907551772753369253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -425,7 +448,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 0
+  GlobalObjectIdHash: 501706501
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -438,7 +461,7 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &4585495523681531982
+--- !u!114 &7245586504999030692
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -447,13 +470,45 @@ MonoBehaviour:
   m_GameObject: {fileID: 9043740789192840749}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a171fc0ef058a4a8c4aaaa246ad992, type: 3}
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  resourceType: 4
-  count: 1
-  NetworkResourceType:
-    m_InternalValue: 0
-  NetworkCount:
-    m_InternalValue: 1
+  NetworkTransformExpanded: 0
+  AuthorityMode: 1
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!114 &3001699802972679436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9043740789192840749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe41f350fc9e6654aa555a77b7c9beca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemType: 6
+  withTwoHanded: 1
+  isStackable: 0
