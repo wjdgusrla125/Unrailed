@@ -44,30 +44,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d204d1c0f02cc594aa49a35050b0882c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSeed: 638791902013764617
+  mapSeed: 
   width: 43
   height: 19
-  pathLength: 13
-  minHorizontalDistance: 11
-  maxNoneTileCount: 70
-  minNoneTileCount: 20
+  pathLength: 39
+  minHorizontalDistance: 35
+  maxGrassTileCount: 400
+  minGrassTileCount: 350
   destructibleClusterCount: 5
-  destructibleClusterProbability: 0.9
-  minWoodCount: 20
-  minIronCount: 15
-  minDestructibleClusterSize: 4
-  mountainClusterCountMin: 4
-  mountainClusterCountMax: 5
-  mountainClusterSizeMin: 5
-  mountainClusterSizeMax: 7
-  minRiverCount: 3
-  maxRiverCount: 4
-  minRiverLength: 8
-  tilePrefab: {fileID: 3258400204647497964, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
-  woodPrefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
-  ironPrefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
+  minDestructibleClusterSize: 20
+  minWoodCount: 80
+  minIronCount: 80
+  mountainClusterCountMin: 1
+  mountainClusterCountMax: 2
+  mountainClusterSizeMin: 14
+  mountainClusterSizeMax: 16
+  minRiverCount: 2
+  maxRiverCount: 3
+  minRiverLength: 20
+  maxRiverCellsAllowed: 45
+  lateralSpreadProbability: 0.4
+  clusterParent: {fileID: 0}
+  clusterPrefab: {fileID: 5415564128649301798, guid: b0a18d9106d02aa4b82a52cbea6ca75c, type: 3}
+  grass0Prefab: {fileID: 3258400204647497964, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
+  grass1Prefab: {fileID: 3258400204647497964, guid: 348ea7d36941d334ebb03828f4c552ca, type: 3}
+  wood0Prefab: {fileID: 3258400204647497964, guid: 2ac2f5ed8d1e2764c850606c5dfb2cd1, type: 3}
+  wood1Prefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
+  iron0Prefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
+  iron1Prefab: {fileID: 3258400204647497964, guid: 049de7cfe090ed84d9cc791a64e4a160, type: 3}
+  mountain0Prefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}
+  mountain1Prefab: {fileID: 3258400204647497964, guid: 577d10793ab517c4eac7939480247b51, type: 3}
   riverPrefab: {fileID: 3258400204647497964, guid: f609fffbcf524c948b7219fbdab92ffc, type: 3}
-  mountainPrefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}
   startPointPrefab: {fileID: 3258400204647497964, guid: 1be121ad81a70df4c9b1c24421ff3e69, type: 3}
   endPointPrefab: {fileID: 3258400204647497964, guid: ed10c27afcdbd764cb890ac0730c51a7, type: 3}
-  blockParent: {fileID: 0}
+  visitX: 2
+  visitY: 8

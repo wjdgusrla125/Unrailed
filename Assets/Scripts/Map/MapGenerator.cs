@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class MapGenerator : SingletonManager<MapGenerator>
@@ -47,11 +48,22 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     [Header("프리팹")] [SerializeField] private Transform clusterParent; // 생성된 클러스터들을 담을 오브젝트
     [SerializeField] private GameObject clusterPrefab; //생성된 블럭들을 클러스터별로 정리할 빈 프리팹
-    [SerializeField] private GameObject tilePrefab;
-    [SerializeField] private GameObject woodPrefab;
-    [SerializeField] private GameObject ironPrefab;
+    [SerializeField] private GameObject grass0Prefab; //grass: 랜덤(5%로 grass1)
+    [SerializeField] private GameObject grass1Prefab;
+    [SerializeField] private GameObject wood0Prefab; //wood: 랜덤(50%)
+    [SerializeField] private GameObject wood1Prefab;
+
+    [SerializeField]
+    private GameObject iron0Prefab; //iron: 고정(스폰 시 주변 4방향이 iron으로 둘러싸여 있을 경우 iron0, 한 면이라도 다른 타일이 있을 경우 iron1)
+
+    [SerializeField] private GameObject iron1Prefab;
+
+    [SerializeField]
+    private GameObject
+        mountain0Prefab; //mountain: 고정(스폰 시 주변 4방향이 mountain으로 둘러싸여 있을 경우 mountain0, 한 면이라도 다른 타일이 있을 경우 mountain1)
+
+    [SerializeField] private GameObject mountain1Prefab;
     [SerializeField] private GameObject riverPrefab;
-    [SerializeField] private GameObject mountainPrefab;
     [SerializeField] private GameObject startPointPrefab;
     [SerializeField] private GameObject endPointPrefab;
 
@@ -77,19 +89,20 @@ public class MapGenerator : SingletonManager<MapGenerator>
     // 반복 최대 횟수 상수
     private const int MAX_ITERATIONS = 10000;
 
-    #endregion
-
-    #region 클러스터 그룹 관련 자료구조 및 헬퍼 변수
-
     // 타일 좌표별 클러스터 그룹 할당 (각 타일은 반드시 단 하나의 클러스터 그룹에만 속함)
     private Dictionary<Vector2Int, ClusterGroup> _tileClusterGroupMap = new();
 
     // 종류별 클러스터 그룹 리스트
+    private List<ClusterGroup> _specialClusterGroups = new();
     private List<ClusterGroup> _mountainClusterGroups = new();
     private List<ClusterGroup> _riverClusterGroups = new();
     private List<ClusterGroup> _resourceClusterGroups = new(); // Wood, Iron 클러스터
     private List<ClusterGroup> _grassClusterGroups = new();
 
+    #endregion
+
+    #region 클러스터 그룹 관련
+    
     // 타일을 새 클러스터 그룹에 할당(이미 다른 그룹에 속해있다면 해당 그룹에서 제거 후 재할당)
     private void AssignTileToCluster(Vector2Int tile, ClusterGroup newGroup)
     {
@@ -190,7 +203,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 break;
         }
     }
-    
+
     // 타일 좌표를 인자로 받아 해당 타일이 속한 클러스터 그룹을 반환
     public ClusterGroup GetClusterInfo(Vector2Int tile)
     {
@@ -248,28 +261,29 @@ public class MapGenerator : SingletonManager<MapGenerator>
         _isMapGenerating = true;
         try
         {
-            InitializeSeed();
-            InitializeMap();
-            SetPath();
-            GenerateValidPath();
-            GenerateMountains();
-            EnsureStartEndInnerClear();
-            GenerateRivers();
-            PlaceDestructibleObstacles();
-            GenerateGrassToMountainClusters();
-            EnsurePathConnectivity();
-            EnsureStartEndInnerClear();
-            EnsureWoodAccessibility();
-            EnsureStartEndInnerClear();
-            EnsureEndpointCorridor();
-            EnsureReachability();
-            FinalAdjustments();
-            EnsureStartEndInnerClear();
-            AdjustPathForRiverAndWood();
-            FinalizeGrassClusters();
-            FinalizeUnassignedClusters();
-            SplitDisconnectedClusterGroups();
-            InstantiateMap();
+            InitializeSeed(); // 시드 설정
+            InitializeMap(); // 맵 초기화
+            SetPath(); // 경로 설정 (출발지와 도착지 결정)
+            GenerateValidPath(); // 출발지에서 도착지까지 유효한 경로 생성
+            GenerateMountains(); // 산(마운틴) 타일 생성
+            EnsureStartEndInnerClear(); // 출발지와 도착지 주변 5x5 영역을 클리어(Grass로 설정)
+            GenerateRivers(); // 강(리버) 타일 생성
+            PlaceDestructibleObstacles(); // 파괴 가능한 장애물(나무, 철) 배치
+            GenerateGrassToMountainClusters(); // Grass 타일을 산 타일로 변환하여 클러스터 생성
+            EnsurePathConnectivity(); // 경로 연결성 보장 (예: 산 타일 제거 후에도 경로 확보)
+            EnsureStartEndInnerClear(); // 출발/도착지 주변 클리어 재보강
+            EnsureWoodAccessibility(); // 나무(Wood) 클러스터 접근 통로 생성
+            CountReachableWoodWithoutRiver(_posA);
+            EnsureStartEndInnerClear(); // 출발/도착지 주변 클리어 재보강
+            EnsureEndpointCorridor(); // 도착점에서 우측 끝까지 통로 확보
+            EnsureReachability(); // 도달 불가능한 영역을 산 타일로 전환하여 접근성 보장
+            FinalAdjustments(); // 최종 보정 작업 (부족한 자원 보충 등)
+            EnsureStartEndInnerClear(); // 출발/도착지 주변 클리어 최종 확인
+            AdjustPathForRiverAndWood(); // 강(River)와 나무(Wood)를 고려하여 경로 조정
+            FinalizeGrassClusters(); // Grass 클러스터 그룹 최종화 및 분할
+            FinalizeUnassignedClusters(); // 미할당 타일들의 클러스터 그룹 생성
+            SplitDisconnectedClusterGroups(); // 분리된(연결되지 않은) 클러스터 그룹 분할
+            InstantiateMap(); // 맵 오브젝트(타일) 생성 및 배치
 
             _isMapGenerating = false;
             IsMapGenerated?.Invoke(true);
@@ -915,31 +929,51 @@ public class MapGenerator : SingletonManager<MapGenerator>
         ForceStartEndGrass();
     }
 
-    // 출발/도착 주변 5*5 영역을 Grass로 설정
+    // 출발/도착 주변 5*5 영역을 Grass로 설정 후 그룹 할당
     private void EnsureStartEndInnerClear()
     {
+        //기존 스페셜 그룹 초기화
+        _specialClusterGroups.Clear();
+        
+        List<Vector2Int> specialCellsA = new List<Vector2Int>();
         for (int dx = -2; dx <= 2; dx++)
-        for (int dy = -2; dy <= 2; dy++)
         {
-            int nx = _posA.x + dx, ny = _posA.y + dy;
-            if (IsInBounds(new Vector2Int(nx, ny)))
+            for (int dy = -2; dy <= 2; dy++)
             {
-                Map[nx, ny] = TileType.Grass;
-                ReassignTile(new Vector2Int(nx, ny));
+                int nx = _posA.x + dx;
+                int ny = _posA.y + dy;
+                Vector2Int cellPos = new Vector2Int(nx, ny);
+                if (IsInBounds(cellPos))
+                {
+                    Map[nx, ny] = TileType.Grass;
+                    specialCellsA.Add(cellPos);
+                }
             }
         }
+        ClusterGroup specialGroupA = CreateClusterGroupFromTiles(specialCellsA);
+        specialGroupA.Direction = ClusterDirection.Under;
+        _specialClusterGroups.Add(specialGroupA);
 
+        List<Vector2Int> specialCellsB = new List<Vector2Int>();
         for (int dx = -2; dx <= 2; dx++)
-        for (int dy = -2; dy <= 2; dy++)
         {
-            int nx = _posB.x + dx, ny = _posB.y + dy;
-            if (IsInBounds(new Vector2Int(nx, ny)))
+            for (int dy = -2; dy <= 2; dy++)
             {
-                Map[nx, ny] = TileType.Grass;
-                ReassignTile(new Vector2Int(nx, ny));
+                int nx = _posB.x + dx;
+                int ny = _posB.y + dy;
+                Vector2Int cellPos = new Vector2Int(nx, ny);
+                if (IsInBounds(cellPos))
+                {
+                    Map[nx, ny] = TileType.Grass;
+                    specialCellsB.Add(cellPos);
+                }
             }
         }
+        ClusterGroup specialGroupB = CreateClusterGroupFromTiles(specialCellsB);
+        specialGroupB.Direction = ClusterDirection.Under;
+        _specialClusterGroups.Add(specialGroupB);
     }
+
 
     // 부족한 Grass 타일 확보 (강 셀 제외)
     private void EnsureAdjacentGrassTiles()
@@ -1255,10 +1289,17 @@ public class MapGenerator : SingletonManager<MapGenerator>
             path.Reverse();
         }
 
-        foreach (var cell in path)
+        for (int i = 0; i < path.Count - 1; i++)
         {
+            Vector2Int cell = path[i];
             Map[cell.x, cell.y] = TileType.Grass;
             ReassignTile(cell);
+        }
+        
+        if (Map[targetWood.x, targetWood.y] != TileType.Wood)
+        {
+            Map[targetWood.x, targetWood.y] = TileType.Wood;
+            ReassignTile(targetWood);
         }
 
         // Debug.Log("EnsureWoodAccessibility: Wood 통로 생성 완료");
@@ -1277,10 +1318,10 @@ public class MapGenerator : SingletonManager<MapGenerator>
             // Debug.Log("경로가 Grass, Wood, Iron 만으로 구성되어 있으므로 추가 보정이 필요 없음.");
             return;
         }
-        // else
-        // {
-        //     Debug.Log("Grass, Wood, Iron 만으로는 경로를 찾지 못했습니다. River를 포함한 경로를 보정합니다.");
-        // }
+        else
+        {
+            // Debug.Log("Grass, Wood, Iron 만으로는 경로를 찾지 못했습니다. River를 포함한 경로를 보정합니다.");
+        }
 
         Tuple<List<Vector2Int>, List<Vector2Int>> pathAndRivers = FindPathMinimizingRiver(_posA, _posB);
         List<Vector2Int> riverMinPath = pathAndRivers.Item1;
@@ -1479,7 +1520,8 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 }
             }
         }
-
+        
+        // Debug.Log($"[CountReachableWoodWithoutRiver] 최종 도달 가능한 Wood Count: {woodCount} (시작점: ({start.x}, {start.y}))");
         return woodCount;
     }
 
@@ -1592,209 +1634,6 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #endregion
 
-    #region 공통 함수
-
-    private bool IsInBounds(Vector2Int pos)
-    {
-        return pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
-    }
-
-    private int CountGrassTiles()
-    {
-        int count = 0;
-        for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-            if (Map[x, y] == TileType.Grass)
-                count++;
-        return count;
-    }
-
-    private int CountTiles(TileType type)
-    {
-        int count = 0;
-        for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-            if (Map[x, y] == type)
-                count++;
-        return count;
-    }
-
-    private List<Vector2Int> GetCardinalNeighbors(Vector2Int pos)
-    {
-        return new List<Vector2Int>
-        {
-            new Vector2Int(pos.x + 1, pos.y),
-            new Vector2Int(pos.x - 1, pos.y),
-            new Vector2Int(pos.x, pos.y + 1),
-            new Vector2Int(pos.x, pos.y - 1)
-        };
-    }
-
-    private List<Vector2Int> GetNeighbors8(Vector2Int pos)
-    {
-        List<Vector2Int> neighbors = new List<Vector2Int>();
-        for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++)
-        {
-            if (dx == 0 && dy == 0)
-                continue;
-            neighbors.Add(new Vector2Int(pos.x + dx, pos.y + dy));
-        }
-
-        return neighbors;
-    }
-
-    private List<Vector2Int> GenerateRandomNonHoleyCluster(Vector2Int start, int targetCount, int maxIterations,
-        System.Random rng,
-        Func<Vector2Int, bool> traversePredicate, Func<Vector2Int, bool> includePredicate)
-    {
-        HashSet<Vector2Int> cluster = new HashSet<Vector2Int>();
-        List<Vector2Int> frontier = new List<Vector2Int>();
-
-        if (!traversePredicate(start))
-            return new List<Vector2Int>();
-
-        cluster.Add(start);
-
-        foreach (var n in GetCardinalNeighbors(start))
-        {
-            if (IsInBounds(n) && traversePredicate(n))
-                frontier.Add(n);
-        }
-
-        int iterations = 0;
-        while (cluster.Count < targetCount && frontier.Count > 0 && iterations < maxIterations)
-        {
-            iterations++;
-            int index = rng.Next(frontier.Count);
-            Vector2Int cell = frontier[index];
-            frontier.RemoveAt(index);
-
-            if (!traversePredicate(cell))
-                continue;
-            if (!includePredicate(cell))
-                continue;
-
-            cluster.Add(cell);
-
-            List<Vector2Int> neighbors = GetCardinalNeighbors(cell);
-            ShuffleList(neighbors, rng);
-            foreach (var n in neighbors)
-            {
-                if (IsInBounds(n) && traversePredicate(n) && !cluster.Contains(n) && !frontier.Contains(n))
-                    frontier.Add(n);
-            }
-        }
-
-        if (iterations >= maxIterations)
-            throw new MapGenerationException("GenerateRandomNonHoleyCluster: 반복 최대치를 초과했습니다.");
-        cluster = FillClusterHoles(cluster);
-        return new List<Vector2Int>(cluster);
-    }
-
-    private void ShuffleList(List<Vector2Int> list, System.Random rng)
-    {
-        for (int i = list.Count - 1; i > 0; i--)
-        {
-            int j = rng.Next(i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
-    }
-
-    private HashSet<Vector2Int> FillClusterHoles(HashSet<Vector2Int> cluster)
-    {
-        int minX = int.MaxValue, minY = int.MaxValue;
-        int maxX = int.MinValue, maxY = int.MinValue;
-        foreach (var cell in cluster)
-        {
-            if (cell.x < minX) minX = cell.x;
-            if (cell.y < minY) minY = cell.y;
-            if (cell.x > maxX) maxX = cell.x;
-            if (cell.y > maxY) maxY = cell.y;
-        }
-
-        minX -= 1;
-        minY -= 1;
-        maxX += 1;
-        maxY += 1;
-
-        int boxWidth = maxX - minX + 1;
-        int boxHeight = maxY - minY + 1;
-        bool[][] isCluster = new bool[boxWidth][];
-        for (int x = 0; x < boxWidth; x++)
-        {
-            isCluster[x] = new bool[boxHeight];
-        }
-
-        foreach (var cell in cluster)
-        {
-            int bx = cell.x - minX;
-            int by = cell.y - minY;
-            isCluster[bx][by] = true;
-        }
-
-        bool[][] reachable = new bool[boxWidth][];
-        for (int x = 0; x < boxWidth; x++)
-        {
-            reachable[x] = new bool[boxHeight];
-        }
-
-        Queue<(int, int)> q = new Queue<(int, int)>();
-        for (int x = 0; x < boxWidth; x++)
-        for (int y = 0; y < boxHeight; y++)
-        {
-            if (x == 0 || y == 0 || x == boxWidth - 1 || y == boxHeight - 1)
-            {
-                if (!isCluster[x][y])
-                {
-                    q.Enqueue((x, y));
-                    reachable[x][y] = true;
-                }
-            }
-        }
-
-        int[] dx = new int[] { 1, -1, 0, 0 };
-        int[] dy = new int[] { 0, 0, 1, -1 };
-
-        while (q.Count > 0)
-        {
-            var (cx, cy) = q.Dequeue();
-            for (int i = 0; i < 4; i++)
-            {
-                int nx = cx + dx[i];
-                int ny = cy + dy[i];
-                if (nx >= 0 && ny >= 0 && nx < boxWidth && ny < boxHeight)
-                {
-                    if (!isCluster[nx][ny] && !reachable[nx][ny])
-                    {
-                        reachable[nx][ny] = true;
-                        q.Enqueue((nx, ny));
-                    }
-                }
-            }
-        }
-
-        for (int x = 0; x < boxWidth; x++)
-        for (int y = 0; y < boxHeight; y++)
-        {
-            if (!reachable[x][y] && !isCluster[x][y])
-            {
-                int clusterX = x + minX;
-                int clusterY = y + minY;
-                cluster.Add(new Vector2Int(clusterX, clusterY));
-            }
-        }
-
-        return cluster;
-    }
-
-    private bool IsCellNear(Vector2Int cell, Vector2Int point, int range)
-    {
-        return Mathf.Abs(cell.x - point.x) <= range && Mathf.Abs(cell.y - point.y) <= range;
-    }
-
-    #endregion
-
     #region Grass 클러스터 그룹 최종화 및 분할
 
     //ClusterGroup이 없는 Grass타일들을 그룹화 또는 분할
@@ -1808,14 +1647,23 @@ public class MapGenerator : SingletonManager<MapGenerator>
         }
 
         for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
         {
-            // 단, Grass 타입이고 클러스터 할당이 없으면 최종 그룹화 대상
-            Vector2Int pos = new Vector2Int(x, y);
-            if (Map[x, y] == TileType.Grass && !_tileClusterGroupMap.ContainsKey(pos))
-                visited[x][y] = false;
-            else
-                visited[x][y] = true;
+            for (int y = 0; y < height; y++)
+            {
+                Vector2Int pos = new Vector2Int(x, y);
+                if (IsInSpecialRegion(pos))
+                {
+                    visited[x][y] = true;
+                }
+                else if (Map[x, y] == TileType.Grass && !_tileClusterGroupMap.ContainsKey(pos))
+                {
+                    visited[x][y] = false;
+                }
+                else
+                {
+                    visited[x][y] = true;
+                }
+            }
         }
 
         // Flood fill로 인접한 Grass 타일 그룹 찾기
@@ -2097,12 +1945,261 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #endregion
 
+    #region 공통 함수
+
+    private bool IsInBounds(Vector2Int pos)
+    {
+        return pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
+    }
+
+    private int CountGrassTiles()
+    {
+        int count = 0;
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+            if (Map[x, y] == TileType.Grass)
+                count++;
+        return count;
+    }
+
+    private int CountTiles(TileType type)
+    {
+        int count = 0;
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+            if (Map[x, y] == type)
+                count++;
+        return count;
+    }
+
+    private List<Vector2Int> GetCardinalNeighbors(Vector2Int pos)
+    {
+        return new List<Vector2Int>
+        {
+            new Vector2Int(pos.x + 1, pos.y),
+            new Vector2Int(pos.x - 1, pos.y),
+            new Vector2Int(pos.x, pos.y + 1),
+            new Vector2Int(pos.x, pos.y - 1)
+        };
+    }
+
+    private List<Vector2Int> GetNeighbors8(Vector2Int pos)
+    {
+        List<Vector2Int> neighbors = new List<Vector2Int>();
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            if (dx == 0 && dy == 0)
+                continue;
+            neighbors.Add(new Vector2Int(pos.x + dx, pos.y + dy));
+        }
+
+        return neighbors;
+    }
+
+    private List<Vector2Int> GenerateRandomNonHoleyCluster(Vector2Int start, int targetCount, int maxIterations,
+        System.Random rng,
+        Func<Vector2Int, bool> traversePredicate, Func<Vector2Int, bool> includePredicate)
+    {
+        HashSet<Vector2Int> cluster = new HashSet<Vector2Int>();
+        List<Vector2Int> frontier = new List<Vector2Int>();
+
+        if (!traversePredicate(start))
+            return new List<Vector2Int>();
+
+        cluster.Add(start);
+
+        foreach (var n in GetCardinalNeighbors(start))
+        {
+            if (IsInBounds(n) && traversePredicate(n))
+                frontier.Add(n);
+        }
+
+        int iterations = 0;
+        while (cluster.Count < targetCount && frontier.Count > 0 && iterations < maxIterations)
+        {
+            iterations++;
+            int index = rng.Next(frontier.Count);
+            Vector2Int cell = frontier[index];
+            frontier.RemoveAt(index);
+
+            if (!traversePredicate(cell))
+                continue;
+            if (!includePredicate(cell))
+                continue;
+
+            cluster.Add(cell);
+
+            List<Vector2Int> neighbors = GetCardinalNeighbors(cell);
+            ShuffleList(neighbors, rng);
+            foreach (var n in neighbors)
+            {
+                if (IsInBounds(n) && traversePredicate(n) && !cluster.Contains(n) && !frontier.Contains(n))
+                    frontier.Add(n);
+            }
+        }
+
+        if (iterations >= maxIterations)
+            throw new MapGenerationException("GenerateRandomNonHoleyCluster: 반복 최대치를 초과했습니다.");
+        cluster = FillClusterHoles(cluster);
+        return new List<Vector2Int>(cluster);
+    }
+
+    private void ShuffleList(List<Vector2Int> list, System.Random rng)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
+
+    private HashSet<Vector2Int> FillClusterHoles(HashSet<Vector2Int> cluster)
+    {
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+        foreach (var cell in cluster)
+        {
+            if (cell.x < minX) minX = cell.x;
+            if (cell.y < minY) minY = cell.y;
+            if (cell.x > maxX) maxX = cell.x;
+            if (cell.y > maxY) maxY = cell.y;
+        }
+
+        minX -= 1;
+        minY -= 1;
+        maxX += 1;
+        maxY += 1;
+
+        int boxWidth = maxX - minX + 1;
+        int boxHeight = maxY - minY + 1;
+        bool[][] isCluster = new bool[boxWidth][];
+        for (int x = 0; x < boxWidth; x++)
+        {
+            isCluster[x] = new bool[boxHeight];
+        }
+
+        foreach (var cell in cluster)
+        {
+            int bx = cell.x - minX;
+            int by = cell.y - minY;
+            isCluster[bx][by] = true;
+        }
+
+        bool[][] reachable = new bool[boxWidth][];
+        for (int x = 0; x < boxWidth; x++)
+        {
+            reachable[x] = new bool[boxHeight];
+        }
+
+        Queue<(int, int)> q = new Queue<(int, int)>();
+        for (int x = 0; x < boxWidth; x++)
+        for (int y = 0; y < boxHeight; y++)
+        {
+            if (x == 0 || y == 0 || x == boxWidth - 1 || y == boxHeight - 1)
+            {
+                if (!isCluster[x][y])
+                {
+                    q.Enqueue((x, y));
+                    reachable[x][y] = true;
+                }
+            }
+        }
+
+        int[] dx = new int[] { 1, -1, 0, 0 };
+        int[] dy = new int[] { 0, 0, 1, -1 };
+
+        while (q.Count > 0)
+        {
+            var (cx, cy) = q.Dequeue();
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = cx + dx[i];
+                int ny = cy + dy[i];
+                if (nx >= 0 && ny >= 0 && nx < boxWidth && ny < boxHeight)
+                {
+                    if (!isCluster[nx][ny] && !reachable[nx][ny])
+                    {
+                        reachable[nx][ny] = true;
+                        q.Enqueue((nx, ny));
+                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < boxWidth; x++)
+        for (int y = 0; y < boxHeight; y++)
+        {
+            if (!reachable[x][y] && !isCluster[x][y])
+            {
+                int clusterX = x + minX;
+                int clusterY = y + minY;
+                cluster.Add(new Vector2Int(clusterX, clusterY));
+            }
+        }
+
+        return cluster;
+    }
+
+    private bool IsCellNear(Vector2Int cell, Vector2Int point, int range)
+    {
+        return Mathf.Abs(cell.x - point.x) <= range && Mathf.Abs(cell.y - point.y) <= range;
+    }
+    
+    // 가장 가까운 mountain이 아닌 타일 까지의 거리 계산
+    private int GetDistanceToNonMountain(Vector2Int pos)
+    {
+        bool[][] visited = new bool[width][];
+        for (int index = 0; index < width; index++)
+        {
+            visited[index] = new bool[height];
+        }
+
+        if (visited == null) throw new ArgumentNullException(nameof(visited));
+        Queue<(Vector2Int pos, int dist)> q = new Queue<(Vector2Int, int)>();
+        q.Enqueue((pos, 0));
+        visited[pos.x][pos.y] = true;
+        int[] dx = new int[] { 1, -1, 0, 0 };
+        int[] dy = new int[] { 0, 0, 1, -1 };
+        while (q.Count > 0)
+        {
+            var (current, dist) = q.Dequeue();
+            // 현재 타일이 Mountain이 아니라면 바로 거리 반환
+            if (Map[current.x, current.y] != TileType.Mountain)
+            {
+                return dist;
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                Vector2Int next = new Vector2Int(current.x + dx[i], current.y + dy[i]);
+                if (IsInBounds(next) && !visited[next.x][next.y])
+                {
+                    visited[next.x][next.y] = true;
+                    q.Enqueue((next, dist + 1));
+                }
+            }
+        }
+        return 0; // 모든 타일이 Mountain인 경우(실제로 발생할 일은 드물다고 가정)
+    }
+    
+    private bool IsInSpecialRegion(Vector2Int pos)
+    {
+        // posA 또는 posB 주변 5×5 영역 (중심에서 -2 ~ +2)
+        return (Mathf.Abs(pos.x - _posA.x) <= 2 && Mathf.Abs(pos.y - _posA.y) <= 2) ||
+               (Mathf.Abs(pos.x - _posB.x) <= 2 && Mathf.Abs(pos.y - _posB.y) <= 2);
+    }
+
+    #endregion
+
     #region 맵 오브젝트 생성
 
     private void InstantiateMap()
     {
         // 마지막 보정 작업 실행
         EnsurePathConnectivity();
+
+        int localSeed = _masterRng.Next();
+        System.Random localRng = new System.Random(localSeed);
 
         //클러스터 그룹 수집
         List<ClusterGroup> allClusterGroups = _tileClusterGroupMap.Values.Distinct().ToList();
@@ -2120,7 +2217,11 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (cluster)
             {
                 cluster.ClusterGroup = cg;
-                Debug.Log($"클러스터 생성 완료: clusterSize: {cg.Tiles.Count}");
+                if (_specialClusterGroups.Contains(cg))
+                {
+                    cluster.isSpecial = true;
+                }
+                // Debug.Log($"클러스터 생성 완료: clusterSize: {cg.Tiles.Count}");
             }
             else
             {
@@ -2133,6 +2234,15 @@ public class MapGenerator : SingletonManager<MapGenerator>
         for (int i = 0; i < sortedClusters.Count; i++)
         {
             clusterGameObjects[sortedClusters[i]].transform.SetSiblingIndex(i);
+        }
+        
+        //클러스터마다 iron1의 스케일을 공유하기 위함
+        Dictionary<ClusterGroup, float> clusterIron1Scales = new Dictionary<ClusterGroup, float>();
+        foreach (ClusterGroup cg in allClusterGroups)
+        {
+            // 각 클러스터마다 0.7~1.0 사이의 랜덤 scale 값을 할당
+            float scale = Random.Range(0.7f, 1.0f);
+            clusterIron1Scales[cg] = scale;
         }
 
         // 실제 타일 생성
@@ -2157,19 +2267,59 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     switch (Map[x, y])
                     {
                         case TileType.Grass:
-                            tileInstance = Instantiate(tilePrefab, pos, Quaternion.identity);
+                            if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group) && _specialClusterGroups.Contains(group))
+                                tileInstance = Instantiate(grass0Prefab, pos, Quaternion.identity);
+                            else
+                                tileInstance = Instantiate(localRng.NextDouble() < 0.05f ? grass1Prefab : grass0Prefab, pos, Quaternion.identity);
                             break;
                         case TileType.Wood:
-                            tileInstance = Instantiate(woodPrefab, pos, Quaternion.identity);
+                            tileInstance = Instantiate(localRng.NextDouble() < 0.5f ? wood1Prefab : wood0Prefab, pos,
+                                Quaternion.identity);
                             break;
                         case TileType.Iron:
-                            tileInstance = Instantiate(ironPrefab, pos, Quaternion.identity);
+                            //주변 4방향이 모두 Iron이면 iron0, 아니면 iron1
+                            bool allCardinalIron = true;
+                            foreach (Vector2Int neighbor in GetCardinalNeighbors(tilePos))
+                            {
+                                if (IsInBounds(neighbor) && Map[neighbor.x, neighbor.y] != TileType.Iron)
+                                {
+                                    allCardinalIron = false;
+                                    break;
+                                }
+                            }
+
+                            tileInstance = allCardinalIron
+                                ? Instantiate(iron0Prefab, pos, Quaternion.identity)
+                                : Instantiate(iron1Prefab, pos, Quaternion.identity);
                             break;
                         case TileType.Mountain:
-                            tileInstance = Instantiate(mountainPrefab, pos, Quaternion.identity);
+                            bool allCardinalMountain = true;
+                            foreach (Vector2Int neighbor in GetCardinalNeighbors(tilePos))
+                            {
+                                if (IsInBounds(neighbor) && Map[neighbor.x, neighbor.y] != TileType.Mountain)
+                                {
+                                    allCardinalMountain = false;
+                                    break;
+                                }
+                            }
+
+                            tileInstance = allCardinalMountain
+                                ? Instantiate(mountain0Prefab, pos, Quaternion.identity)
+                                : Instantiate(mountain1Prefab, pos, Quaternion.identity);
                             break;
                         case TileType.River:
                             tileInstance = Instantiate(riverPrefab, pos, Quaternion.identity);
+                            Water waterComponent = tileInstance.GetComponent<Water>();
+                            if (waterComponent)
+                            {
+                                if (tilePos.x == 0)
+                                    waterComponent.ActivateWaterFall(1);
+                                if (tilePos.y == 0)
+                                    waterComponent.ActivateWaterFall(3);
+                                if (tilePos.y == height - 1)
+                                    waterComponent.ActivateWaterFall(7);
+                            }
+                            break;
                             break;
                     }
                 }
@@ -2181,10 +2331,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group))
                     {
                         blocks.ClusterGroup = group;
-                        if (clusterGameObjects.ContainsKey(group))
-                            tileInstance.transform.SetParent(clusterGameObjects[group].transform);
-                        else
-                            tileInstance.transform.SetParent(clusterParent);
+                        tileInstance.transform.SetParent(clusterGameObjects.TryGetValue(group, out var o)
+                            ? o.transform
+                            : clusterParent);
                     }
                     else
                     {
@@ -2192,13 +2341,94 @@ public class MapGenerator : SingletonManager<MapGenerator>
                         blocks.ClusterGroup = null;
                         tileInstance.transform.SetParent(clusterParent);
                     }
+
+                    switch (Map[x, y])
+                    {
+                        case TileType.Grass:
+                            break;
+                        case TileType.Wood:
+                        {
+                            float woodScale = Random.Range(0.75f, 1.0f);
+                            blocks.SetEnvScale(woodScale);
+                            float woodRotation = Random.Range(0f, 360f);
+                            blocks.SetEnvRotation(woodRotation);
+                        }
+                            break;
+                        case TileType.Mountain:
+                        {
+                            // mountain0 vs mountain1 판별 (Instantiate 시의 조건과 동일하게 재계산)
+                            bool allCardinalMountain = true;
+                            foreach (Vector2Int neighbor in GetCardinalNeighbors(tilePos))
+                            {
+                                if (IsInBounds(neighbor) && Map[neighbor.x, neighbor.y] != TileType.Mountain)
+                                {
+                                    allCardinalMountain = false;
+                                    break;
+                                }
+                            }
+
+                            if (!allCardinalMountain)
+                            {
+                                float mountain0Scale = Random.Range(0.4f, 0.8f);
+                                blocks.SetEnvScale(mountain0Scale);
+                                int rotIndex = Random.Range(0, 4);
+                                blocks.SetEnvRotation(rotIndex * 90f);
+                            }
+                            else
+                            {
+                                int d = GetDistanceToNonMountain(tilePos);
+                                float factor = Mathf.Clamp01((float)d / 5f);
+                                float baseRandom = Random.Range(0.25f, 1.0f);
+                                float mountain1Scale = Mathf.Lerp(baseRandom, 1.5f, factor);
+                                blocks.SetEnvScale(mountain1Scale);
+                                int rotIndex = Random.Range(0, 4);
+                                blocks.SetEnvRotation(rotIndex * 90f);
+                            }
+                        }
+                            break;
+                        case TileType.Iron:
+                        {
+                            bool allCardinalIron = true;
+                            foreach (Vector2Int neighbor in GetCardinalNeighbors(tilePos))
+                            {
+                                if (IsInBounds(neighbor) && Map[neighbor.x, neighbor.y] != TileType.Iron)
+                                {
+                                    allCardinalIron = false;
+                                    break;
+                                }
+                            }
+
+                            if (!allCardinalIron)
+                            {
+                                float iron0Scale = Random.Range(0.4f, 0.8f);
+                                blocks.SetEnvScale(iron0Scale);
+                                int rotIndex = Random.Range(0, 4);
+                                blocks.SetEnvRotation(rotIndex * 90f);
+                            }
+                            else
+                            {
+                                if (blocks.ClusterGroup != null && clusterIron1Scales.ContainsKey(blocks.ClusterGroup))
+                                {
+                                    blocks.SetEnvScale(clusterIron1Scales[blocks.ClusterGroup]);
+                                }
+                                else
+                                {
+                                    blocks.SetEnvScale(Random.Range(0.4f, 1.0f));
+                                }
+                                int rotIndex = Random.Range(0, 4);
+                                blocks.SetEnvRotation(rotIndex * 90f);
+                            }
+                        }
+                            break;
+                        case TileType.River:
+                            break;
+                    }
                 }
             }
         }
 
-        Debug.Log("맵 생성 완료");
+        Debug.Log("맵 타일 생성 완료, 스폰 시작");
 
-        // 클러스터 부모 아래의 각 clusterPrefab을 정렬된 순서대로 Spawn 호출
         for (int i = 0; i < sortedClusters.Count; i++)
         {
             Cluster clusterComponent = clusterGameObjects[sortedClusters[i]].GetComponent<Cluster>();
@@ -2216,6 +2446,19 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public int visitX;
     public int visitY;
     private int _checkCount;
+
+    //스페셜 클러스터의 개수와 총 셀 수를 출력
+    private void CheckSpecialCluster(int i = -1)
+    {
+        int totalSpecialCells = 0;
+        foreach (ClusterGroup special in _specialClusterGroups)
+        {
+            totalSpecialCells += special.Tiles.Count;
+        }
+
+        var str = i == -1 ? "(마지막)" : $"({i})";
+        Debug.Log($"{str} 스페셜 클러스터 그룹 개수: {_specialClusterGroups.Count}, 스페셜 클러스터 총 셀 수: {totalSpecialCells}");
+    }
 
     private void CheckVisit()
     {

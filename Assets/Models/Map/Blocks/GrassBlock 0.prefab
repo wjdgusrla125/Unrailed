@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 3258400204647497961}
   - component: {fileID: 3258400204647497962}
   - component: {fileID: 3258400204647497963}
+  - component: {fileID: -7183026962103279962}
   m_Layer: 31
-  m_Name: BaseBlock
+  m_Name: GrassBlock 0
   m_TagString: Invisible
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -65,7 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: c5794710a39bf2049856b2a62d16796f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -108,3 +109,17 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-7183026962103279962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 067d5111824143b49ad1da366c6a5052, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  envPrefab: []
+  fragPrefab: {fileID: 0}
