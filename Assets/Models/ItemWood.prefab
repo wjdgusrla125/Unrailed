@@ -339,6 +339,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemType: 5
   withTwoHanded: 1
+  isStackable: 1
 --- !u!1 &7761388225402387580
 GameObject:
   m_ObjectHideFlags: 0
