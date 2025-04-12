@@ -874,7 +874,7 @@ GameObject:
   - component: {fileID: 3781425049581601411}
   - component: {fileID: 1644432263431907858}
   - component: {fileID: 2293545991628178934}
-  - component: {fileID: -7523692914282009429}
+  - component: {fileID: 3955233271745293627}
   - component: {fileID: 5331327231425745710}
   m_Layer: 6
   m_Name: ItemPick
@@ -947,7 +947,7 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-7523692914282009429
+--- !u!114 &3955233271745293627
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -962,7 +962,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
   AuthorityMode: 1
-  TickSyncChildren: 0
+  TickSyncChildren: 1
   UseUnreliableDeltas: 0
   SyncPositionX: 1
   SyncPositionY: 1
@@ -980,7 +980,7 @@ MonoBehaviour:
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
+  SwitchTransformSpaceWhenParented: 1
   Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &5331327231425745710

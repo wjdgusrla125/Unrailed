@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Linq;
 
 public class BlockPickup : NetworkBehaviour
 {
@@ -10,13 +11,11 @@ public class BlockPickup : NetworkBehaviour
     public Vector3 boxSize;
     public LayerMask tileLayerMask;
     public InputReader inputReader;
-
-    // heldObject를 스택으로 변경
+    
     private Stack<NetworkObject> heldObjectStack = new Stack<NetworkObject>();
     
     [SerializeField] private List<NetworkObject> heldObjectList = new List<NetworkObject>();
     
-    // 메인 아이템에 쉽게 접근하기 위한 프로퍼티
     public NetworkObject MainHeldObject => heldObjectStack.Count > 0 ? heldObjectStack.Peek() : null;
     
     private bool canInteract = false;
@@ -26,8 +25,8 @@ public class BlockPickup : NetworkBehaviour
     
     private const int maxStackSize = 4;
     
-    [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.1f, 0);
-
+    [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.2f, 0);
+    
     private void OnEnable()
     {
         if (inputReader != null)
@@ -176,10 +175,13 @@ public class BlockPickup : NetworkBehaviour
         if (heldObjectStack.Count == 0) return;
     
         NetworkObject mainObject = heldObjectStack.Peek();
+        
         Item heldItem = mainObject.GetComponent<Item>();
+        
         if (heldItem == null) return;
     
         int tileStackSize = currentTile.GetStackSize();
+        
         bool isTileEmpty = tileStackSize == 0;
         
         if (isTileEmpty)
@@ -250,6 +252,9 @@ public class BlockPickup : NetworkBehaviour
         }
     }
 
+    #region ServerRPC
+
+    //아이템 획득 관련
     [ServerRpc]
     void RequestPickupMultipleFromStackServerRpc(ulong tileId, int count, ServerRpcParams rpcParams = default)
     {
@@ -315,143 +320,32 @@ public class BlockPickup : NetworkBehaviour
         UpdateTileStackClientRpc(tileId);
         AddToHeldStackClientRpc(topItemId, NetworkObjectId);
     }
-
-    [ClientRpc]
-    void AddToHeldStackClientRpc(ulong objectId, ulong playerId)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
-            !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerId, out NetworkObject playerObj))
-        {
-            return;
-        }
-
-        BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
-        if (playerPickup == null) return;
-        
-        // 소유자인 경우 스택에 추가
-        if (playerPickup.IsLocalPlayer || playerPickup.IsOwner)
-        {
-            // 중복 아이템 체크 추가 - 이미 들고 있는 아이템은 다시 추가하지 않음
-            bool alreadyInStack = false;
-            foreach (NetworkObject obj in playerPickup.heldObjectStack)
-            {
-                if (obj.NetworkObjectId == objectId)
-                {
-                    alreadyInStack = true;
-                    break;
-                }
-            }
-            
-            if (!alreadyInStack)
-            {
-                playerPickup.heldObjectStack.Push(netObj);
-                // 리스트 업데이트
-                playerPickup.UpdateHeldObjectList();
-            
-                Item heldItem = netObj.GetComponent<Item>();
-                if (heldItem != null && playerPickup.playerInfo != null)
-                {
-                    playerPickup.UpdatePlayerItemType(heldItem.ItemType);
-                }
-                
-                // 즉시 위치 업데이트
-                Transform holdPosition = heldItem != null && heldItem.WithTwoHanded ? 
-                    playerPickup.twoHandPosition : playerPickup.handPosition;
-                    
-                netObj.transform.position = holdPosition.position;
-                netObj.transform.rotation = holdPosition.rotation;
-                
-                // 스택된 아이템들의 위치도 업데이트
-                playerPickup.UpdateStackedItemPositions(holdPosition);
-            }
-        }
-        // 비소유자 클라이언트도 아이템 위치 업데이트
-        else
-        {
-            // 해당 오브젝트가 다른 플레이어의 스택에 들어갔으므로 시각적으로 업데이트
-            Transform holdPosition = playerPickup.handPosition;
-            Item heldItem = netObj.GetComponent<Item>();
-            
-            if (heldItem != null && heldItem.WithTwoHanded)
-            {
-                holdPosition = playerPickup.twoHandPosition;
-            }
-            
-            netObj.transform.position = holdPosition.position;
-            netObj.transform.rotation = holdPosition.rotation;
-        }
-    }
-
-    [ClientRpc]
-    void SetHeldObjectStackClientRpc(ulong[] objectIds, ulong playerId)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerId, out NetworkObject playerObj))
-        {
-            return;
-        }
-
-        BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
-        if (playerPickup == null) return;
-
-        // 모든 클라이언트가 시각적 위치 업데이트를 위한 정보 준비
-        Transform holdPosition = playerPickup.handPosition;
-        ItemType itemType = ItemType.None;
-        
-        if (playerPickup.IsLocalPlayer || playerPickup.IsOwner)
-        {
-            playerPickup.heldObjectStack.Clear();
-
-            HashSet<ulong> processedIds = new HashSet<ulong>(); // 중복 방지를 위한 해시셋 추가
-
-            for (int i = objectIds.Length - 1; i >= 0; i--) // 역순으로 스택에 추가 (첫 번째 항목이 맨 위에 오도록)
-            {
-                ulong objectId = objectIds[i];
-                
-                // 이미 처리한 아이템이면 건너뜀
-                if (processedIds.Contains(objectId)) continue;
-                
-                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
-                {
-                    playerPickup.heldObjectStack.Push(netObj);
-                    processedIds.Add(objectId); // 처리된 ID 추가
-                    
-                    // 첫 번째 아이템의 타입 설정 및 홀드 위치 결정
-                    if (i == 0)
-                    {
-                        Item item = netObj.GetComponent<Item>();
-                        if (item != null)
-                        {
-                            itemType = item.ItemType;
-                            if (item.WithTwoHanded)
-                            {
-                                holdPosition = playerPickup.twoHandPosition;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 리스트 업데이트
-            playerPickup.UpdateHeldObjectList();
-
-            if (playerPickup.playerInfo != null)
-            {
-                playerPickup.UpdatePlayerItemType(itemType);
-            }
-        }
-        
-        // 모든 클라이언트에서 아이템 위치 업데이트
-        for (int i = 0; i < objectIds.Length; i++)
-        {
-            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectIds[i], out NetworkObject netObj))
-            {
-                Vector3 offset = playerPickup.stackOffset * i;
-                netObj.transform.position = holdPosition.position + offset;
-                netObj.transform.rotation = holdPosition.rotation;
-            }
-        }
-    }
     
+    [ServerRpc]
+    void RequestAddToStackFromTileServerRpc(ulong tileId, int count, ServerRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+            return;
+            
+        Tile tile = tileObj.GetComponent<Tile>();
+        if (tile == null || tile.GetStackSize() == 0) return;
+        
+        count = Mathf.Min(count, maxStackSize - heldObjectStack.Count, tile.GetStackSize());
+        
+        for (int i = 0; i < count; i++)
+        {
+            ulong itemId = tile.RemoveTopItemFromStack();
+            if (itemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
+            {
+                continue;
+            }
+            
+            netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
+            AddToHeldStackClientRpc(itemId, NetworkObjectId);
+        }
+    }
+
+    //아이템 드랍 관련
     [ServerRpc]
     void RequestDropAllServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -478,186 +372,11 @@ public class BlockPickup : NetworkBehaviour
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
             return;
 
+        netObj.RemoveOwnership();
         DropStackedItemsOnTileClientRpc(tileId);
     }
     
-    [ServerRpc]
-    void RequestPlaceStackOnTileServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
-    {
-        if (heldObjectStack.Count == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
-            return;
-
-        DropStackedItemsOnTileClientRpc(tileId);
-    }
-    
-    [ServerRpc]
-    void UpdateTileServerRpc(ItemType itemType, ServerRpcParams rpcParams = default)
-    {
-        UpdateTileClientRpc(itemType);
-    }
-    
-    [ClientRpc]
-    void UpdateTileClientRpc(ItemType itemType)
-    {
-        if (IsOwner && currentTile != null)
-        {
-            currentTile.AddItem(itemType);
-        }
-    }
-
-    [ClientRpc]
-    void DropStackedItemsClientRpc()
-    {
-        // 각 클라이언트에서 자신의 NetworkObject에 대해서만 작업 수행
-        if (!IsOwner && NetworkObjectId != NetworkObjectId) return;
-
-        float dropOffset = 0.2f;
-        NetworkObject[] stackedArray = heldObjectStack.ToArray();
-
-        foreach (NetworkObject netObj in stackedArray)
-        {
-            if (netObj != null)
-            {
-                netObj.gameObject.SetActive(true);
-                netObj.transform.SetParent(null);
-            
-                // 클라이언트에서는 RemoveOwnership이 작동하지 않으므로 서버 RPC로 처리해야 함
-                if (IsServer)
-                {
-                    netObj.RemoveOwnership();
-                }
-            
-                Vector3 position = transform.position;
-                position.y = 0.1f;
-                position += new Vector3(Random.Range(-dropOffset, dropOffset), 0, Random.Range(-dropOffset, dropOffset));
-            
-                netObj.transform.position = position;
-                netObj.transform.rotation = Quaternion.identity;
-            }
-        }
-
-        heldObjectStack.Clear();
-        // 리스트 업데이트
-        UpdateHeldObjectList();
-        UpdatePlayerItemType(ItemType.None);
-    }
-    
-    [ClientRpc]
-    void DropObjectOnTileClientRpc(ulong objectId, ulong tileId)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
-            !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
-            return;
-    
-        Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null) return;
-
-        // 서버에서만 실제 타일에 아이템 추가를 처리하도록 수정
-        if (IsServer)
-        {
-            tile.AddItemToStack(objectId);
-        }
-        // 시각적 업데이트는 모든 클라이언트에서 진행
-        // 하지만 AddItemToStack 호출 없이 위치만 업데이트
-
-        BlockPickup localPickup = GetLocalBlockPickup();
-        if (localPickup != null && (IsLocalPlayer || IsOwner))
-        {
-            // 스택에서 해당 아이템 제거
-            NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
-            localPickup.heldObjectStack.Clear();
-        
-            foreach (NetworkObject obj in stackArray)
-            {
-                if (obj.NetworkObjectId != objectId)
-                {
-                    localPickup.heldObjectStack.Push(obj);
-                }
-            }
-        
-            // 리스트 업데이트
-            localPickup.UpdateHeldObjectList();
-        
-            if (localPickup.heldObjectStack.Count == 0)
-            {
-                localPickup.UpdatePlayerItemType(ItemType.None);
-            }
-            else
-            {
-                Item item = localPickup.heldObjectStack.Peek().GetComponent<Item>();
-                if (item != null)
-                {
-                    localPickup.UpdatePlayerItemType(item.ItemType);
-                }
-            }
-        }
-    }
-    
-    private BlockPickup GetLocalBlockPickup()
-    {
-        foreach (var player in FindObjectsOfType<BlockPickup>())
-        {
-            if (player.IsLocalPlayer)
-            {
-                return player;
-            }
-        }
-        return null;
-    }
-    
-    [ClientRpc]
-    void DropStackedItemsOnTileClientRpc(ulong tileId)
-    {
-        if (!IsOwner) return;
-    
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
-        {
-            return;
-        }
-            
-        Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null) return;
-    
-        ItemType itemType = ItemType.None;
-    
-        if (heldObjectStack.Count > 0)
-        {
-            NetworkObject mainObject = heldObjectStack.Peek();
-            Item heldItem = mainObject.GetComponent<Item>();
-            if (heldItem != null)
-            {
-                itemType = heldItem.ItemType;
-            }
-        }
-    
-        foreach (NetworkObject netObj in heldObjectStack)
-        {
-            if (netObj != null)
-            {
-                netObj.gameObject.SetActive(true);
-                netObj.transform.SetParent(null);
-                netObj.RemoveOwnership();
-            
-                // 서버에서만 실제 타일에 아이템 추가
-                if (IsServer)
-                {
-                    tile.AddItemToStack(netObj.NetworkObjectId);
-                }
-            
-                if (itemType != ItemType.None && IsServer)
-                {
-                    tile.AddItem(itemType);
-                    itemType = ItemType.None; // Only add type once
-                }
-            }
-        }
-    
-        heldObjectStack.Clear();
-        // 리스트 업데이트
-        UpdateHeldObjectList();
-        UpdatePlayerItemType(ItemType.None);
-    }
-    
+    //아이템 스왑 관련
     [ServerRpc]
     void SwapObjectWithTileServerRpc(ulong heldObjectId, ulong newTargetId, ulong tileId, ServerRpcParams rpcParams = default)
     {
@@ -669,52 +388,24 @@ public class BlockPickup : NetworkBehaviour
         }
 
         ulong clientId = rpcParams.Receive.SenderClientId;
-    
-        // 타일 컴포넌트 가져오기
+        
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null) return;
-    
-        // 타일에서 아이템 제거 (스택 초기화를 위해)
+        
         tile.RemoveTopItemFromStack();
-    
-        // 플레이어가 스택을 들고 있으면 타일에 모두 놓기
+        
         if (heldObjectStack.Count > 1)
         {
             DropStackedItemsOnTileClientRpc(tileId);
         }
-        else // 단일 아이템만 들고 있는 경우
+        else
         {
             heldNetObj.RemoveOwnership();
             DropObjectOnTileClientRpc(heldObjectId, tileId);
         }
-    
-        // 타일에서 새 아이템 집기
-        //newNetObj.ChangeOwnership(clientId);
+        
+        newNetObj.ChangeOwnership(clientId);
         AddToHeldStackClientRpc(newTargetId, NetworkObjectId);
-    }
-    
-    [ServerRpc]
-    void RequestAddToStackFromTileServerRpc(ulong tileId, int count, ServerRpcParams rpcParams = default)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
-            return;
-            
-        Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null || tile.GetStackSize() == 0) return;
-        
-        count = Mathf.Min(count, maxStackSize - heldObjectStack.Count, tile.GetStackSize());
-        
-        for (int i = 0; i < count; i++)
-        {
-            ulong itemId = tile.RemoveTopItemFromStack();
-            if (itemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
-            {
-                continue;
-            }
-            
-            //netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
-            AddToHeldStackClientRpc(itemId, NetworkObjectId);
-        }
     }
     
     [ServerRpc]
@@ -730,12 +421,10 @@ public class BlockPickup : NetworkBehaviour
         if (tile == null || tile.GetStackSize() == 0) return;
     
         ulong clientId = rpcParams.Receive.SenderClientId;
-    
-        // 플레이어가 들고 있는 스택에서 해당 아이템 제거 (먼저 수행)
+        
         NetworkObject[] stackArray = heldObjectStack.ToArray();
         heldObjectStack.Clear();
-    
-        // 타일의 스택 아이템들 저장
+        
         List<ulong> tileItemIds = new List<ulong>();
         int itemsToPickup = Mathf.Min(tile.GetStackSize(), maxStackSize);
     
@@ -746,31 +435,328 @@ public class BlockPickup : NetworkBehaviour
         
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
             {
-                //netObj.ChangeOwnership(clientId);
+                netObj.ChangeOwnership(clientId);
                 tileItemIds.Add(itemId);
             }
         }
-    
-        // 타일에 들고 있던 일반 아이템 놓기
+        
         heldNetObj.RemoveOwnership();
         tile.AddItemToStack(heldObjectId);
-    
-        // 타일의 아이템 타입 업데이트
+        
         Item heldItem = heldNetObj.GetComponent<Item>();
         if (heldItem != null)
         {
             tile.AddItem(heldItem.ItemType);
         }
-    
-        // 플레이어에게 스택 아이템들 추가
+        
         if (tileItemIds.Count > 0)
         {
             SetHeldObjectStackClientRpc(tileItemIds.ToArray(), NetworkObjectId);
         }
         else
         {
-            // 아이템을 얻지 못한 경우 플레이어 상태 업데이트
             UpdatePlayerItemTypeClientRpc(ItemType.None, NetworkObjectId);
+        }
+    }
+    
+    [ServerRpc]
+    void RequestSwapStackWithSingleItemServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+            return;
+
+        Tile tile = tileObj.GetComponent<Tile>();
+        if (tile == null || tile.GetStackSize() == 0) return;
+
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        // 타일 위 아이템 정보 확인
+        ulong tileItemId = tile.PeekTopItemFromStack();
+        if (tileItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileItemId, out NetworkObject tileItemObj))
+            return;
+
+        // 현재 들고 있는 아이템 목록 저장
+        NetworkObject[] currentHeldItems = heldObjectStack.ToArray();
+        heldObjectStack.Clear();
+
+        ItemType playerItemType = ItemType.None;
+        List<ulong> playerItemIds = new List<ulong>();
+
+        foreach (NetworkObject heldItem in currentHeldItems)
+        {
+            if (heldItem != null)
+            {
+                playerItemIds.Add(heldItem.NetworkObjectId);
+
+                // 아이템 타입은 첫 번째 아이템 기준
+                if (playerItemType == ItemType.None)
+                {
+                    Item item = heldItem.GetComponent<Item>();
+                    if (item != null)
+                    {
+                        playerItemType = item.ItemType;
+                    }
+                }
+            }
+        }
+
+        // 1. 타일에서 기존 아이템 제거
+        tile.RemoveTopItemFromStack();
+
+        // 2. 타일 초기화 및 새 아이템 타입 설정
+        if (playerItemType != ItemType.None)
+        {
+            tile.AddItem(playerItemType); // 타입 설정 (ItemType 네트워크 변수 갱신)
+        }
+
+        // 3. 들고 있는 아이템들을 타일에 추가
+        foreach (NetworkObject heldItem in currentHeldItems)
+        {
+            if (heldItem != null)
+            {
+                heldItem.RemoveOwnership();
+
+                // ✅ 반드시 서버에서 실행되는 메서드로 강제 추가
+                tile.ForceAddItemToStackFromServer(heldItem.NetworkObjectId);
+            }
+        }
+
+        // 4. 타일 스택 시각화 강제 동기화
+        UpdateTileStackClientRpc(tile.NetworkObjectId);
+
+        // 5. 타일에 있던 아이템을 플레이어가 소유
+        tileItemObj.ChangeOwnership(clientId);
+
+        // 6. 플레이어에 아이템 설정
+        ulong[] singleItemArray = new ulong[] { tileItemId };
+        SetHeldObjectStackClientRpc(singleItemArray, NetworkObjectId);
+    }
+
+    
+    [ServerRpc]
+    void RequestSwapDifferentTypeStacksServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+        {
+            return;
+        }
+        
+        Tile tile = tileObj.GetComponent<Tile>();
+        if (tile == null || tile.GetStackSize() == 0) return;
+        
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        
+        // 타일의 아이템 목록 저장
+        List<ulong> tileItemIds = new List<ulong>();
+        int tileStackSize = tile.GetStackSize();
+        
+        // 플레이어가 들고 있는 아이템 목록 저장
+        NetworkObject[] playerHeldItems = new NetworkObject[heldObjectStack.Count];
+        heldObjectStack.CopyTo(playerHeldItems, 0);
+        
+        // 플레이어 아이템 타입 저장
+        ItemType playerItemType = ItemType.None;
+        if (playerHeldItems.Length > 0 && playerHeldItems[0] != null)
+        {
+            Item item = playerHeldItems[0].GetComponent<Item>();
+            if (item != null)
+            {
+                playerItemType = item.ItemType;
+            }
+        }
+        
+        // 타일의 아이템 타입 저장
+        ItemType tileItemType = tile.GetCurrentItemType();
+        
+        // 타일에서 모든 아이템 제거하고 목록에 저장
+        for (int i = 0; i < tileStackSize; i++)
+        {
+            ulong itemId = tile.RemoveTopItemFromStack();
+            if (itemId == 0) continue;
+            
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
+            {
+                netObj.ChangeOwnership(clientId);
+                tileItemIds.Add(itemId);
+            }
+        }
+        
+        // 플레이어 스택 비우기
+        heldObjectStack.Clear();
+        
+        // 중요: 타일 초기화 및 아이템 타입 설정
+        if (playerItemType != ItemType.None)
+        {
+            tile.AddItem(playerItemType);
+        }
+        
+        // 플레이어가 들고 있던 아이템을 타일에 추가
+        foreach (NetworkObject heldItem in playerHeldItems)
+        {
+            if (heldItem != null)
+            {
+                heldItem.RemoveOwnership();
+                tile.AddItemToStack(heldItem.NetworkObjectId);
+            }
+        }
+        
+        // 타일 스택 상태 강제 동기화
+        SyncStackClientRpc(tile.NetworkObjectId, playerHeldItems.Select(item => item.NetworkObjectId).ToArray());
+        
+        // 타일의 아이템을 플레이어에게 설정
+        if (tileItemIds.Count > 0)
+        {
+            SetHeldObjectStackClientRpc(tileItemIds.ToArray(), NetworkObjectId);
+        }
+        else
+        {
+            UpdatePlayerItemTypeClientRpc(ItemType.None, NetworkObjectId);
+        }
+    }
+    
+    //타일 업데이트 관련
+    [ServerRpc]
+    private void UpdateTileServerRpc(ItemType itemType, ServerRpcParams rpcParams = default)
+    {
+        UpdateTileClientRpc(itemType);
+    }
+    
+    [ServerRpc]
+    void RequestPlaceStackOnTileServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    {
+        if (heldObjectStack.Count == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+            return;
+
+        DropStackedItemsOnTileClientRpc(tileId);
+    }
+
+    #endregion
+
+    #region ClientRPC
+
+    //플레이어 인벤토리 관련
+    [ClientRpc]
+    void AddToHeldStackClientRpc(ulong objectId, ulong playerId)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
+            !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerId, out NetworkObject playerObj))
+        {
+            return;
+        }
+
+        BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
+        if (playerPickup == null) return;
+        
+        // 소유자인 경우 스택에 추가
+        if (playerPickup.IsLocalPlayer || playerPickup.IsOwner)
+        {
+            bool alreadyInStack = false;
+            foreach (NetworkObject obj in playerPickup.heldObjectStack)
+            {
+                if (obj.NetworkObjectId == objectId)
+                {
+                    alreadyInStack = true;
+                    break;
+                }
+            }
+            
+            if (!alreadyInStack)
+            {
+                playerPickup.heldObjectStack.Push(netObj);
+                playerPickup.UpdateHeldObjectList();
+            
+                Item heldItem = netObj.GetComponent<Item>();
+                if (heldItem != null && playerPickup.playerInfo != null)
+                {
+                    playerPickup.UpdatePlayerItemType(heldItem.ItemType);
+                }
+                
+                Transform holdPosition = heldItem != null && heldItem.WithTwoHanded ? 
+                    playerPickup.twoHandPosition : playerPickup.handPosition;
+                    
+                netObj.transform.position = holdPosition.position;
+                netObj.transform.rotation = holdPosition.rotation;
+                
+                playerPickup.UpdateStackedItemPositions(holdPosition);
+            }
+        }
+        else
+        {
+            Transform holdPosition = playerPickup.handPosition;
+            Item heldItem = netObj.GetComponent<Item>();
+            
+            if (heldItem != null && heldItem.WithTwoHanded)
+            {
+                holdPosition = playerPickup.twoHandPosition;
+            }
+            
+            netObj.transform.position = holdPosition.position;
+            netObj.transform.rotation = holdPosition.rotation;
+        }
+    }
+    
+    [ClientRpc]
+    void SetHeldObjectStackClientRpc(ulong[] objectIds, ulong playerId)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerId, out NetworkObject playerObj))
+        {
+            return;
+        }
+
+        BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
+        if (playerPickup == null) return;
+        
+        Transform holdPosition = playerPickup.handPosition;
+        ItemType itemType = ItemType.None;
+        
+        if (playerPickup.IsLocalPlayer || playerPickup.IsOwner)
+        {
+            playerPickup.heldObjectStack.Clear();
+
+            HashSet<ulong> processedIds = new HashSet<ulong>();
+
+            for (int i = objectIds.Length - 1; i >= 0; i--)
+            {
+                ulong objectId = objectIds[i];
+                
+                if (processedIds.Contains(objectId)) continue;
+                
+                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
+                {
+                    playerPickup.heldObjectStack.Push(netObj);
+                    processedIds.Add(objectId);
+                    
+                    if (i == 0)
+                    {
+                        Item item = netObj.GetComponent<Item>();
+                        if (item != null)
+                        {
+                            itemType = item.ItemType;
+                            if (item.WithTwoHanded)
+                            {
+                                holdPosition = playerPickup.twoHandPosition;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            playerPickup.UpdateHeldObjectList();
+
+            if (playerPickup.playerInfo != null)
+            {
+                playerPickup.UpdatePlayerItemType(itemType);
+            }
+        }
+        
+        for (int i = 0; i < objectIds.Length; i++)
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectIds[i], out NetworkObject netObj))
+            {
+                Vector3 offset = playerPickup.stackOffset * i;
+                netObj.transform.position = holdPosition.position + offset;
+                netObj.transform.rotation = holdPosition.rotation;
+            }
         }
     }
     
@@ -788,56 +774,149 @@ public class BlockPickup : NetworkBehaviour
             playerPickup.UpdatePlayerItemType(itemType);
         }
     }
-    
-    [ServerRpc]
-    void RequestSwapStackWithSingleItemServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+
+    //아이템 놓기 관련
+    [ClientRpc]
+    private void DropStackedItemsClientRpc()
     {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+        if (!IsOwner && NetworkObjectId != NetworkObjectId) return;
+
+        float dropOffset = 0.2f;
+        NetworkObject[] stackedArray = heldObjectStack.ToArray();
+
+        foreach (NetworkObject netObj in stackedArray)
         {
-            return;
-        }
-    
-        Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null || tile.GetStackSize() == 0) return;
-    
-        ulong clientId = rpcParams.Receive.SenderClientId;
-    
-        // 타일에 있는 아이템 (일반 아이템)
-        ulong tileItemId = tile.PeekTopItemFromStack(); // 먼저 확인만 하고 제거는 아직 안 함
-        if (tileItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileItemId, out NetworkObject tileItemObj))
-        {
-            return;
-        }
-    
-        // 현재 플레이어가 들고 있는 아이템 목록을 저장
-        NetworkObject[] currentHeldItems = new NetworkObject[heldObjectStack.Count];
-        heldObjectStack.CopyTo(currentHeldItems, 0);
-    
-        // 플레이어의 스택 비우기
-        heldObjectStack.Clear();
-    
-        // 타일의 일반 아이템 제거
-        tile.RemoveTopItemFromStack();
-    
-        // 일반 아이템을 플레이어에게 전달
-        //tileItemObj.ChangeOwnership(clientId);
-    
-        // 플레이어가 들고 있던 스택 아이템들을 타일에 놓기
-        foreach (NetworkObject heldItem in currentHeldItems)
-        {
-            if (heldItem != null)
+            if (netObj != null)
             {
-                heldItem.RemoveOwnership();
-                tile.AddItemToStack(heldItem.NetworkObjectId);
+                netObj.gameObject.SetActive(true);
+                netObj.transform.SetParent(null);
+                
+                if (IsServer)
+                {
+                    netObj.RemoveOwnership();
+                }
+            
+                Vector3 position = transform.position;
+                position.y = 0.1f;
+                position += new Vector3(Random.Range(-dropOffset, dropOffset), 0, Random.Range(-dropOffset, dropOffset));
+            
+                netObj.transform.position = position;
+                netObj.transform.rotation = Quaternion.identity;
             }
         }
+
+        heldObjectStack.Clear();
+        UpdateHeldObjectList();
+        UpdatePlayerItemType(ItemType.None);
+    }
     
-        // 타일에서 가져온 아이템만 플레이어에게 설정
-        ulong[] singleItemArray = new ulong[] { tileItemId };
-        SetHeldObjectStackClientRpc(singleItemArray, NetworkObjectId);
+    [ClientRpc]
+    private void DropObjectOnTileClientRpc(ulong objectId, ulong tileId)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
+            !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+            return;
     
-        // 타일의 스택 업데이트 명시적 호출
-        UpdateTileStackClientRpc(tileId);
+        Tile tile = tileObj.GetComponent<Tile>();
+        if (tile == null) return;
+        
+        if (IsServer)
+        {
+            tile.AddItemToStack(objectId);
+        }
+
+        BlockPickup localPickup = GetLocalBlockPickup();
+        if (localPickup != null && (IsLocalPlayer || IsOwner))
+        {
+            NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
+            localPickup.heldObjectStack.Clear();
+        
+            foreach (NetworkObject obj in stackArray)
+            {
+                if (obj.NetworkObjectId != objectId)
+                {
+                    localPickup.heldObjectStack.Push(obj);
+                }
+            }
+            
+            localPickup.UpdateHeldObjectList();
+        
+            if (localPickup.heldObjectStack.Count == 0)
+            {
+                localPickup.UpdatePlayerItemType(ItemType.None);
+            }
+            else
+            {
+                Item item = localPickup.heldObjectStack.Peek().GetComponent<Item>();
+                if (item != null)
+                {
+                    localPickup.UpdatePlayerItemType(item.ItemType);
+                }
+            }
+        }
+    }
+    
+    [ClientRpc]
+    private void DropStackedItemsOnTileClientRpc(ulong tileId)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+            return;
+    
+        Tile tile = tileObj.GetComponent<Tile>();
+        if (tile == null) return;
+
+        BlockPickup localPickup = GetLocalBlockPickup();
+        if (localPickup != null && (IsLocalPlayer || IsOwner))
+        {
+            ItemType itemType = ItemType.None;
+    
+            if (localPickup.heldObjectStack.Count > 0)
+            {
+                NetworkObject mainObject = localPickup.heldObjectStack.Peek();
+                Item heldItem = mainObject.GetComponent<Item>();
+                if (heldItem != null)
+                {
+                    itemType = heldItem.ItemType;
+                }
+            }
+    
+            NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
+    
+            // 타일에 ItemType 정보 추가 (스택 아이템의 기본 타입)
+            if (itemType != ItemType.None)
+            {
+                tile.AddItem(itemType);
+            }
+    
+            foreach (NetworkObject netObj in stackArray)
+            {
+                if (netObj != null)
+                {
+                    netObj.gameObject.SetActive(true);
+                    netObj.transform.SetParent(null);
+                
+                    // 서버와 클라이언트 모두에서 타일에 아이템 추가
+                    tile.AddItemToStack(netObj.NetworkObjectId);
+                }
+            }
+    
+            localPickup.heldObjectStack.Clear();
+            localPickup.UpdateHeldObjectList();
+            localPickup.UpdatePlayerItemType(ItemType.None);
+        }
+    }
+    
+    //아이템 스왑 관련
+    
+    
+    //타일 업데이트 관련
+    [ClientRpc]
+    private void UpdateTileClientRpc(ItemType itemType)
+    {
+        if (IsOwner && currentTile != null)
+        {
+            currentTile.AddItem(itemType);
+        }
     }
     
     [ClientRpc]
@@ -855,8 +934,8 @@ public class BlockPickup : NetworkBehaviour
         }
     }
     
-    [ServerRpc]
-    void RequestSwapDifferentTypeStacksServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    [ClientRpc]
+    void SyncStackClientRpc(ulong tileId, ulong[] itemIds)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
         {
@@ -864,78 +943,15 @@ public class BlockPickup : NetworkBehaviour
         }
         
         Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null || tile.GetStackSize() == 0) return;
-        
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        
-        // 타일의 스택 아이템들 저장
-        List<ulong> tileItemIds = new List<ulong>();
-        int tileStackSize = tile.GetStackSize();
-        
-        // 현재 플레이어가 들고 있는 아이템 목록을 저장
-        NetworkObject[] currentHeldItems = new NetworkObject[heldObjectStack.Count];
-        heldObjectStack.CopyTo(currentHeldItems, 0);
-        
-        // 타일의 ItemType 기억
-        ItemType tileItemType = tile.GetCurrentItemType();
-        
-        // 타일의 모든 아이템을 가져옴
-        for (int i = 0; i < tileStackSize; i++)
+        if (tile != null)
         {
-            ulong itemId = tile.RemoveTopItemFromStack();
-            if (itemId == 0) continue;
-            
-            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
-            {
-                //netObj.ChangeOwnership(clientId);
-                tileItemIds.Add(itemId);
-            }
+            // 명시적으로 타일의 아이템 스택을 다시 설정
+            //tile.SyncStackedItemsClientRpc(itemIds);
+            tile.UpdateVisibleStack();
         }
-        
-        // 플레이어의 스택 비우기
-        heldObjectStack.Clear();
-        
-        // 플레이어가 들고 있던 모든 아이템의 타입 기억
-        ItemType playerItemType = ItemType.None;
-        if (currentHeldItems.Length > 0 && currentHeldItems[0] != null)
-        {
-            Item item = currentHeldItems[0].GetComponent<Item>();
-            if (item != null)
-            {
-                playerItemType = item.ItemType;
-            }
-        }
-        
-        // 플레이어가 들고 있던 스택 아이템들을 타일에 놓기
-        foreach (NetworkObject heldItem in currentHeldItems)
-        {
-            if (heldItem != null)
-            {
-                heldItem.RemoveOwnership();
-                tile.AddItemToStack(heldItem.NetworkObjectId);
-            }
-        }
-        
-        // 타일의 ItemType 업데이트
-        if (playerItemType != ItemType.None)
-        {
-            UpdateTileClientRpc(playerItemType);
-        }
-        
-        // 타일에서 가져온 아이템들을 플레이어에게 설정
-        if (tileItemIds.Count > 0)
-        {
-            SetHeldObjectStackClientRpc(tileItemIds.ToArray(), NetworkObjectId);
-        }
-        else
-        {
-            // 아이템을 얻지 못한 경우 플레이어 상태 업데이트
-            UpdatePlayerItemTypeClientRpc(ItemType.None, NetworkObjectId);
-        }
-        
-        // 타일의 스택 업데이트 명시적 호출
-        UpdateTileStackClientRpc(tileId);
     }
+
+    #endregion
     
     private void UpdatePlayerItemType(ItemType type)
     {
@@ -957,11 +973,16 @@ public class BlockPickup : NetworkBehaviour
         return netObj;
     }
     
-    private void OnDrawGizmos()
+    private BlockPickup GetLocalBlockPickup()
     {
-        Vector3 tileBoxCenter = transform.position + Vector3.down * (detectionDistance * 0.5f);
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(tileBoxCenter, boxSize);
+        foreach (var player in FindObjectsOfType<BlockPickup>())
+        {
+            if (player.IsLocalPlayer)
+            {
+                return player;
+            }
+        }
+        return null;
     }
     
     private void UpdateHeldObjectList()
@@ -974,5 +995,12 @@ public class BlockPickup : NetworkBehaviour
                 heldObjectList.Add(obj);
             }
         }
+    }
+    
+    private void OnDrawGizmos()
+    {
+        Vector3 tileBoxCenter = transform.position + Vector3.down * (detectionDistance * 0.5f);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(tileBoxCenter, boxSize);
     }
 }

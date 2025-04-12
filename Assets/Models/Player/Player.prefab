@@ -759,6 +759,7 @@ GameObject:
   - component: {fileID: 1077141039454660502}
   - component: {fileID: 1914943282}
   - component: {fileID: 1363995341099909590}
+  - component: {fileID: -6823921237156432841}
   - component: {fileID: 5481624243433267928}
   - component: {fileID: 4717751350744541271}
   - component: {fileID: 7690786432313350131}
@@ -884,6 +885,23 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &-6823921237156432841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5496825195785439562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkRigidbodyBaseExpanded: 0
+  UseRigidBodyForMotion: 0
+  AutoUpdateKinematicState: 1
+  AutoSetKinematicOnDespawn: 1
 --- !u!114 &5481624243433267928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -912,7 +930,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 1
+  NetworkTransformExpanded: 0
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0

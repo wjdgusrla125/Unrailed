@@ -367,6 +367,10 @@ PrefabInstance:
       propertyPath: objectPrefab
       value: 
       objectReference: {fileID: 8647543255831081959, guid: e62ad7bd0010d2742996e68dc67e70df, type: 3}
+    - target: {fileID: 6879083840948881781, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
+      propertyPath: initialItemPrefab
+      value: 
+      objectReference: {fileID: 8647543255831081959, guid: e62ad7bd0010d2742996e68dc67e70df, type: 3}
     - target: {fileID: 7220487535442256906, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 1826048748

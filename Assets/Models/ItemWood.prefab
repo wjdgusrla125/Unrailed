@@ -218,7 +218,7 @@ GameObject:
   - component: {fileID: 1554482166082667595}
   - component: {fileID: 5538702390208351594}
   - component: {fileID: 200876824033033984}
-  - component: {fileID: 6794816702965406858}
+  - component: {fileID: -74023851755229222}
   - component: {fileID: 9129150939598196783}
   m_Layer: 6
   m_Name: ItemWood
@@ -289,7 +289,7 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &6794816702965406858
+--- !u!114 &-74023851755229222
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -304,7 +304,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
   AuthorityMode: 1
-  TickSyncChildren: 0
+  TickSyncChildren: 1
   UseUnreliableDeltas: 0
   SyncPositionX: 1
   SyncPositionY: 1
@@ -322,7 +322,7 @@ MonoBehaviour:
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
+  SwitchTransformSpaceWhenParented: 1
   Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &9129150939598196783
