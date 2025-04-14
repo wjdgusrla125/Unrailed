@@ -7,6 +7,7 @@ public class CraftingTable : MonoBehaviour
     // 테이블 공간 체크
     public bool AbleInTableWood = true;
     public bool AbleInTableIron = true;
+    public bool CreateDone = false;
     // 테이블에 나무 또는 철을 올려놨을 때 오브젝트 처리.
     public List<GameObject> WoodObjects;
     public List<GameObject> IronObjects;
@@ -17,9 +18,14 @@ public class CraftingTable : MonoBehaviour
 
     public void OnEnable()
     {
-        CraftingDesk.GetComponent<DeskInfo>().CreateDoneRail += CreateDoneDestroy;
+        CraftingDesk.GetComponent<DeskInfo>().CreateDoneRail += DoneEvent;
     }
 
+    public void DoneEvent()
+    {
+        CreateDone = true;
+        CreateRail();
+    }
     public void CreateDoneDestroy()
     {
         GameObject temp = WoodObjects[WoodObjects.Count - 1];
@@ -29,7 +35,6 @@ public class CraftingTable : MonoBehaviour
         temp = IronObjects[IronObjects.Count - 1];
         IronObjects.RemoveAt(IronObjects.Count - 1);
         Destroy(temp);
-        CreateRail();
     }
 
     public void Update()
@@ -49,6 +54,14 @@ public class CraftingTable : MonoBehaviour
     {
         if(WoodObjects.Count >= 1 && IronObjects.Count >= 1 && CraftingDesk.GetComponent<DeskInfo>().RailCount < 3)
         {
+            if (CreateDone)
+            {
+                CreateDoneDestroy();
+                CreateDone = false;
+            }
+            else
+                return;
+
             switch (CraftingDesk.GetComponent<DeskInfo>().RailCount)
             {
                 case 0:
