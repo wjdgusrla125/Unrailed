@@ -212,9 +212,18 @@ public class BlockPickup : NetworkBehaviour
             // 타일에 있는 스택의 크기가 3 이하인 경우에만 스왑
             if (tileStackSize <= 3)
             {
-                RequestSwapDifferentTypeStacksServerRpc(currentTile.NetworkObjectId);
+                // 플레이어가 들고 있는 아이템 ID를 배열로 준비
+                NetworkObject[] playerItems = heldObjectStack.ToArray();
+                ulong[] playerItemIds = new ulong[playerItems.Length];
+        
+                for (int i = 0; i < playerItems.Length; i++)
+                {
+                    playerItemIds[i] = playerItems[i].NetworkObjectId;
+                }
+        
+                // 아이템 ID 배열을 서버 RPC에 전달
+                RequestSwapDifferentTypeStacksServerRpc(currentTile.NetworkObjectId, playerItemIds);
             }
-            // 3개 초과인 경우 아무 일도 일어나지 않음 (그냥 return)
             return;
         }
         
@@ -224,11 +233,20 @@ public class BlockPickup : NetworkBehaviour
         }
         else if (heldObjectStack.Count > 1 && (!isSameItemType || !areBothStackable))
         {
-            // Remove secondClosestTile check and related functionality
             if (heldItem.IsStackable && !tileItem.IsStackable)
             {
                 // 스택 가능한 아이템을 여러 개 들고 있고, 타일에 일반 아이템이 있을 때
-                RequestSwapStackWithSingleItemServerRpc(currentTile.NetworkObjectId);
+                // 플레이어가 들고 있는 아이템 ID 배열 준비
+                NetworkObject[] playerItems = heldObjectStack.ToArray();
+                ulong[] playerItemIds = new ulong[playerItems.Length];
+        
+                for (int i = 0; i < playerItems.Length; i++)
+                {
+                    playerItemIds[i] = playerItems[i].NetworkObjectId;
+                }
+        
+                // 아이템 ID 배열을 서버 RPC에 전달
+                RequestSwapStackWithSingleItemServerRpc(currentTile.NetworkObjectId, playerItemIds);
             }
             else
             {
@@ -460,158 +478,221 @@ public class BlockPickup : NetworkBehaviour
     }
     
     [ServerRpc]
-    void RequestSwapStackWithSingleItemServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    void RequestSwapStackWithSingleItemServerRpc(ulong tileId, ulong[] playerItemIds, ServerRpcParams rpcParams = default)
     {
+        Debug.Log($"[DEBUG] RequestSwapStackWithSingleItemServerRpc called with tileId: {tileId}, playerItems: {playerItemIds.Length}");
+        
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+        {
+            Debug.LogError($"[DEBUG] Tile NetworkObject not found with ID: {tileId}");
             return;
+        }
 
         Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null || tile.GetStackSize() == 0) return;
+        if (tile == null || tile.GetStackSize() == 0)
+        {
+            Debug.LogError($"[DEBUG] Tile component not found or empty, ID: {tileId}");
+            return;
+        }
 
         ulong clientId = rpcParams.Receive.SenderClientId;
+        Debug.Log($"[DEBUG] Client ID: {clientId}, Tile stack size: {tile.GetStackSize()}");
 
         // 타일 위 아이템 정보 확인
         ulong tileItemId = tile.PeekTopItemFromStack();
         if (tileItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileItemId, out NetworkObject tileItemObj))
-            return;
-
-        // 현재 들고 있는 아이템 목록 저장
-        NetworkObject[] currentHeldItems = heldObjectStack.ToArray();
-        heldObjectStack.Clear();
-
-        ItemType playerItemType = ItemType.None;
-        List<ulong> playerItemIds = new List<ulong>();
-
-        foreach (NetworkObject heldItem in currentHeldItems)
         {
-            if (heldItem != null)
-            {
-                playerItemIds.Add(heldItem.NetworkObjectId);
-
-                // 아이템 타입은 첫 번째 아이템 기준
-                if (playerItemType == ItemType.None)
-                {
-                    Item item = heldItem.GetComponent<Item>();
-                    if (item != null)
-                    {
-                        playerItemType = item.ItemType;
-                    }
-                }
-            }
+            Debug.LogError($"[DEBUG] Tile top item not found with ID: {tileItemId}");
+            return;
         }
 
-        // 1. 타일에서 기존 아이템 제거
+        // 아이템 타입 저장
+        ItemType playerItemType = ItemType.None;
+        if (playerItemIds.Length > 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerItemIds[0], out NetworkObject firstItem))
+        {
+            Item item = firstItem.GetComponent<Item>();
+            if (item != null)
+            {
+                playerItemType = item.ItemType;
+                Debug.Log($"[DEBUG] Player item type: {playerItemType}");
+            }
+        }
+        
+        // 1. 타일에서 기존 아이템 먼저 제거 (스택 최상단)
         tile.RemoveTopItemFromStack();
-
-        // 2. 타일 초기화 및 새 아이템 타입 설정
+        Debug.Log($"[DEBUG] Removed top item {tileItemId} from tile");
+        
+        // 2. 타일에 플레이어 아이템 타입 설정
         if (playerItemType != ItemType.None)
         {
-            tile.AddItem(playerItemType); // 타입 설정 (ItemType 네트워크 변수 갱신)
+            Debug.Log($"[DEBUG] Setting tile item type to: {playerItemType}");
+            tile.AddItem(playerItemType);
         }
-
-        // 3. 들고 있는 아이템들을 타일에 추가
-        foreach (NetworkObject heldItem in currentHeldItems)
+        
+        // 3. 들고 있던 모든 아이템의 소유권 제거 및 타일에 추가
+        Debug.Log($"[DEBUG] Adding player items to tile: {playerItemIds.Length}");
+        foreach (ulong id in playerItemIds)
         {
-            if (heldItem != null)
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject netObj))
             {
-                heldItem.RemoveOwnership();
-
-                // ✅ 반드시 서버에서 실행되는 메서드로 강제 추가
-                tile.ForceAddItemToStackFromServer(heldItem.NetworkObjectId);
+                netObj.RemoveOwnership();
+                Debug.Log($"[DEBUG] Removed ownership of item {id}");
+                
+                // 각 아이템을 타일에 직접 추가
+                tile.ForceAddItemToStackFromServer(id);
+                Debug.Log($"[DEBUG] Added item {id} to tile stack");
             }
         }
-
-        // 4. 타일 스택 시각화 강제 동기화
-        UpdateTileStackClientRpc(tile.NetworkObjectId);
-
-        // 5. 타일에 있던 아이템을 플레이어가 소유
+        
+        // 타일 스택 상태 모든 클라이언트에 동기화
+        UpdateTileStackClientRpc(tileId);
+        
+        // 4. 타일에 있던 아이템을 플레이어가 소유
         tileItemObj.ChangeOwnership(clientId);
-
-        // 6. 플레이어에 아이템 설정
+        Debug.Log($"[DEBUG] Changed ownership of tile item {tileItemId} to client {clientId}");
+        
+        // 5. 플레이어에게 타일에서 가져온 아이템 설정
         ulong[] singleItemArray = new ulong[] { tileItemId };
         SetHeldObjectStackClientRpc(singleItemArray, NetworkObjectId);
+        Debug.Log($"[DEBUG] Set player held item to {tileItemId}");
     }
 
-    
     [ServerRpc]
-    void RequestSwapDifferentTypeStacksServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    void RequestSwapDifferentTypeStacksServerRpc(ulong tileId, ulong[] playerItemIds, ServerRpcParams rpcParams = default)
     {
+        Debug.Log($"[DEBUG] RequestSwapDifferentTypeStacksServerRpc called with tileId: {tileId}, playerItems: {playerItemIds.Length}");
+        
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
         {
+            Debug.LogError($"[DEBUG] Tile NetworkObject not found with ID: {tileId}");
             return;
         }
         
         Tile tile = tileObj.GetComponent<Tile>();
-        if (tile == null || tile.GetStackSize() == 0) return;
+        if (tile == null || tile.GetStackSize() == 0)
+        {
+            Debug.LogError($"[DEBUG] Tile component not found or empty, ID: {tileId}");
+            return;
+        }
         
         ulong clientId = rpcParams.Receive.SenderClientId;
-        
-        // 타일의 아이템 목록 저장
-        List<ulong> tileItemIds = new List<ulong>();
-        int tileStackSize = tile.GetStackSize();
-        
-        // 플레이어가 들고 있는 아이템 목록 저장
-        NetworkObject[] playerHeldItems = new NetworkObject[heldObjectStack.Count];
-        heldObjectStack.CopyTo(playerHeldItems, 0);
+        Debug.Log($"[DEBUG] Client ID: {clientId}, Tile stack size: {tile.GetStackSize()}");
         
         // 플레이어 아이템 타입 저장
         ItemType playerItemType = ItemType.None;
-        if (playerHeldItems.Length > 0 && playerHeldItems[0] != null)
+        if (playerItemIds.Length > 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerItemIds[0], out NetworkObject firstItem))
         {
-            Item item = playerHeldItems[0].GetComponent<Item>();
+            Item item = firstItem.GetComponent<Item>();
             if (item != null)
             {
                 playerItemType = item.ItemType;
+                Debug.Log($"[DEBUG] Player item type: {playerItemType}");
             }
         }
         
-        // 타일의 아이템 타입 저장
-        ItemType tileItemType = tile.GetCurrentItemType();
-        
         // 타일에서 모든 아이템 제거하고 목록에 저장
+        List<ulong> tileItemIds = new List<ulong>();
+        int tileStackSize = tile.GetStackSize();
+        
+        Debug.Log($"[DEBUG] Removing items from tile...");
         for (int i = 0; i < tileStackSize; i++)
         {
             ulong itemId = tile.RemoveTopItemFromStack();
-            if (itemId == 0) continue;
-            
-            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
+            if (itemId != 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
             {
                 netObj.ChangeOwnership(clientId);
                 tileItemIds.Add(itemId);
+                Debug.Log($"[DEBUG] Changed ownership of item {itemId} to client {clientId}");
             }
         }
         
-        // 플레이어 스택 비우기
-        heldObjectStack.Clear();
-        
-        // 중요: 타일 초기화 및 아이템 타입 설정
+        // 타일 초기화 및 아이템 타입 설정
         if (playerItemType != ItemType.None)
         {
+            Debug.Log($"[DEBUG] Setting tile item type to: {playerItemType}");
             tile.AddItem(playerItemType);
         }
         
         // 플레이어가 들고 있던 아이템을 타일에 추가
-        foreach (NetworkObject heldItem in playerHeldItems)
+        if (playerItemIds.Length > 0)
         {
-            if (heldItem != null)
+            Debug.Log($"[DEBUG] Adding player items to tile: {playerItemIds.Length}");
+            
+            // 모든 플레이어 아이템 소유권 제거
+            foreach (ulong id in playerItemIds)
             {
-                heldItem.RemoveOwnership();
-                tile.AddItemToStack(heldItem.NetworkObjectId);
+                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject netObj))
+                {
+                    netObj.RemoveOwnership();
+                    Debug.Log($"[DEBUG] Removed ownership of item {id}");
+                    
+                    // 각 아이템을 타일에 직접 추가
+                    tile.ForceAddItemToStackFromServer(id);
+                    Debug.Log($"[DEBUG] Added item {id} to tile stack");
+                }
             }
+            
+            // 타일 스택 상태 모든 클라이언트에 동기화
+            UpdateTileStackClientRpc(tileId);
         }
-        
-        // 타일 스택 상태 강제 동기화
-        SyncStackClientRpc(tile.NetworkObjectId, playerHeldItems.Select(item => item.NetworkObjectId).ToArray());
         
         // 타일의 아이템을 플레이어에게 설정
         if (tileItemIds.Count > 0)
         {
+            Debug.Log($"[DEBUG] Setting held stack for player with {tileItemIds.Count} items");
             SetHeldObjectStackClientRpc(tileItemIds.ToArray(), NetworkObjectId);
         }
         else
         {
+            Debug.Log($"[DEBUG] No tile items to give to player");
             UpdatePlayerItemTypeClientRpc(ItemType.None, NetworkObjectId);
         }
+    }
+
+    // 아이템 배열을 타일에 안전하게 추가하는 ServerRpc
+    [ServerRpc]
+    void AddItemsToTileServerRpc(ulong tileId, ulong[] itemIds)
+    {
+        Debug.Log($"[DEBUG] AddItemsToTileServerRpc called with tileId: {tileId}, itemIds count: {itemIds.Length}");
+    
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
+        {
+            Debug.LogError($"[DEBUG] Tile NetworkObject not found with ID: {tileId}");
+            return;
+        }
+    
+        Tile tile = tileObj.GetComponent<Tile>();
+        if (tile == null)
+        {
+            Debug.LogError($"[DEBUG] Tile component not found on object with ID: {tileId}");
+            return;
+        }
+    
+        // 각 아이템을 타일에 추가
+        foreach (ulong itemId in itemIds)
+        {
+            Debug.Log($"[DEBUG] Processing item {itemId}");
+            if (itemId != 0)
+            {
+                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
+                {
+                    Debug.Log($"[DEBUG] Found NetworkObject for item {itemId}, calling ForceAddItemToStackFromServer");
+                    tile.ForceAddItemToStackFromServer(itemId);
+                }
+                else
+                {
+                    Debug.LogError($"[DEBUG] NetworkObject NOT found for item {itemId}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[DEBUG] Invalid item ID: 0");
+            }
+        }
+    
+        // 모든 클라이언트에 타일 스택 업데이트 알림
+        Debug.Log($"[DEBUG] Calling UpdateTileStackClientRpc");
+        UpdateTileStackClientRpc(tileId);
     }
     
     //타일 업데이트 관련
@@ -934,23 +1015,6 @@ public class BlockPickup : NetworkBehaviour
         }
     }
     
-    [ClientRpc]
-    void SyncStackClientRpc(ulong tileId, ulong[] itemIds)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
-        {
-            return;
-        }
-        
-        Tile tile = tileObj.GetComponent<Tile>();
-        if (tile != null)
-        {
-            // 명시적으로 타일의 아이템 스택을 다시 설정
-            //tile.SyncStackedItemsClientRpc(itemIds);
-            tile.UpdateVisibleStack();
-        }
-    }
-
     #endregion
     
     private void UpdatePlayerItemType(ItemType type)

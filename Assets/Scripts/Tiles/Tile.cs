@@ -68,7 +68,8 @@ public class Tile : NetworkBehaviour
         stackedItemIds.Clear();
         debugStackItems.Clear();
 
-        for (int i = 0; i < items.Length; i++)
+        // 역순으로 스택에 추가 (스택 순서 유지를 위해)
+        for (int i = items.Length - 1; i >= 0; i--)
         {
             if (items[i] != 0)
             {
@@ -77,19 +78,31 @@ public class Tile : NetworkBehaviour
             }
         }
 
+        // 수정: itemCount 값도 업데이트
+        if (IsServer)
+        {
+            itemCount.Value = stackedItemIds.Count;
+        }
+
+        // 수정: 타입이 없는 경우에만 타입 업데이트
+        if (stackedItemIds.Count > 0 && currentItemType.Value == ItemType.None)
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackedItemIds.Peek(), out NetworkObject netObj))
+            {
+                Item item = netObj.GetComponent<Item>();
+                if (item != null && IsServer)
+                {
+                    currentItemType.Value = item.ItemType;
+                }
+            }
+        }
+        else if (stackedItemIds.Count == 0 && IsServer)
+        {
+            currentItemType.Value = ItemType.None;
+        }
+
+        // 스택 시각적 업데이트
         UpdateVisibleStack();
-        // itemCount.Value = stackedItemIds.Count;
-        //
-        // if (stackedItemIds.Count > 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackedItemIds.Peek(), out NetworkObject netObj))
-        // {
-        //     Item item = netObj.GetComponent<Item>();
-        //     if (item != null)
-        //         currentItemType.Value = item.ItemType;
-        // }
-        // else
-        // {
-        //     currentItemType.Value = ItemType.None;
-        // }
     }
     
     //아이템 스택 조작 관련
@@ -189,10 +202,88 @@ public class Tile : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        stackedItemIds.Push(itemNetId);
-        itemCount.Value++;
+        Debug.Log($"[DEBUG] ForceAddItemToStackFromServer called with itemNetId: {itemNetId}");
+        
+        // Stack의 Contains 메소드 사용 여부 검사
+        bool containsItem = false;
+        Debug.Log($"[DEBUG] Current stack count: {stackedItemIds.Count}");
+        
+        // 스택의 모든 아이템 출력
+        foreach (ulong id in stackedItemIds)
+        {
+            Debug.Log($"[DEBUG] Stack contains item: {id}");
+            if (id == itemNetId)
+            {
+                containsItem = true;
+                Debug.Log($"[DEBUG] Found duplicate item {itemNetId} in stack!");
+            }
+        }
+        
+        // 중복 확인 (이미 스택에 있는 아이템인지)
+        if (containsItem)
+        {
+            Debug.LogWarning($"Item {itemNetId} is already in the stack. Skipping.");
+            return;
+        }
 
-        SyncStackedItemsClientRpc(stackedItemIds.ToArray());
+        Debug.Log($"[DEBUG] Checking if item exists in NetworkManager...");
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemNetId, out NetworkObject netObj))
+        {
+            Debug.Log($"[DEBUG] Found NetworkObject for itemNetId: {itemNetId}");
+            
+            // 아이템 타입 확인 및 저장
+            Item item = netObj.GetComponent<Item>();
+            if (item != null)
+            {
+                Debug.Log($"[DEBUG] Item component found, type: {item.ItemType}");
+                if (currentItemType.Value == ItemType.None)
+                {
+                    Debug.Log($"[DEBUG] Setting tile item type to: {item.ItemType}");
+                    currentItemType.Value = item.ItemType;
+                }
+            }
+            else
+            {
+                Debug.LogError($"[DEBUG] Item component NOT found on NetworkObject: {itemNetId}");
+            }
+        
+            // 스택에 추가
+            Debug.Log($"[DEBUG] Adding item {itemNetId} to stack");
+            stackedItemIds.Push(itemNetId);
+            Debug.Log($"[DEBUG] New stack count: {stackedItemIds.Count}");
+            itemCount.Value = stackedItemIds.Count;
+        
+            // 아이템 위치 및 회전 설정
+            Debug.Log($"[DEBUG] Setting item position and rotation");
+            netObj.transform.position = GetItemPositionAtHeight(stackedItemIds.Count - 1);
+            netObj.transform.rotation = itemPoint.rotation;
+        
+            // 시각적 업데이트를 위해 모든 클라이언트에 동기화
+            Debug.Log($"[DEBUG] Calling SyncStackedItemsClientRpc");
+            SyncStackedItemsClientRpc(stackedItemIds.ToArray());
+        }
+        else
+        {
+            Debug.LogError($"[DEBUG] NetworkObject NOT found for itemNetId: {itemNetId}");
+        }
+    }
+    
+    [ClientRpc]
+    public void ForceSetStackClientRpc(ulong[] itemIds)
+    {
+        stackedItemIds.Clear();
+    
+        // 역순으로 스택에 추가 (스택 특성 유지)
+        for (int i = itemIds.Length - 1; i >= 0; i--)
+        {
+            if (itemIds[i] != 0)
+            {
+                stackedItemIds.Push(itemIds[i]);
+            }
+        }
+    
+        UpdateDebugList();
+        UpdateVisibleStack();
     }
     
     //아이템 시각화 및 디버깅
