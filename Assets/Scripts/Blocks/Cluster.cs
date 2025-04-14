@@ -6,12 +6,13 @@ public class Cluster : MonoBehaviour
 {
     public ClusterGroup ClusterGroup;
     public bool isSpecial = false;
-
+    
     public void Spawn(int delay)
     {
         StartCoroutine(SpawnCoroutine(delay));
     }
-
+    
+    //타일 스폰 애니메이션
     private IEnumerator SpawnCoroutine(int delay)
     {
         Vector3 originalPos = transform.position;
