@@ -930,7 +930,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
+  NetworkTransformExpanded: 1
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -951,7 +951,7 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!114 &7690786432313350131
 MonoBehaviour:
@@ -1013,11 +1013,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7fc0add96d924145b88bdd2ad86a550, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PlayerPos: {x: 0, y: 0, z: 0}
-  PlayerFront: {x: 0, y: 0, z: 0}
   itemType: 0
   IsDig: 0
   hitBlock: 0
+  CraftingTableObject: {fileID: 0}
+  deskInfo: {fileID: 0}
 --- !u!114 &7778199186492131206
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1042,6 +1042,7 @@ MonoBehaviour:
   heldObjectList: []
   currentTile: {fileID: 0}
   playerInfo: {fileID: 8263613358351938457}
+  deskInfo: {fileID: 0}
   stackOffset: {x: 0, y: 0.2, z: 0}
 --- !u!1 &5496825195806496656
 GameObject:

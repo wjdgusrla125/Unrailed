@@ -22,6 +22,7 @@ public class BlockPickup : NetworkBehaviour
     public Tile currentTile = null;
     
     [SerializeField] private PlayerInfo playerInfo;
+    [SerializeField] private DeskInfo deskInfo;
     
     private const int maxStackSize = 4;
     
@@ -133,6 +134,96 @@ public class BlockPickup : NetworkBehaviour
     private void OnInteract(bool pressed)
     {
         if (!pressed || !IsOwner || currentTile == null) return;
+
+        if (playerInfo.hitBlock == BlockType.CraftingTable)
+        {
+            if (playerInfo.itemType == ItemType.WoodPlank && playerInfo.CraftingTableObject.AbleInTableWood && heldObjectStack.Count > 0)
+            {
+                NetworkObject mainObject = heldObjectStack.Peek();
+                
+                if (heldObjectStack.Count >= 2)
+                {
+                    // 테이블에 추가할 목재 수와 현재 테이블의 목재 수의 합이 3보다 크면 리턴
+                    if (playerInfo.CraftingTableObject.WoodObjects.Count + heldObjectStack.Count > 3) return;
+                    
+                    Debug.Log("나무 2개 이상");
+                    
+                    // 모든 스택된 아이템을 테이블에 추가
+                    foreach (NetworkObject obj in heldObjectStack)
+                    {
+                        if (obj != null)
+                        {
+                            playerInfo.CraftingTableObject.OnTableItem(obj);
+                        }
+                    }
+                    
+                    // 스택 비우기 및 소유권 제거
+                    mainObject.RemoveOwnership();
+                    RequestDropAllServerRpc();
+                }
+                else
+                {
+                    // 스택이 1개만 있는 경우
+                    playerInfo.CraftingTableObject.OnTableItem(mainObject);
+                    mainObject.RemoveOwnership();
+                    RequestDropAllServerRpc();
+                }
+                return;
+            }
+            else if (playerInfo.itemType == ItemType.Iron && playerInfo.CraftingTableObject.AbleInTableIron && heldObjectStack.Count > 0)
+            {
+                NetworkObject mainObject = heldObjectStack.Peek();
+                
+                if (heldObjectStack.Count >= 2)
+                {
+                    // 테이블에 추가할 철 수와 현재 테이블의 철 수의 합이 3보다 크면 리턴
+                    if (playerInfo.CraftingTableObject.IronObjects.Count + heldObjectStack.Count > 3) return;
+                    
+                    Debug.Log("철 2개 이상");
+                    
+                    // 모든 스택된 아이템을 테이블에 추가
+                    foreach (NetworkObject obj in heldObjectStack)
+                    {
+                        if (obj != null)
+                        {
+                            playerInfo.CraftingTableObject.OnTableItem(obj);
+                        }
+                    }
+                    
+                    // 스택 비우기 및 소유권 제거
+                    mainObject.RemoveOwnership();
+                    RequestDropAllServerRpc();
+                }
+                else
+                {
+                    // 스택이 1개만 있는 경우
+                    playerInfo.CraftingTableObject.OnTableItem(mainObject);
+                    mainObject.RemoveOwnership();
+                    RequestDropAllServerRpc();
+                }
+                return;
+            }
+        }
+
+        // 추가: DeskTable과의 상호작용 (레일 가져오기)
+        if (playerInfo.hitBlock == BlockType.DeskTable && playerInfo.itemType == ItemType.None && deskInfo != null && deskInfo.RailCount > 0)
+        {
+            switch (deskInfo.RailCount)
+            {
+                case 1:
+                    GameObject temp = GameObject.Instantiate(deskInfo.GetRailObject());
+                    temp.gameObject.transform.position = playerInfo.gameObject.transform.position;
+                    RequestPickUpServerRpc(temp.GetComponent<NetworkObject>().NetworkObjectId);
+                    break;
+                case 2:
+                    // 레일 2개일 때 동작 구현 필요
+                    break;
+                case 3:
+                    // 레일 3개일 때 동작 구현 필요
+                    break;
+            }
+            return;
+        }
         
         int tileStackSize = currentTile.GetStackSize();
         bool hasTileItems = tileStackSize > 0;
@@ -361,6 +452,21 @@ public class BlockPickup : NetworkBehaviour
             netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
             AddToHeldStackClientRpc(itemId, NetworkObjectId);
         }
+    }
+    
+    [ServerRpc]
+    void RequestPickUpServerRpc(ulong objectId, ServerRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
+        {
+            return;
+        }
+
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        netObj.ChangeOwnership(clientId);
+    
+        // 소유권 변경 후, 클라이언트 RPC를 통해 오브젝트를 스택에 추가
+        AddToHeldStackClientRpc(objectId, NetworkObjectId);
     }
 
     //아이템 드랍 관련

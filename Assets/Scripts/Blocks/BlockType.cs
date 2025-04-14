@@ -7,5 +7,7 @@ public enum BlockType
     
     Water,
     
-    Enemy   //도둑
+    Enemy,
+    CraftingTable,
+    DeskTable
 }

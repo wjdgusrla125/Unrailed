@@ -981,7 +981,7 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 1
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!114 &5331327231425745710
 MonoBehaviour:
