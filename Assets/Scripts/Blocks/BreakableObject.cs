@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class BreakableObject : MonoBehaviour 
@@ -34,6 +35,9 @@ public class BreakableObject : MonoBehaviour
 
     public void DestroyBlock()
     {
-        GameObject dropObject = GameObject.Instantiate(DropGameObject[(int)blockType]);
+        GameObject dropObject = GameObject.Instantiate(DropGameObject[(int)blockType - 1]);
+        dropObject.transform.position = gameObject.transform.position;
+        dropObject.GetComponent<NetworkObject>().Spawn();
+        Destroy(gameObject);
     }
 }
