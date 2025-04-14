@@ -9,6 +9,7 @@ public enum ItemType
     
     WoodPlank,
     Iron,
+    Rail,
     
     Train
 }

@@ -66,7 +66,18 @@ public class PlayerInfo : MonoBehaviour
             
             // 제작대와 책상 감지
             CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
+            if (CraftingTableObject != null)
+            {
+                hitBlock = BlockType.CraftingTable;
+                Debug.Log("크래프팅 테이블 감지됨");
+            }
+        
             deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
+            if (deskInfo != null)
+            {
+                hitBlock = BlockType.DeskTable;
+                Debug.Log("데스크 테이블 감지됨");
+            }
             
             BlockType blockType = BlockType.None;
             
