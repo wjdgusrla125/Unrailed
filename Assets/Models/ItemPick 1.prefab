@@ -877,7 +877,7 @@ GameObject:
   - component: {fileID: 3955233271745293627}
   - component: {fileID: 5331327231425745710}
   m_Layer: 6
-  m_Name: ItemPick
+  m_Name: ItemPick 1
   m_TagString: Invisible
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
