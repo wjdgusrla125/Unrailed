@@ -5,28 +5,20 @@ using UnityEngine.Serialization;
 
 public class PlayerInfo : MonoBehaviour
 {
-    [SerializeField] private Vector3 PlayerPos;
-    [SerializeField] private Vector3 PlayerFront;
-    
+    private Vector3 PlayerPos;
+    private Vector3 PlayerFront;
     private float rayDistance = 0.8f;
     private float digwaitTime = 1f;
     
     [Header("플레이어 상태")]
     public ItemType itemType;
     public bool IsDig = false;
-    
     [Header("앞에 인식된 블럭 타입")]
     public BlockType hitBlock;
-    public GameObject hitObject;
-    [HideInInspector]
+    [Header("앞에 인식된 열차")]
     public CraftingTable CraftingTableObject;
-
-
-    public void Awake()
-    {
-        CraftingTableObject = FindObjectOfType<CraftingTable>();
-    }
-
+    public DeskInfo deskInfo;
+    
     public void Update()
     {
         PlayerRaycast();
@@ -36,8 +28,8 @@ public class PlayerInfo : MonoBehaviour
     {
         itemType = newItemType;
     }
-    
-    public bool HandleCheckDigBlock()
+
+    private bool HandleCheckDigBlock()
     {
         if (itemType == ItemType.Axe && hitBlock == BlockType.Wood)
         {
@@ -54,8 +46,7 @@ public class PlayerInfo : MonoBehaviour
         return false;
     }
     
-    // 플레이어 레이 캐스트.
-    public void PlayerRaycast()
+    private void PlayerRaycast()
     {
         if (PlayerPos != gameObject.transform.position || PlayerFront != gameObject.transform.forward)
         {
@@ -72,36 +63,50 @@ public class PlayerInfo : MonoBehaviour
         {
             PlayerPos = gameObject.transform.position;
             PlayerFront = gameObject.transform.forward;
-            BlockType blockType = BlockType.None;
-            if (hit.collider.gameObject.GetComponent<BreakableObject>() != null)
-                blockType = hit.collider.gameObject.GetComponent<BreakableObject>().BlockTypeProperty;
-
-            if (blockType == BlockType.None)
+            
+            // 제작대와 책상 감지
+            CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
+            if (CraftingTableObject != null)
             {
-                hitObject = null;
-                return;
+                hitBlock = BlockType.CraftingTable;
+                Debug.Log("크래프팅 테이블 감지됨");
             }
+        
+            deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
+            if (deskInfo != null)
+            {
+                hitBlock = BlockType.DeskTable;
+                Debug.Log("데스크 테이블 감지됨");
+            }
+            
+            BlockType blockType = BlockType.None;
+            
+            if (hit.collider.gameObject.GetComponent<BreakableObject>() != null)
+            {
+                blockType = hit.collider.gameObject.GetComponent<BreakableObject>().BlockTypeProperty;
+            }
+            
+            if (blockType == BlockType.None) return;
+            
             hitBlock = blockType;
-            hitObject = hit.collider.gameObject;
-
+            
             if (!IsDig)
+            {
                 StartCoroutine(DigBlockCorutine());
+            }
         }
         else
         {
             hitBlock = BlockType.None;
+            
+            // 레이캐스트가 아무것도 감지하지 못했을 때 참조 제거
+            CraftingTableObject = null;
+            deskInfo = null;
         }
-        if (hitObject == null)
-            IsDig = false;
-        // 디버그용 레이 시각화.
+        
         Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
     }
     
-    public void DigDone()
-    {
-        hitObject.GetComponent<BreakableObject>().CheckRay(itemType);
-    }
-
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(1f);

@@ -240,20 +240,20 @@ public class PlayerAnimation : NetworkBehaviour
     private void UpdateTwoHandedAnimation()
     {
         bool isTwoHanded = false;
-        
+    
         // 현재 들고있는 아이템이 양손 모드인지 확인
-        if (blockPickup != null && blockPickup.heldObject != null)
+        if (blockPickup != null && blockPickup.MainHeldObject != null)
         {
-            Item heldItem = blockPickup.heldObject.GetComponent<Item>();
+            Item heldItem = blockPickup.MainHeldObject.GetComponent<Item>();
             if (heldItem != null)
             {
                 isTwoHanded = heldItem.WithTwoHanded;
             }
         }
-        
+    
         // 로컬 애니메이션 업데이트
         animator.SetBool(IsTwoHanded, isTwoHanded);
-        
+    
         // 네트워크 상태 업데이트
         if (isTwoHanded != networkIsTwoHanded.Value)
         {

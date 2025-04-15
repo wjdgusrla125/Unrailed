@@ -981,7 +981,7 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!114 &5331327231425745710
 MonoBehaviour:
@@ -997,6 +997,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemType: 2
   withTwoHanded: 0
+  isStackable: 0
 --- !u!1 &9046565917231300933
 GameObject:
   m_ObjectHideFlags: 0

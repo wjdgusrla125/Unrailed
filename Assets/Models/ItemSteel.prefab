@@ -392,7 +392,6 @@ GameObject:
   - component: {fileID: 6907551772753369253}
   - component: {fileID: 7245586504999030692}
   - component: {fileID: 3001699802972679436}
-  - component: {fileID: 378001865024870281}
   m_Layer: 6
   m_Name: ItemSteel
   m_TagString: Invisible
@@ -496,7 +495,7 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!114 &3001699802972679436
 MonoBehaviour:
@@ -513,25 +512,3 @@ MonoBehaviour:
   itemType: 6
   withTwoHanded: 1
   isStackable: 1
---- !u!95 &378001865024870281
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9043740789192840749}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 4a27c6758fc37e2459b44cb771239d39, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
