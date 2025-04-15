@@ -1,13 +1,22 @@
 ﻿using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-public class Cluster : MonoBehaviour
+public class Cluster : NetworkBehaviour
 {
     public ClusterGroup ClusterGroup;
+
+    private int _delay;
     public bool isSpecial = false;
+    private float _spawnOffset;
     
-    public void Spawn(int delay)
+    public void SetOffset(float spawnOffset)
+    {
+        // Debug.Log("spawnOffset" + spawnOffset);
+        _spawnOffset = spawnOffset;
+    }
+
+    public void PlaySpawnAnimation(int delay)
     {
         StartCoroutine(SpawnCoroutine(delay));
     }
@@ -15,57 +24,66 @@ public class Cluster : MonoBehaviour
     //타일 스폰 애니메이션
     private IEnumerator SpawnCoroutine(int delay)
     {
-        Vector3 originalPos = transform.position;
+        Vector3 finalPos;
+        if (ClusterGroup is { Direction: ClusterDirection.Upper })
+            finalPos = transform.position + Vector3.down * _spawnOffset;
+        else
+            finalPos = transform.position + Vector3.up * _spawnOffset;
         
-        float spawnOffset = 20.0f; // 이동 거리
-        float moveDuration = 3.0f; //이동 시간
-        
-        // if (!isSpecial) //스페셜 그룹이면 스폰 애니메이션을 스킵하도록 하는 조건문
+
+        // 렌더러 끄기 (애니메이션 효과를 위해)
+        foreach (Transform child in transform)
         {
-            if (ClusterGroup is { Direction: ClusterDirection.Upper })
-                transform.position = originalPos + Vector3.up * spawnOffset;
-            else
-                transform.position = originalPos + Vector3.down * spawnOffset;
-            
-            // 렌더러 끄기
-            foreach (Transform child in transform)
+            Blocks block = child.GetComponent<Blocks>();
+            if (block)
+                block.SetRendererActive(false);
+        }
+        yield return new WaitForSeconds(delay * 0.03f);
+
+        foreach (Transform child in transform)
+        {
+            Blocks block = child.GetComponent<Blocks>();
+            if (block)
+                block.SetRendererActive(true);
+            if (block is StartPoint or EndPoint)
             {
-                Blocks block = child.GetComponent<Blocks>();
-                if (block)
-                    block.SetRendererActive(false);
-            }
-            yield return new WaitForSeconds(delay * 0.03f);
-            // 렌더러 켜기
-            foreach (Transform child in transform)
-            {
-                Blocks block = child.GetComponent<Blocks>();
-                if (block)
-                    block.SetRendererActive(true);
-                
-                if (block is StartPoint or EndPoint)
-                {
-                    block.StartCoroutine(block.AnimateEnvDrop(moveDuration, spawnOffset * 2));
-                }
-            }
-            // float moveDuration = 0.1f;
-            float elapsed = 0f;
-            Vector3 startPos = transform.position;
-            while (elapsed < moveDuration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / moveDuration);
-                // 아래 줄에서 easeOutCubic을 easeOutQuart로 교체 가능
-                float easedT = EaseOutQuart(t); 
-                transform.position = Vector3.Lerp(startPos, originalPos, easedT);
-                yield return null;
+                block.StartCoroutine(block.AnimateEnvDrop(3.0f, _spawnOffset * 2));
             }
         }
-        
-        transform.position = originalPos;
+    
+        // 오프셋된 위치에서 원래의 최종 위치(finalPos)로 이동
+        float moveDuration = 3.0f; // 이동 시간
+        float elapsed = 0f;
+        Vector3 startPos = transform.position;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / moveDuration);
+            float easedT = EaseOutQuart(t);
+            transform.position = Vector3.Lerp(startPos, finalPos, easedT);
+            yield return null;
+        }
+        transform.position = finalPos;
     }
     
     private float EaseOutQuart(float t)
     {
         return 1f - Mathf.Pow(1f - t, 4f);
+    }
+
+    public void DespawnCluster()
+    {
+        // 클러스터 내부의 모든 자식 Block들을 순회
+        foreach (Transform child in transform)
+        {
+            Blocks block = child.GetComponent<Blocks>();
+            if (block)
+            {
+                // Block과 그 자식 env Despawn 처리
+                block.DespawnBlockAndEnv();
+            }
+        }
+        
+        NetworkObject.Despawn();
     }
 }

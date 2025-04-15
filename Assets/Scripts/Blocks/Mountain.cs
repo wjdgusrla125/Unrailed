@@ -2,7 +2,9 @@
 
 public class Mountain: Blocks
 {
-    protected override void AdditionalCreateBlock()
+    public override TileType BlockTileType => TileType.Mountain;
+
+    protected override void BlockInit()
     {
     }
 }

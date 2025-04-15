@@ -2,7 +2,9 @@
 
 public class Wood: Blocks
 {
-    protected override void AdditionalCreateBlock()
+    public override TileType BlockTileType => TileType.Wood;
+
+    protected override void BlockInit()
     {
     }
 }

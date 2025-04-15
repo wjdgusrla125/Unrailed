@@ -2,7 +2,9 @@
 
 public class Iron: Blocks
 {
-    protected override void AdditionalCreateBlock()
+    public override TileType BlockTileType => TileType.Iron;
+
+    protected override void BlockInit()
     {
     }
 }

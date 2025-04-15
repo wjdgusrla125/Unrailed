@@ -3,7 +3,9 @@ using UnityEngine;
 
 public class StartPoint: Blocks
 {
-    protected override void AdditionalCreateBlock()
+    public override TileType BlockTileType { get; }
+
+    protected override void BlockInit()
     {
     }
 }

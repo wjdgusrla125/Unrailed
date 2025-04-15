@@ -3,7 +3,9 @@ using UnityEngine;
 
 public class Grass: Blocks
 {
-    protected override void AdditionalCreateBlock()
+    public override TileType BlockTileType => TileType.Grass;
+
+    protected override void BlockInit()
     {
     }
 }

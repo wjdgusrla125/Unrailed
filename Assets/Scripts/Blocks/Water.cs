@@ -1,12 +1,15 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class Water: Blocks
 {
     [SerializeField] private WaterFall waterFall1; //키패드 기준 1시 방향으로 떨어지는 폭포
     [SerializeField] private WaterFall waterFall3; //키패드 기준 3시 방향으로 떨어지는 폭포
     [SerializeField] private WaterFall waterFall7; //키패드 기준 7시 방향에서 떨어지는 폭포
-    
-    protected override void AdditionalCreateBlock()
+
+    public override TileType BlockTileType => TileType.River;
+
+    protected override void BlockInit()
     {
         waterFall1.gameObject.SetActive(false);
         waterFall3.gameObject.SetActive(false);

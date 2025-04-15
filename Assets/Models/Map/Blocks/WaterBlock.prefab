@@ -95,8 +95,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3258400204647497960}
-  - component: {fileID: 1775186517129209259}
   - component: {fileID: 7430854457571940158}
+  - component: {fileID: -3938506336611743750}
+  - component: {fileID: 1775186517129209259}
+  - component: {fileID: -3119068308291943466}
   m_Layer: 31
   m_Name: WaterBlock
   m_TagString: Invisible
@@ -123,24 +125,6 @@ Transform:
   - {fileID: 329678685810428948}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1775186517129209259
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3258400204647497964}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a1e808879774ab49e4825f9f1a3f536, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  envPrefab: []
-  fragPrefab: {fileID: 0}
-  envOffset: {x: 0, y: 0.5, z: 0}
-  waterFall1: {fileID: 198667179049958434}
-  waterFall3: {fileID: 5357457287126564632}
-  waterFall7: {fileID: 4521459790889563862}
 --- !u!65 &7430854457571940158
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -162,6 +146,88 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-3938506336611743750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3442370596
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &1775186517129209259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a1e808879774ab49e4825f9f1a3f536, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  rndSeedOffset: 0
+  envPrefab: []
+  fragPrefab: {fileID: 0}
+  envOffset: {x: 0, y: 0.5, z: 0}
+  desiredParent: {fileID: 0}
+  waterFall1: {fileID: 198667179049958434}
+  waterFall3: {fileID: 5357457287126564632}
+  waterFall7: {fileID: 4521459790889563862}
+--- !u!114 &-3119068308291943466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
 --- !u!1001 &1272914674535273997
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -306,6 +372,10 @@ PrefabInstance:
     - target: {fileID: 3522402998835842010, guid: 7184e1b88124c514cac87aa0d65e1119, type: 3}
       propertyPath: m_Name
       value: WaterFall7
+      objectReference: {fileID: 0}
+    - target: {fileID: 3522402998835842010, guid: 7184e1b88124c514cac87aa0d65e1119, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3830327009579727642, guid: 7184e1b88124c514cac87aa0d65e1119, type: 3}
       propertyPath: m_LocalPosition.z
