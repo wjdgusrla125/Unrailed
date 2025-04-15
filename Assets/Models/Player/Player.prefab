@@ -759,13 +759,14 @@ GameObject:
   - component: {fileID: 1077141039454660502}
   - component: {fileID: 1914943282}
   - component: {fileID: 1363995341099909590}
+  - component: {fileID: -6823921237156432841}
   - component: {fileID: 5481624243433267928}
   - component: {fileID: 4717751350744541271}
   - component: {fileID: 7690786432313350131}
   - component: {fileID: 4224287992770889048}
   - component: {fileID: 8206591846314276960}
-  - component: {fileID: 8364225734367397517}
   - component: {fileID: 8263613358351938457}
+  - component: {fileID: 7778199186492131206}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -884,6 +885,23 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &-6823921237156432841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5496825195785439562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkRigidbodyBaseExpanded: 0
+  UseRigidBodyForMotion: 0
+  AutoUpdateKinematicState: 1
+  AutoSetKinematicOnDespawn: 1
 --- !u!114 &5481624243433267928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -982,32 +1000,7 @@ MonoBehaviour:
   inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
   playerMovement: {fileID: 4224287992770889048}
   playerInfo: {fileID: 8263613358351938457}
-  blockPickup: {fileID: 0}
---- !u!114 &8364225734367397517
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5496825195785439562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1f48cf7476286e4fa836777a8d0e132, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  handPosition: {fileID: 4370802459825855843}
-  twoHandPosition: {fileID: 6247121610456024132}
-  detectionDistance: -1
-  boxSize: {x: 0.2, y: 1, z: 0.2}
-  tileLayerMask:
-    serializedVersion: 2
-    m_Bits: 0
-  inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
-  heldObjectList: []
-  currentTile: {fileID: 0}
-  playerInfo: {fileID: 8263613358351938457}
-  stackOffset: {x: 0, y: 0.2, z: 0}
+  blockPickup: {fileID: 7778199186492131206}
 --- !u!114 &8263613358351938457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1025,6 +1018,32 @@ MonoBehaviour:
   hitBlock: 0
   CraftingTableObject: {fileID: 0}
   deskInfo: {fileID: 0}
+--- !u!114 &7778199186492131206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5496825195785439562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1f48cf7476286e4fa836777a8d0e132, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  handPosition: {fileID: 4370802459825855843}
+  twoHandPosition: {fileID: 6247121610456024132}
+  detectionDistance: 0
+  boxSize: {x: 0.7, y: 0.5, z: 0.7}
+  tileLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
+  heldObjectList: []
+  currentTile: {fileID: 0}
+  playerInfo: {fileID: 8263613358351938457}
+  deskInfo: {fileID: 0}
+  stackOffset: {x: 0, y: 0.2, z: 0}
 --- !u!1 &5496825195806496656
 GameObject:
   m_ObjectHideFlags: 0

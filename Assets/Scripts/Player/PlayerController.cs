@@ -59,9 +59,6 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc]
     private void RequestInteractServerRpc()
     {
-        // 서버에서 상호작용 처리
-        Debug.Log($"플레이어 {OwnerClientId}가 상호작용했습니다");
         
-        // 여기에 상호작용 로직을 추가할 수 있습니다
     }
 }

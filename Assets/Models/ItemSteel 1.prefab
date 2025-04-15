@@ -393,7 +393,7 @@ GameObject:
   - component: {fileID: 8517020017673767884}
   - component: {fileID: 8758283588308162447}
   m_Layer: 11
-  m_Name: ItemSteel
+  m_Name: ItemSteel 1
   m_TagString: Invisible
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
