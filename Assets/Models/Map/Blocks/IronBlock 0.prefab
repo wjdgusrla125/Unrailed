@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3258400204647497963}
   - component: {fileID: -8861087227518446208}
   - component: {fileID: 3450362743990168002}
-  - component: {fileID: 8704665564398336418}
+  - component: {fileID: 5317596910887495098}
   m_Layer: 31
   m_Name: IronBlock 0
   m_TagString: Invisible
@@ -149,12 +149,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  rndSeedOffset: 0
   envPrefab:
   - {fileID: 3258400204647497964, guid: b2d7f73ecb5ef81438d6d486b7c0a7ab, type: 3}
   fragPrefab: {fileID: 0}
   envOffset: {x: 0, y: 0.5, z: 0}
   desiredParent: {fileID: 0}
---- !u!114 &8704665564398336418
+--- !u!114 &5317596910887495098
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

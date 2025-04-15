@@ -17,7 +17,7 @@ public enum TileType
 public abstract class Blocks : NetworkBehaviour
 {
     public ClusterGroup ClusterGroup;
-    private System.Random rng; //랜덤 시드값
+    private System.Random _rng; //랜덤 시드값
     public int rndSeedOffset;
 
     [SerializeField, Header("블럭 위에 소환될 오브젝트")]
@@ -28,37 +28,30 @@ public abstract class Blocks : NetworkBehaviour
     [SerializeField]
     private Vector3 envOffset = new Vector3(0, 0.5f, 0);
     
-    [NonSerialized]
-    private GameObject _selectedPrefab;
+    // [NonSerialized]
+    // private GameObject _selectedPrefab;
     
     private MeshRenderer _meshRenderer;
     private GameObject _env;
 
     public Transform desiredParent;
 
-    // 각 파생 클래스가 자신의 타일 타입을 지정하도록 추상 프로퍼티 추가
     public abstract TileType BlockTileType { get; }
 
     private void Awake()
     {
         _meshRenderer = GetComponent<MeshRenderer>();
-    }
-
-    public void SetSeed()
-    {
-        int seedValue = MapGenerator.Instance.GetSeed().GetHashCode() + rndSeedOffset;
-        rng = new System.Random(seedValue);
         
-        CreateBlock();
-        AdditionalCreateBlock();
-        
+        // BlockInit();
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-
+        rndSeedOffset = (int)NetworkObjectId;
+        SetSeed();
+        
         if (NetworkManager.Singleton.IsHost)
         {
             if (desiredParent)
@@ -71,25 +64,45 @@ public abstract class Blocks : NetworkBehaviour
             {
                 Debug.LogError("desiredParent가 null임!!");
             }
+            CreateEnv();
+            SetEnv();
         }
         
     }
+
+    private void SetSeed()
+    {
+        int seedValue = MapGenerator.Instance.GetSeed().GetHashCode() + rndSeedOffset;
+        _rng = new System.Random(seedValue);
+    }
     
     // envPrefab를 생성하고 부모 설정 후, tileType에 맞는 회전 및 스케일을 적용
-    private void CreateBlock()
+    private void CreateEnv()
     {
         if (envPrefab == null || envPrefab.Length == 0)
             return;
         
-        int prefabIndex = rng.Next(0, envPrefab.Length);
+        int prefabIndex = _rng.Next(0, envPrefab.Length);
         _env = Instantiate(envPrefab[prefabIndex], transform.position + envOffset, Quaternion.identity);
-        _env.transform.SetParent(transform);
+        NetworkObject envObj = _env.GetComponent<NetworkObject>();
+        if (envObj)
+        {
+            envObj.Spawn();
+            ulong parentId = transform.GetComponent<NetworkObject>().NetworkObjectId;
+            ulong childId = envObj.NetworkObjectId;
+            StartCoroutine(SetParentCoroutine(parentId, childId));
+            // Debug.Log($"parentId: {parentId}, childId: {childId}");
+        }
+    }
 
-        ApplyEnvSettings();
+    private IEnumerator SetParentCoroutine(ulong parentId, ulong childId)
+    {
+        yield return new WaitForSeconds(1.0f);
+        RpcManager.Instance.SetParentRpc(parentId, childId);
     }
     
     // tileType별 회전 및 스케일 설정 로직
-    protected virtual void ApplyEnvSettings()
+    protected virtual void SetEnv()
     {
         float scale = 1;
         float rotation = 0;
@@ -98,31 +111,31 @@ public abstract class Blocks : NetworkBehaviour
             case TileType.Grass:
                 break;
             case TileType.Wood:
-                scale = (float)(rng.NextDouble() * 0.25 + 0.75); // 0.75 ~ 1.0
-                rotation = (float)(rng.NextDouble() * 360);
+                scale = (float)(_rng.NextDouble() * 0.25 + 0.75); // 0.75 ~ 1.0
+                rotation = (float)(_rng.NextDouble() * 360);
                 break;
             case TileType.Mountain:
                 if (!DetermineUniformMountain())
                 {
-                    scale = (float)(rng.NextDouble() * 0.4 + 0.4); // 0.4 ~ 0.8
-                    rotation = rng.Next(0, 4) * 90f;
+                    scale = (float)(_rng.NextDouble() * 0.4 + 0.4); // 0.4 ~ 0.8
+                    rotation = _rng.Next(0, 4) * 90f;
                 }
                 else
                 {
-                    scale = (float)(rng.NextDouble() * 1.0 + 0.5); // 0.5 ~ 1.5
-                    rotation = rng.Next(0, 4) * 90f;
+                    scale = (float)(_rng.NextDouble() * 1.0 + 0.5); // 0.5 ~ 1.5
+                    rotation = _rng.Next(0, 4) * 90f;
                 }
                 break;
             case TileType.Iron:
                 if (!DetermineUniformIron())
                 {
-                    scale = (float)(rng.NextDouble() * 0.4 + 0.4);
-                    rotation = rng.Next(0, 4) * 90f;
+                    scale = (float)(_rng.NextDouble() * 0.4 + 0.4);
+                    rotation = _rng.Next(0, 4) * 90f;
                 }
                 else
                 {
-                    scale = (float)(rng.NextDouble() * 0.6 + 0.4);
-                    rotation = rng.Next(0, 4) * 90f;
+                    scale = (float)(_rng.NextDouble() * 0.6 + 0.4);
+                    rotation = _rng.Next(0, 4) * 90f;
                 }
                 break;
             case TileType.River:
@@ -141,14 +154,14 @@ public abstract class Blocks : NetworkBehaviour
 
     public void SetEnvScale(float scale)
     {
-        Debug.Log($"스케일 변경: {scale}");
+        // Debug.Log($"스케일 변경: {scale}");
         if (_env)
             _env.transform.localScale = new Vector3(1, scale, 1);
     }
 
     public void SetEnvRotation(float yAngle)
     {
-        Debug.Log($"로테이션 변경{yAngle}");
+        // Debug.Log($"로테이션 변경{yAngle}");
         if (_env)
         {
             Vector3 currentEuler = _env.transform.rotation.eulerAngles;
@@ -182,7 +195,7 @@ public abstract class Blocks : NetworkBehaviour
         return 1f - Mathf.Pow(1f - t, 4f);
     }
 
-    protected abstract void AdditionalCreateBlock();
+    protected abstract void BlockInit();
 
     public void SetRendererActive(bool active)
     {
@@ -196,5 +209,20 @@ public abstract class Blocks : NetworkBehaviour
                 r.enabled = active;
         }
     }
-
+    
+    //env를 Despawn한 뒤 자신을 Despawn한다.
+    public void DespawnBlockAndEnv()
+    {
+        // env 오브젝트 Despawn
+        if (_env)
+        {
+            NetworkObject envNetObj = _env.GetComponent<NetworkObject>();
+            if (envNetObj != null)
+            {
+                envNetObj.Despawn();
+            }
+        }
+        
+        NetworkObject.Despawn();
+    }
 }

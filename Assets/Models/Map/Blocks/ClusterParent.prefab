@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4826452072328128688}
   - component: {fileID: 9222564423497776325}
-  - component: {fileID: -6749167031336235718}
+  - component: {fileID: 3817665490868191958}
   m_Layer: 0
   m_Name: ClusterParent
   m_TagString: Untagged
@@ -58,7 +58,7 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-6749167031336235718
+--- !u!114 &3817665490868191958
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

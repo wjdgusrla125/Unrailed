@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3258400204647497963}
   - component: {fileID: 1406806850045040472}
   - component: {fileID: 7790623877077326339}
-  - component: {fileID: -8486203914201775566}
+  - component: {fileID: -5524517344750572576}
   m_Layer: 31
   m_Name: MountainBlock 0
   m_TagString: Invisible
@@ -149,12 +149,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  rndSeedOffset: 0
   envPrefab:
   - {fileID: 7206750060758765626, guid: f3a506b80799a2f47b6316ff35094c59, type: 3}
   fragPrefab: {fileID: 0}
   envOffset: {x: 0, y: 0.5, z: 0}
   desiredParent: {fileID: 0}
---- !u!114 &-8486203914201775566
+--- !u!114 &-5524517344750572576
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

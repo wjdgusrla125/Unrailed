@@ -5,7 +5,7 @@ public class StartPoint: Blocks
 {
     public override TileType BlockTileType { get; }
 
-    protected override void AdditionalCreateBlock()
+    protected override void BlockInit()
     {
     }
 }

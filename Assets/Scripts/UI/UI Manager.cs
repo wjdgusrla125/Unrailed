@@ -76,7 +76,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     //게임시작 버튼 클릭
     public void OnStartGameClicked()
     {
-        Debug.Log("버튼클릭");
+        // Debug.Log("버튼클릭");
         RpcManager.Instance.StartGameClientRpc();
     }
     

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class Water: Blocks
 {
@@ -8,7 +9,7 @@ public class Water: Blocks
 
     public override TileType BlockTileType => TileType.River;
 
-    protected override void AdditionalCreateBlock()
+    protected override void BlockInit()
     {
         waterFall1.gameObject.SetActive(false);
         waterFall3.gameObject.SetActive(false);

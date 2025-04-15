@@ -8,7 +8,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        Debug.Log("Rpc 매니저 스폰됨");
+        // Debug.Log("Rpc 매니저 스폰됨");
     }
 
     #region UI관련
@@ -36,10 +36,27 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         MapGenerator.Instance.SetSeed(seed);
     }
 
+    //폭포를 활성화
+    [Rpc(SendTo.Everyone)]
+    public void ToggleWaterFallRpc(ulong waterBlockId, int waterFallNumber)
+    {
+        
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(waterBlockId,
+                out NetworkObject waterFallObject))
+        {
+            waterFallObject.GetComponent<Water>().ActivateWaterFall(waterFallNumber);
+        }
+    }
+
     //오브젝트의 Parent를 설정한다.
-    [Rpc(SendTo.Server)]
+    [Rpc(SendTo.Server)] //NetworkObject의 Parent 설정은 Host만이 가능
     public void SetParentRpc(ulong parentId, ulong childId)
     {
+        if (!NetworkManager.Singleton.IsHost)
+        {
+            Debug.LogError("호스트가 아닌 클라이언트에서 SetParentRpc가 불렸음");
+            return;
+        }
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject))
         {
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(childId, out NetworkObject childObject))

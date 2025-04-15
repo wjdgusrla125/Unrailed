@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3258400204647497963}
   - component: {fileID: 1291051699433753942}
   - component: {fileID: -7183026962103279962}
-  - component: {fileID: -2762598630865658719}
+  - component: {fileID: -7793049810870516416}
   m_Layer: 31
   m_Name: GrassBlock 1
   m_TagString: Invisible
@@ -149,12 +149,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  rndSeedOffset: 0
   envPrefab:
   - {fileID: 2222689848673879557, guid: 7bb55a959f3d47442aee4d44f9d84690, type: 3}
   fragPrefab: {fileID: 0}
   envOffset: {x: 0, y: 0.5, z: 0}
   desiredParent: {fileID: 0}
---- !u!114 &-2762598630865658719
+--- !u!114 &-7793049810870516416
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

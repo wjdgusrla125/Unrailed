@@ -12,7 +12,7 @@ public class Cluster : NetworkBehaviour
     
     public void SetOffset(float spawnOffset)
     {
-        Debug.Log("spawnOffset" + spawnOffset);
+        // Debug.Log("spawnOffset" + spawnOffset);
         _spawnOffset = spawnOffset;
     }
 
@@ -65,12 +65,25 @@ public class Cluster : NetworkBehaviour
         }
         transform.position = finalPos;
     }
-
-
-
     
     private float EaseOutQuart(float t)
     {
         return 1f - Mathf.Pow(1f - t, 4f);
+    }
+
+    public void DespawnCluster()
+    {
+        // 클러스터 내부의 모든 자식 Block들을 순회
+        foreach (Transform child in transform)
+        {
+            Blocks block = child.GetComponent<Blocks>();
+            if (block)
+            {
+                // Block과 그 자식 env Despawn 처리
+                block.DespawnBlockAndEnv();
+            }
+        }
+        
+        NetworkObject.Despawn();
     }
 }
