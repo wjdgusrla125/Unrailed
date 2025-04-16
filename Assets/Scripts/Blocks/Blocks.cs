@@ -36,6 +36,8 @@ public abstract class Blocks : NetworkBehaviour
 
     public Transform desiredParent;
 
+    public bool railed; //이 타일에 레일이 설치되었는지
+
     public abstract TileType BlockTileType { get; }
 
     private void Awake()
