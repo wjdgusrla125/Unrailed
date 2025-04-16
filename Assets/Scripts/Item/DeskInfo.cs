@@ -5,13 +5,9 @@ using UnityEngine;
 public class DeskInfo : NetworkBehaviour
 {
     private NetworkVariable<int> railCount = new NetworkVariable<int>(0);
+    private Animator animator;
     
-    [HideInInspector]
-    public bool CanCreateRail = true;
-    [Header("레일 오브젝트")]
-    [SerializeField] private GameObject RailObject;
-
-    public event Action CreateDoneRail;
+    [SerializeField] private GameObject RailPrefab;
     
     public int RailCount
     {
@@ -22,88 +18,15 @@ public class DeskInfo : NetworkBehaviour
                 railCount.Value = value;
         }
     }
-
-    public override void OnNetworkSpawn()
+    
+    private void Awake()
     {
-        base.OnNetworkSpawn();
-        
-        // 레일 카운트 변경 이벤트 등록
-        railCount.OnValueChanged += OnRailCountChanged;
-        
-        // 클라이언트가 처음 접속했을 때 상태 요청
-        if (IsClient && !IsServer)
-            RequestInitialStateServerRpc();
+        animator = GetComponent<Animator>();
     }
 
-    public override void OnNetworkDespawn()
+    public GameObject GetRailObject()
     {
-        base.OnNetworkDespawn();
-        
-        // 이벤트 구독 해제
-        railCount.OnValueChanged -= OnRailCountChanged;
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestInitialStateServerRpc(ServerRpcParams rpcParams = default)
-    {
-        SyncInitialStateClientRpc(railCount.Value, new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new ulong[] { rpcParams.Receive.SenderClientId }
-            }
-        });
-    }
-
-    [ClientRpc]
-    private void SyncInitialStateClientRpc(int count, ClientRpcParams rpcParams = default)
-    {
-        // 애니메이션 상태 설정
-        GetComponent<Animator>().SetInteger("GetRails", count);
-    }
-
-    private void OnRailCountChanged(int previousValue, int newValue)
-    {
-        // 레일 카운트가 변경될 때 애니메이션 업데이트
-        GetComponent<Animator>().SetInteger("GetRails", newValue);
-        
-        // 클라이언트에서도 CanCreateRail 상태 업데이트
-        RailCountCheck();
-    }
-
-    public void RailCreateDone()
-    {
-        if (IsServer)
-        {
-            // 레일 카운트 증가 (네트워크 변수)
-            railCount.Value++;
-            
-            // 이벤트 호출
-            CreateDoneRail?.Invoke();
-        }
-        else
-        {
-            // 클라이언트에서 서버에 레일 생성 완료 요청
-            RailCreateDoneServerRpc();
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void RailCreateDoneServerRpc()
-    {
-        // 레일 카운트 증가 (네트워크 변수)
-        railCount.Value++;
-        
-        // 이벤트 호출
-        CreateDoneRail?.Invoke();
-    }
-
-    public void RailCountCheck()
-    {
-        if (railCount.Value == 3)
-            CanCreateRail = false;
-        else
-            CanCreateRail = true;
+        return RailPrefab;
     }
 
     public void GetRail()
@@ -113,31 +36,92 @@ public class DeskInfo : NetworkBehaviour
             if (railCount.Value > 0)
             {
                 railCount.Value--;
+                // 레일을 가져갔을 때 애니메이션 파라미터 초기화
+                ResetRailAnimationClientRpc();
             }
         }
         else
         {
-            // 클라이언트에서 레일 가져가기 요청
             GetRailServerRpc();
         }
     }
 
+    public void RailCreateDone()
+    {
+        if (IsServer)
+        {
+            RailCreateDoneInternal();
+        }
+        else
+        {
+            RailCreateDoneServerRpc();
+        }
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    private void RailCreateDoneServerRpc()
+    {
+        RailCreateDoneInternal();
+    }
+
+    private void RailCreateDoneInternal()
+    {
+        // 애니메이션 단계를 목표치(레일 개수)까지 올림
+        int currentStep = animator.GetInteger("GetRails");
+    
+        // 현재 단계가 목표(레일 개수)보다 작으면 다음 단계로 진행
+        if (currentStep < railCount.Value)
+        {
+            UpdateRailAnimationStepClientRpc(currentStep + 1);
+        }
+    }
+    
+    [ClientRpc]
+    private void UpdateRailAnimationStepClientRpc(int step)
+    {
+        // 애니메이션 단계 업데이트
+        if (animator != null)
+        {
+            animator.SetInteger("GetRails", step);
+        }
+    }
+    
     [ServerRpc(RequireOwnership = false)]
     private void GetRailServerRpc()
     {
         if (railCount.Value > 0)
         {
             railCount.Value--;
+            // 레일을 가져갔을 때 애니메이션 파라미터 초기화
+            ResetRailAnimationClientRpc();
         }
     }
 
-    public GameObject GetRailObject()
+    [ClientRpc]
+    private void ResetRailAnimationClientRpc()
     {
-        return RailObject;
+        // 애니메이터의 GetRails 값을 0으로 초기화
+        if (animator != null)
+        {
+            animator.SetInteger("GetRails", 0);
+        }
+    }
+    
+    public void UpdateRailAnimation(int step)
+    {
+        if (IsServer)
+        {
+            UpdateRailAnimationClientRpc(step);
+        }
     }
 
-    public void Update()
+    [ClientRpc]
+    private void UpdateRailAnimationClientRpc(int step)
     {
-        RailCountCheck();
+        // 애니메이션 단계 업데이트
+        if (animator != null)
+        {
+            animator.SetInteger("GetRails", step);
+        }
     }
 }

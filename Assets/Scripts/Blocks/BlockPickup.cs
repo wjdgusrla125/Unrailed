@@ -705,31 +705,46 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-    
-        GameObject railPrefab = playerInfo.deskInfo.GetRailObject();
-        if (railPrefab == null)
-        {
-            return;
-        }
-    
-        // 레일 객체를 생성하고 NetworkObject 컴포넌트를 가져옵니다
-        GameObject railInstance = Instantiate(railPrefab);
-        NetworkObject railNetObj = railInstance.GetComponent<NetworkObject>();
 
-        if (railNetObj != null)
+        DeskInfo deskInfo = deskObj.GetComponent<DeskInfo>();
+        if (deskInfo == null) return;
+
+        GameObject railPrefab = deskInfo.GetRailObject();
+        if (railPrefab == null) return;
+
+        int railsToGet = deskInfo.RailCount;
+        if (railsToGet <= 0) return;
+
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        // 플레이어 NetworkObject 가져오기
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(NetworkObjectId, out NetworkObject playerObj))
+            return;
+
+        BlockPickup pickup = playerObj.GetComponent<BlockPickup>();
+        if (pickup == null) return;
+
+        Transform holdPosition = pickup.handPosition;
+
+        for (int i = 0; i < railsToGet && pickup.heldObjectStack.Count < maxStackSize; i++)
         {
-            // 네트워크에 레일 객체를 스폰합니다
+            GameObject railInstance = Instantiate(railPrefab);
+            NetworkObject railNetObj = railInstance.GetComponent<NetworkObject>();
+
+            if (railNetObj == null) continue;
+
             railNetObj.Spawn();
-        
-            // 클라이언트 소유권을 설정합니다
-            ulong clientId = rpcParams.Receive.SenderClientId;
             railNetObj.ChangeOwnership(clientId);
-        
-            // 데스크에서 레일을 가져옵니다
-            playerInfo.deskInfo.GetRail();
-        
-            // 생성한 레일을 즉시 플레이어의 손에 추가합니다
+
+            // 즉시 손 위치로 배치 (서버에서도 보정)
+            railNetObj.transform.position = holdPosition.position + pickup.stackOffset * pickup.heldObjectStack.Count;
+            railNetObj.transform.rotation = holdPosition.rotation;
+
+            // 클라이언트 스택에 즉시 추가
             AddToHeldStackClientRpc(railNetObj.NetworkObjectId, NetworkObjectId);
+
+            // 데스크의 레일 카운트 감소
+            deskInfo.GetRail();
         }
     }
     
