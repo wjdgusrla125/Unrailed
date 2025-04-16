@@ -13,47 +13,79 @@ public class TrainManager: MonoBehaviour
 
     private void Awake()
     {
-        StartCoroutine(Spawn());
-        firstRail = WorkSceneManager.Instance.firstRail;
+        if(NetworkManager.Singleton.IsServer) StartCoroutine(Spawn());
+        // firstRail = WorkSceneManager.Instance.firstRail;
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Z))
         {
-            Debug.Log("Q입력, 기차 출발");
-            foreach (var keyValuePair in trains)
-            {
-                keyValuePair.Value.StartTrain();
-            }
+            Debug.Log("Z입력, 기차 출발");
+            StartAllTrains();
         }
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.X))
         {
-            Debug.Log("E입력, 기차 정지");
-            foreach (var keyValuePair in trains)
-            {
-                keyValuePair.Value.StopTrain();
-            }
+            Debug.Log("X입력, 기차 정지");
+            StopAllTrains();
+        }
+    }
+
+    private const float START_COUNTDOWN = 5.0F;
+
+    public void StartTrainCount()
+    {
+        StartCoroutine(CountDownAndStart());
+    }
+
+    private IEnumerator CountDownAndStart()
+    {
+        Debug.Log("카운트다운 시작");
+        
+        yield return new WaitForSeconds(START_COUNTDOWN - 3f);
+        Debug.Log("3초 전");
+
+        yield return new WaitForSeconds(1f);
+        Debug.Log("2초 전");
+
+        yield return new WaitForSeconds(1f);
+        Debug.Log("1초 전");
+
+        yield return new WaitForSeconds(1f);
+        // StartAllTrains();
+    }
+
+    public void StartAllTrains()
+    {
+        foreach (var keyValuePair in trains)
+        {
+            keyValuePair.Value.StartTrain();
+        }
+    }
+
+    public void StopAllTrains()
+    {
+        foreach (var keyValuePair in trains)
+        {
+            keyValuePair.Value.StopTrain();
         }
     }
 
     IEnumerator Spawn()
     {
-        yield return new WaitForSeconds(1f);
-        Debug.Log("열차스폰시작");
+        yield return null;
         foreach (var keyValuePair in trains)
         {
-            // Debug.Log($"{keyValuePair.Key}번 열차 스폰");
-            keyValuePair.Value.SetDestinationRail(firstRail);
             NetworkObject no = keyValuePair.Value.GetComponent<NetworkObject>();
             no.Spawn();
         }
-        Debug.Log("열차스폰완료");
+    }
 
-        Debug.Log("열차 출발");
+    public void PlaySpawnAnimation()
+    {
         foreach (var keyValuePair in trains)
         {
-            keyValuePair.Value.StartTrain();
+            keyValuePair.Value.PlaySpawnAnimation(MapGenerator.SPAWN_OFFSET);
         }
     }
 }

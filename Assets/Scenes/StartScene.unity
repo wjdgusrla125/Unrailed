@@ -1206,14 +1206,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: oldMapParent
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: clusterParent
-      value: 
-      objectReference: {fileID: 4826452072328128688, guid: 4aa16aa90d65e0a4bb8af51c8016e1f2, type: 3}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator
@@ -2098,7 +2090,7 @@ Transform:
   m_GameObject: {fileID: 1355830171}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 20.63649, y: -39.948895, z: 28.797602}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

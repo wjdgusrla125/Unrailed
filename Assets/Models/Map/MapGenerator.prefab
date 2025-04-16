@@ -78,5 +78,7 @@ MonoBehaviour:
   riverPrefab: {fileID: 3258400204647497964, guid: f609fffbcf524c948b7219fbdab92ffc, type: 3}
   startPointPrefab: {fileID: 3258400204647497964, guid: 1be121ad81a70df4c9b1c24421ff3e69, type: 3}
   endPointPrefab: {fileID: 3258400204647497964, guid: ed10c27afcdbd764cb890ac0730c51a7, type: 3}
+  railPrefab: {fileID: 7402043901895155594, guid: 5f2437260ce67974bb4afef1b7c006e5, type: 3}
+  trainCarHeadPrefab: {fileID: 7916100667047651537, guid: 10e343ab5ca27244e9f8acec238e60f1, type: 3}
   visitX: 2
   visitY: 8

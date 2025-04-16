@@ -9,7 +9,7 @@ public class Cluster : NetworkBehaviour
     private int _delay;
     public bool isSpecial = false;
     private float _spawnOffset;
-    
+
     public void SetOffset(float spawnOffset)
     {
         // Debug.Log("spawnOffset" + spawnOffset);
@@ -20,7 +20,7 @@ public class Cluster : NetworkBehaviour
     {
         StartCoroutine(SpawnCoroutine(delay));
     }
-    
+
     //타일 스폰 애니메이션
     private IEnumerator SpawnCoroutine(int delay)
     {
@@ -29,17 +29,32 @@ public class Cluster : NetworkBehaviour
             finalPos = transform.position + Vector3.down * _spawnOffset;
         else
             finalPos = transform.position + Vector3.up * _spawnOffset;
-        
 
-        // 렌더러 끄기 (애니메이션 효과를 위해)
+        // 렌더러를 끄고 대기
         foreach (Transform child in transform)
         {
             Blocks block = child.GetComponent<Blocks>();
             if (block)
                 block.SetRendererActive(false);
         }
-        yield return new WaitForSeconds(delay * 0.03f);
 
+        yield return new WaitForSeconds(delay * 0.02f);
+
+        // 레일 생성
+        if (MapGenerator.Instance.IsInitialGeneration && ClusterGroup.Tiles.Contains(MapGenerator.Instance.GetPosA()))
+        {
+            //첫생성이면
+            MapGenerator.Instance.SpawnRails();
+        }
+        else if (!MapGenerator.Instance.IsInitialGeneration &&
+                 ClusterGroup.Tiles.Contains(MapGenerator.Instance.GetPosB()))
+        {
+            //재생성이면
+            MapGenerator.Instance.SpawnRails(MapGenerator.Instance.GetOldWidth());
+        }
+
+
+        // 렌더러 다시 활성화하고 env 드랍 애니메이션 실행
         foreach (Transform child in transform)
         {
             Blocks block = child.GetComponent<Blocks>();
@@ -50,9 +65,9 @@ public class Cluster : NetworkBehaviour
                 block.StartCoroutine(block.AnimateEnvDrop(3.0f, _spawnOffset * 2));
             }
         }
-    
-        // 오프셋된 위치에서 원래의 최종 위치(finalPos)로 이동
-        float moveDuration = 3.0f; // 이동 시간
+
+        // 클러스터 위치 이동 애니메이션
+        float moveDuration = 2.5f;
         float elapsed = 0f;
         Vector3 startPos = transform.position;
         while (elapsed < moveDuration)
@@ -63,9 +78,11 @@ public class Cluster : NetworkBehaviour
             transform.position = Vector3.Lerp(startPos, finalPos, easedT);
             yield return null;
         }
+
         transform.position = finalPos;
     }
-    
+
+
     private float EaseOutQuart(float t)
     {
         return 1f - Mathf.Pow(1f - t, 4f);
@@ -83,7 +100,7 @@ public class Cluster : NetworkBehaviour
                 block.DespawnBlockAndEnv();
             }
         }
-        
+
         NetworkObject.Despawn();
     }
 }

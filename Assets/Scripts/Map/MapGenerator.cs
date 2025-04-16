@@ -70,9 +70,13 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private GameObject riverPrefab;
     [SerializeField] private GameObject startPointPrefab;
     [SerializeField] private GameObject endPointPrefab;
+    [SerializeField] private GameObject railPrefab;
+    [SerializeField] private GameObject trainCarHeadPrefab;
 
-    //블록 소환 오프셋
-    private static float SPAWN_OFFSET = 20F;
+    //오브젝트 소환 오프셋
+    [NonSerialized]public static float SPAWN_OFFSET = 20F;
+    private Vector3 _railSpawnOffset = new Vector3(0f, 0.53f, 0f);
+    private Vector3 _trainSpawnOffset = new Vector3(0f, 0.5f, 0f);
 
     // 기존 타일 타입 열거형
     public enum TileType
@@ -216,7 +220,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (!NetworkManager.Singleton.IsServer) return;
             Debug.Log($"T입력, ({visitX}, {visitY}) visit 확인");
             CheckVisit();
-        }
+        }    
     }
 
     #endregion
@@ -2706,7 +2710,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         
         yield return new WaitForSeconds(1.0f);
         
-        Debug.Log("맵 타일 생성 완료, 스폰 시작");
+        Debug.Log("맵 타일 생성 완료, 스폰 애니메이션 시작");
         for (int i = 0; i < sortedClusters.Count; i++)
         {
             Cluster clusterComponent = clusterGameObjects[sortedClusters[i]].GetComponent<Cluster>();
@@ -2716,6 +2720,106 @@ public class MapGenerator : SingletonManager<MapGenerator>
             }
         }
         yield return null;
+    }
+
+    //레일을 스폰(MapGenerator이 아닌 Cluster에서 호출)
+    public void SpawnRails(int oldWidth = 0)
+    {
+        int railYAdjustment = -1;
+        GameObject railGo;
+        RailController firstDestination = null;
+
+        if (oldWidth == 0)
+        {
+            // posA에 대한 Rail 생성 (좌우 2칸씩, 총 5칸)
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                Vector3 railPos = new Vector3(_posA.x + dx, 0, _posA.y + railYAdjustment);
+                railPos += _railSpawnOffset;
+                railPos.y += SPAWN_OFFSET;
+                railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
+                
+
+                if (railGo)
+                {
+                    RailController rc = railGo.GetComponent<RailController>();
+                    if (dx == 1) firstDestination = rc;
+                    rc.NetworkObject.Spawn();
+                    rc.PlaySpawnAnimation(SPAWN_OFFSET);
+                }
+            }
+            // posB에 대한 Rail 생성 (좌우 2칸씩, 총 5칸)
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                Vector3 railPos = new Vector3(_posB.x + dx, 0, _posB.y + railYAdjustment);
+                railPos += _railSpawnOffset;
+                railPos.y += SPAWN_OFFSET;
+                railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
+                
+
+                if (railGo)
+                {
+                    RailController rc = railGo.GetComponent<RailController>();
+                    rc.NetworkObject.Spawn();
+                    rc.PlaySpawnAnimation(SPAWN_OFFSET);
+                }
+            }
+
+            //첫 생성일 시 열차도 함께 스폰
+            SpawnTrain(firstDestination);
+        }
+        else
+        {
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                Vector3 railPos = new Vector3(_posB.x + dx, 0, _posB.y + railYAdjustment);
+                railPos += _railSpawnOffset;
+                railPos.y += SPAWN_OFFSET;
+                railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
+                
+
+                if (railGo)
+                {
+                    RailController rc = railGo.GetComponent<RailController>();
+                    rc.NetworkObject.Spawn();
+                    rc.PlaySpawnAnimation(SPAWN_OFFSET);
+                }
+            }
+        }
+    }
+
+    //디버그용 레일 생성
+    private void SpawnRail(int x, int y)
+    {
+        
+        Vector3 railPos = new Vector3(_posA.x + x, 0, _posA.y + y);
+        railPos += _railSpawnOffset;
+        railPos.y += SPAWN_OFFSET;
+        GameObject railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
+                
+
+        if (railGo)
+        {
+            RailController rc = railGo.GetComponent<RailController>();
+            rc.NetworkObject.Spawn();
+            rc.PlaySpawnAnimation(SPAWN_OFFSET);
+        }
+    }
+
+    //열차를 스폰
+    private void SpawnTrain(RailController firstDestination)
+    {
+        Vector3 trainPos = new Vector3(_posA.x + 1, 0, _posA.y + -1);
+        trainPos += _trainSpawnOffset;
+        trainPos.y += SPAWN_OFFSET;
+        GameObject trainGo = Instantiate(trainCarHeadPrefab);
+        trainGo.transform.position = trainPos;
+        if (trainGo)
+        {
+            Train rc = trainGo.GetComponent<Train>();
+            // rc.transform.rotation = Quaternion.Euler(0, 90, 0);
+            rc.SetDestinationRail(firstDestination);
+        }
     }
 
     #endregion
@@ -2731,10 +2835,26 @@ public class MapGenerator : SingletonManager<MapGenerator>
         Random.InitState(masterSeed);
     }
 
+    // 확장(추가 생성) 여부를 반환 (extensionCount가 0이면 첫 생성)
+    public bool IsInitialGeneration => _extensionCount == 0;
+    
+    public int GetOldWidth() {
+        return _curWidth - width;
+    }
+
+    public Vector2Int GetPosA() {
+        return _posA;
+    }
+
+    public Vector2Int GetPosB() {
+        return _posB;
+    }
+    
     public string GetSeed()
     {
         return mapSeed;
     }
+    
 
     #endregion
 

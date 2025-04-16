@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
-public class RailController : MonoBehaviour
+public class RailController : NetworkBehaviour
 {
     public GameObject RailRight;
     public GameObject RailLeftBottom;
@@ -208,4 +210,35 @@ public class RailController : MonoBehaviour
             }
         }
     }
+    
+    public void PlaySpawnAnimation(float spawnOffset)
+    {
+        StartCoroutine(SpawnCoroutine(spawnOffset));
+    }
+    
+    //스폰 애니메이션
+    private IEnumerator SpawnCoroutine(float spawnOffset)
+    {
+        Vector3 finalPos = transform.position + Vector3.down * spawnOffset;
+        
+        float moveDuration = 2.5f;
+        float elapsed = 0f;
+        Vector3 startPos = transform.position;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / moveDuration);
+            float easedT = EaseOutQuart(t);
+            transform.position = Vector3.Lerp(startPos, finalPos, easedT);
+            yield return null;
+        }
+        
+        transform.position = finalPos;
+    }
+    
+    private float EaseOutQuart(float t)
+    {
+        return 1f - Mathf.Pow(1f - t, 4f);
+    }
+
 }
