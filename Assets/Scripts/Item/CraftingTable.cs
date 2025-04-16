@@ -1,3 +1,4 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
@@ -33,7 +34,12 @@ public class CraftingTable : NetworkBehaviour
             RequestInitialStateServerRpc();
         }
     }
-    
+
+    private void Update()
+    {
+        TryCraftRail();
+    }
+
     [ServerRpc(RequireOwnership = false)]
     private void RequestInitialStateServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -261,54 +267,45 @@ public class CraftingTable : NetworkBehaviour
     
     private void TryCraftRail()
     {
-        // 서버에서만 레일 제작 처리
+        // 서버에서만 진행
         if (!IsServer) return;
-        
-        // 타겟 데스크가 없거나 레일을 더 이상 만들 수 없으면 리턴
-        if (targetDesk == null || !targetDesk.CanCreateRail) return;
-        
-        // 필요한 자원이 충분한지 확인
-        if (woodStackedItemIds.Count >= WOOD_REQUIRED && ironStackedItemIds.Count >= IRON_REQUIRED)
+
+        // 레일을 만들 재료가 충분한지 확인
+        if (woodCount.Value >= WOOD_REQUIRED && ironCount.Value >= IRON_REQUIRED)
         {
-            // 재료 소비
-            List<ulong> itemsToDestroyIds = new List<ulong>();
-            
-            // 나무 아이템 제거
-            for (int i = 0; i < WOOD_REQUIRED; i++)
+            // DeskInfo의 현재 레일 개수 확인
+            if (targetDesk.RailCount < 3)
             {
-                ulong itemId = RemoveTopWoodItemInternal();
-                if (itemId != 0)
-                {
-                    itemsToDestroyIds.Add(itemId);
-                }
+                // 재료 소비
+                ulong woodItemId = RemoveTopWoodItemInternal();
+                ulong ironItemId = RemoveTopIronItemInternal();
+        
+                // 아이템 네트워크 오브젝트 파괴
+                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(woodItemId, out NetworkObject woodObj))
+                    woodObj.Despawn(true);
+            
+                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(ironItemId, out NetworkObject ironObj))
+                    ironObj.Despawn(true);
+        
+                // 레일 개수 증가
+                targetDesk.RailCount++;
+        
+                // 수정된 부분: 현재 레일 개수에 맞게 애니메이션 단계 설정
+                targetDesk.UpdateRailAnimation(targetDesk.RailCount);
             }
-            
-            // 철 아이템 제거
-            for (int i = 0; i < IRON_REQUIRED; i++)
-            {
-                ulong itemId = RemoveTopIronItemInternal();
-                if (itemId != 0)
-                {
-                    itemsToDestroyIds.Add(itemId);
-                }
-            }
-            
-            // 사용된 아이템 파괴
-            foreach (ulong itemId in itemsToDestroyIds)
-            {
-                if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
-                {
-                    netObj.Despawn(true);
-                }
-            }
-            
-            // 레일 생성 완료 알림
-            targetDesk.RailCreateDone();
-            
-            // 디버그 리스트 업데이트
-            UpdateDebugLists();
         }
     }
+
+    // [ClientRpc]
+    // private void UpdateRailAnimationClientRpc(int railCount)
+    // {
+    //     // 애니메이터가 있는 경우 GetRails 파라미터 설정
+    //     // railCount에 따라 단계별로 증가
+    //     if (targetDesk != null && targetDesk.GetComponent<Animator>() != null)
+    //     {
+    //         targetDesk.GetComponent<Animator>().SetInteger("GetRails", railCount);
+    //     }
+    // }
     
     [ServerRpc(RequireOwnership = false)]
     public void TryCraftRailServerRpc()
