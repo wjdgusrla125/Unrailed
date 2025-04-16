@@ -50,8 +50,10 @@ public abstract class Blocks : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
+        if (MapGenerator.TryGetInstance() == null) return;
+        
         rndSeedOffset = (int)NetworkObjectId;
+        
         SetSeed();
         
         if (NetworkManager.Singleton.IsHost)

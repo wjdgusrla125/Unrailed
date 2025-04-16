@@ -36,11 +36,13 @@ namespace Network
 
         private void HandleServerStarted()
         {
+            //WorkScene을 할 때는 비활성화
             UIManager.Instance.SetPlayerCountText(NetworkManager.Singleton.ConnectedClients.Count);
-            Debug.Log("서버 시작 완료.");
             UIManager.Instance.SetSeed();
-            // UIManager.Instance.OpenSessionUI();
-            // UIManager.Instance.OpenGameUI();
+            
+            Debug.Log("서버 시작 완료.");
+            // // UIManager.Instance.OpenSessionUI();
+            // // UIManager.Instance.OpenGameUI();
         }
 
         private void HandleClientStarted()

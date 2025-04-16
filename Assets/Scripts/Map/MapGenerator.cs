@@ -2601,7 +2601,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 
                 GameObject tileInstance = null;
                 Vector2Int tilePos = new Vector2Int(x, y);
-        
+                
                 if (tilePos == _posA)
                 {
                     tileInstance = Instantiate(startPointPrefab, basePos, Quaternion.identity);
@@ -2660,7 +2660,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                             break;
                         case TileType.River:
                             tileInstance = Instantiate(riverPrefab, basePos, Quaternion.identity);
-        
+                            
                             break;
                     }
                 }

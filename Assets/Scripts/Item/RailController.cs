@@ -120,7 +120,7 @@ public class RailController : MonoBehaviour
     {
         ResetRails();
         
-        Debug.Log("레일 상태: 앞=" + connectedFront + ", 뒤=" + connectedBack + ", 왼쪽=" + connectedLeft + ", 오른쪽=" + connectedRight);
+        // Debug.Log("레일 상태: 앞=" + connectedFront + ", 뒤=" + connectedBack + ", 왼쪽=" + connectedLeft + ", 오른쪽=" + connectedRight);
         
         // 연결된 레일의 수 계산
         int connectionCount = 0;
@@ -129,13 +129,13 @@ public class RailController : MonoBehaviour
         if (connectedLeft) connectionCount++;
         if (connectedRight) connectionCount++;
         
-        Debug.Log("연결된 레일 수: " + connectionCount);
+        // Debug.Log("연결된 레일 수: " + connectionCount);
         
         // 아무 레일도 감지되지 않았을 때 기본값으로 RailRight 활성화
         if (connectionCount == 0)
         {
             RailRight.SetActive(true);
-            Debug.Log("기본 오른쪽 레일 활성화");
+            // Debug.Log("기본 오른쪽 레일 활성화");
             return;
         }
         
@@ -145,22 +145,22 @@ public class RailController : MonoBehaviour
             if (connectedLeft)
             {
                 RailLeft.SetActive(true);
-                Debug.Log("왼쪽만 연결 - 왼쪽 레일 활성화");
+                // Debug.Log("왼쪽만 연결 - 왼쪽 레일 활성화");
             }
             else if (connectedRight)
             {
                 RailRight.SetActive(true);
-                Debug.Log("오른쪽만 연결 - 오른쪽 레일 활성화");
+                // Debug.Log("오른쪽만 연결 - 오른쪽 레일 활성화");
             }
             else if (connectedFront)
             {
                 RailUp.SetActive(true);
-                Debug.Log("앞쪽만 연결 - 위쪽 레일 활성화");
+                // Debug.Log("앞쪽만 연결 - 위쪽 레일 활성화");
             }
             else if (connectedBack)
             {
                 RailDown.SetActive(true);
-                Debug.Log("뒤쪽만 연결 - 아래쪽 레일 활성화");
+                // Debug.Log("뒤쪽만 연결 - 아래쪽 레일 활성화");
             }
             return;
         }
@@ -173,38 +173,38 @@ public class RailController : MonoBehaviour
             {
                 RailLeft.SetActive(true);
                 RailRight.SetActive(true);
-                Debug.Log("가로 직선 레일 활성화");
+                // Debug.Log("가로 직선 레일 활성화");
             }
             // 직선 레일 (세로)
             else if (connectedFront && connectedBack)
             {
                 RailUp.SetActive(true);
                 RailDown.SetActive(true);
-                Debug.Log("세로 직선 레일 활성화");
+                // Debug.Log("세로 직선 레일 활성화");
             }
             // 코너 레일 (왼쪽-위) - 수정된 부분
             else if (connectedLeft && connectedFront)
             {
                 RailLeftBottom.SetActive(true);
-                Debug.Log("왼쪽-위 코너 레일 활성화");
+                // Debug.Log("왼쪽-위 코너 레일 활성화");
             }
             // 코너 레일 (오른쪽-위)
             else if (connectedRight && connectedFront)
             {
                 RailRightTop.SetActive(true);
-                Debug.Log("오른쪽-위 코너 레일 활성화");
+                // Debug.Log("오른쪽-위 코너 레일 활성화");
             }
             // 코너 레일 (왼쪽-아래) - 수정된 부분
             else if (connectedLeft && connectedBack)
             {
                 RailLeftTop.SetActive(true);
-                Debug.Log("왼쪽-아래 코너 레일 활성화");
+                // Debug.Log("왼쪽-아래 코너 레일 활성화");
             }
             // 코너 레일 (오른쪽-아래)
             else if (connectedRight && connectedBack)
             {
                 RailRightBottom.SetActive(true);
-                Debug.Log("오른쪽-아래 코너 레일 활성화");
+                // Debug.Log("오른쪽-아래 코너 레일 활성화");
             }
         }
     }

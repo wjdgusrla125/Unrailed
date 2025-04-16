@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 436cf996e9674625ad29956eacdbb8e1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - frontTrainCar: {instanceID: 0}
+  - backTrainCar: {instanceID: 0}
+  - headPrefab: {instanceID: 0}
+  - waterTankPrefab: {instanceID: 0}
+  - chestBoxPrefab: {instanceID: 0}
+  - craftDeskPrefab: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
