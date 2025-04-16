@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3698892113573819539}
   - component: {fileID: 2489305500533505908}
   - component: {fileID: 7755480611165014605}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: ShopPlane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,7 +127,7 @@ MonoBehaviour:
   speed: 1
   detectableLayers:
     serializedVersion: 2
-    m_Bits: 320
+    m_Bits: 192
   IsJoinShop: 0
   IsExitShop: 0
   material: {fileID: 2100000, guid: 6ba90d0433fc8744ea0ecae4d1c754af, type: 2}

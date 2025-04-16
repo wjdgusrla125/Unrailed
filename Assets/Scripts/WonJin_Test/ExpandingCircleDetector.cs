@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class ExpandingCircleDetector : MonoBehaviour
 {
@@ -16,7 +16,7 @@ public class ExpandingCircleDetector : MonoBehaviour
     public Material material;        // Shader가 적용된 머티리얼
     public Transform planeTransform; // Plane 오브젝트의 Transform
 
-    private HashSet<GameObject> previouslyDetected = new HashSet<GameObject>();
+    HashSet<GameObject> previouslyDetected = new HashSet<GameObject>();
 
     public void JoinShop() => IsJoinShop = true;
     public void ExitShop() => IsExitShop = true;
@@ -48,6 +48,10 @@ public class ExpandingCircleDetector : MonoBehaviour
                 {
                     obj.transform.GetChild(0).gameObject.SetActive(true);
                 }
+                else
+                {
+                    obj.transform.gameObject.GetComponent<MeshRenderer>().enabled = true;
+                }
             }
             IsExitShop = false;
         }
@@ -56,11 +60,19 @@ public class ExpandingCircleDetector : MonoBehaviour
         if (IsJoinShop)
         {
             radius += speed * Time.deltaTime * 50f;
+            Debug.Log("ㅇㅇ");
+
             foreach (var obj in currentlyDetected)
             {
                 if (obj.transform.childCount > 0)
                 {
+
                     obj.transform.GetChild(0).gameObject.SetActive(false);
+
+                }
+                else
+                {
+                    obj.transform.gameObject.GetComponent<MeshRenderer>().enabled = false;
                 }
             }
         }
@@ -76,6 +88,10 @@ public class ExpandingCircleDetector : MonoBehaviour
                     if (obj.transform.childCount > 0)
                     {
                         obj.transform.GetChild(0).gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        obj.transform.gameObject.GetComponent<MeshRenderer>().enabled = true;
                     }
                 }
             }
