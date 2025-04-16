@@ -40,39 +40,63 @@ public class ExpandingCircleDetector : MonoBehaviour
         }
 
         if (material.GetFloat("_Radius") >= 1 && IsJoinShop) IsJoinShop = false;
+
         if (material.GetFloat("_Radius") <= 0 && IsExitShop)
         {
+            // 남아 있는 감지된 오브젝트 전부 복구
             foreach (var obj in currentlyDetected)
             {
                 if (obj.transform.childCount > 0)
                 {
-                    obj.transform.GetChild(0).gameObject.SetActive(true);
+                    if (obj.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+                        obj.transform.GetChild(0).gameObject.SetActive(false);
+                    else
+                        obj.transform.GetChild(0).gameObject.SetActive(true);
                 }
-                else
+                else if (obj.TryGetComponent<MeshRenderer>(out var renderer))
                 {
-                    obj.transform.gameObject.GetComponent<MeshRenderer>().enabled = true;
+                    renderer.enabled = true;
                 }
             }
+
+            // previouslyDetected에만 있던 애들도 복구
+            foreach (var obj in previouslyDetected)
+            {
+                if (!currentlyDetected.Contains(obj))
+                {
+                    if (obj.transform.childCount > 0)
+                    {
+                        if (obj.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+                            obj.transform.GetChild(0).gameObject.SetActive(false);
+                        else
+                            obj.transform.GetChild(0).gameObject.SetActive(true);
+                    }
+                    else if (obj.TryGetComponent<MeshRenderer>(out var renderer))
+                    {
+                        renderer.enabled = true;
+                    }
+                }
+            }
+
             IsExitShop = false;
         }
-        
 
         if (IsJoinShop)
         {
             radius += speed * Time.deltaTime * 50f;
-            Debug.Log("ㅇㅇ");
 
             foreach (var obj in currentlyDetected)
             {
                 if (obj.transform.childCount > 0)
                 {
-
-                    obj.transform.GetChild(0).gameObject.SetActive(false);
-
+                    if (obj.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+                        obj.transform.GetChild(0).gameObject.SetActive(true);
+                    else
+                        obj.transform.GetChild(0).gameObject.SetActive(false);
                 }
-                else
+                else if (obj.TryGetComponent<MeshRenderer>(out var renderer))
                 {
-                    obj.transform.gameObject.GetComponent<MeshRenderer>().enabled = false;
+                    renderer.enabled = false;
                 }
             }
         }
@@ -80,18 +104,20 @@ public class ExpandingCircleDetector : MonoBehaviour
         {
             radius -= speed * Time.deltaTime * 50f;
 
-            // 이전에는 감지됐는데 지금은 빠진 애들만 다시 SetActive
             foreach (var obj in previouslyDetected)
             {
                 if (!currentlyDetected.Contains(obj))
                 {
                     if (obj.transform.childCount > 0)
                     {
-                        obj.transform.GetChild(0).gameObject.SetActive(true);
+                        if (obj.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+                            obj.transform.GetChild(0).gameObject.SetActive(false);
+                        else
+                            obj.transform.GetChild(0).gameObject.SetActive(true);
                     }
-                    else
+                    else if (obj.TryGetComponent<MeshRenderer>(out var renderer))
                     {
-                        obj.transform.gameObject.GetComponent<MeshRenderer>().enabled = true;
+                        renderer.enabled = true;
                     }
                 }
             }
@@ -101,9 +127,9 @@ public class ExpandingCircleDetector : MonoBehaviour
         if (material != null && planeTransform != null)
         {
             float planeWorldSize = planeTransform.localScale.x * 10f;
-            if (radius == 1)
-                return;
             float radiusNormalized = Mathf.Clamp01(radius / planeWorldSize);
+            if(radius == 1)
+                return;
             material.SetFloat("_Radius", radiusNormalized);
         }
 
