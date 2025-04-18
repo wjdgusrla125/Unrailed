@@ -7,7 +7,7 @@ public class PlayerInfo : MonoBehaviour
 {
     private Vector3 PlayerPos;
     private Vector3 PlayerFront;
-    private float rayDistance = 0.8f;
+    public float rayDistance = 0.8f;
     private float digwaitTime = 1f;
     
     [Header("플레이어 상태")]

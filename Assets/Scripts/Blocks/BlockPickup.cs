@@ -124,6 +124,43 @@ public class BlockPickup : NetworkBehaviour
     {
         if (!pressed || !IsOwner) return;
         
+        if (playerInfo.hitBlock == BlockType.Water && playerInfo.itemType == ItemType.WoodPlank && heldObjectStack.Count > 0)
+        {
+            // Check if the hit object has a BridgeController component
+            Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
+            RaycastHit hit;
+        
+            if (Physics.Raycast(ray, out hit, playerInfo.rayDistance))
+            {
+                BridgeController bridgeController = hit.collider.GetComponent<BridgeController>();
+                if (bridgeController != null)
+                {
+                    // Consume one wood plank and activate the bridge
+                    NetworkObject woodPlank = heldObjectStack.Pop();
+                    UpdateHeldObjectList();
+                
+                    if (heldObjectStack.Count == 0)
+                    {
+                        UpdatePlayerItemType(ItemType.None);
+                    }
+                
+                    // Remove the wood plank object
+                    if (IsServer)
+                    {
+                        woodPlank.Despawn();
+                    }
+                    else
+                    {
+                        RequestDespawnObjectServerRpc(woodPlank.NetworkObjectId);
+                    }
+                
+                    // Activate the bridge
+                    bridgeController.ActivateBridgeServerRpc();
+                    return;
+                }
+            }
+        }
+        
         if (playerInfo.hitBlock == BlockType.CraftingTable)
         {
             if (heldObjectStack.Count > 0 && playerInfo.CraftingTableObject != null)
@@ -745,6 +782,15 @@ public class BlockPickup : NetworkBehaviour
 
             // 데스크의 레일 카운트 감소
             deskInfo.GetRail();
+        }
+    }
+    
+    [ServerRpc]
+    private void RequestDespawnObjectServerRpc(ulong objectId, ServerRpcParams rpcParams = default)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
+        {
+            netObj.Despawn();
         }
     }
     
