@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
 
 public class BlockPickup : NetworkBehaviour
 {
@@ -20,11 +21,47 @@ public class BlockPickup : NetworkBehaviour
     
     private bool canInteract = false;
     public Tile currentTile = null;
-    
+
+    // 코루틴 관련 추가 한 부분 - 최원진
+    public bool IsTriggerOBJ = false;
+    public bool HoldInteract = false;
+    private Coroutine holdCoroutine;
+    public Vector3 TriggerOBJPos;
+    private GameObject ShopPanelOBJ;
+        
     [SerializeField] private PlayerInfo playerInfo;
     private const int maxStackSize = 4;
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.2f, 0);
-    
+
+    // 코루틴 - 최원진
+    private IEnumerator HoldTimer()
+    {
+        float time = 0f;
+
+        while (time < 2f)
+        {
+            ExpandingCircleDetector.Instance.SetGuageBar(TriggerOBJPos, HoldInteract);
+            if (!HoldInteract)
+                yield break;
+
+            time += Time.deltaTime;
+            yield return null;
+        }
+        if(PlayerPoket.Instance.BuyItem(ShopPanelOBJ.GetComponent<ShopPanelInfo>().ShopCost))
+        {
+            if (ShopPanelOBJ.GetComponent<ShopPanelInfo>().ShopCost == 0)
+                ExpandingCircleDetector.Instance.ExitShop();
+            ShopPanelOBJ.GetComponent<ShopPanelInfo>().BuyAterCostUp();
+        }
+        else
+        {
+            // 여기는 구매 실패했을 때 코드.
+        }
+        HoldInteract = false;
+        holdCoroutine = null;
+    }
+
+
     private void OnEnable()
     {
         if (inputReader != null)
@@ -38,6 +75,31 @@ public class BlockPickup : NetworkBehaviour
         if (inputReader != null)
         {
             inputReader.InteractEvent -= OnInteract;
+        }
+    }
+
+    // Trigger 체크 - 최원진
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+        {
+            IsTriggerOBJ = true;
+            ShopPanelOBJ = other.gameObject;
+            TriggerOBJPos = other.transform.position - new Vector3 (0,0,1.7f);
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+        {
+            IsTriggerOBJ = false;
+            if (holdCoroutine != null)
+            {
+                StopCoroutine(holdCoroutine);
+                holdCoroutine = null;
+                ShopPanelOBJ = null;
+                ExpandingCircleDetector.Instance.SetGuageBar(TriggerOBJPos, false);
+            }
         }
     }
 
@@ -122,8 +184,31 @@ public class BlockPickup : NetworkBehaviour
     
     private void OnInteract(bool pressed)
     {
+        // 코루틴 관련 코드 - 최원진
+        if(ExpandingCircleDetector.Instance.GetJoin() && IsTriggerOBJ)
+        {
+            HoldInteract = pressed;
+            if (HoldInteract)
+            {
+                holdCoroutine = StartCoroutine(HoldTimer());
+            }
+            else
+            {
+                if (holdCoroutine != null)
+                {
+                    StopCoroutine(holdCoroutine);
+                    ExpandingCircleDetector.Instance.SetGuageBar(TriggerOBJPos, HoldInteract);
+                    holdCoroutine = null;
+                }
+            }
+        }
+
+        if (ExpandingCircleDetector.Instance.GetJoin() || ExpandingCircleDetector.Instance.GetExit())
+            return;
+
         if (!pressed || !IsOwner) return;
-        
+
+        // =======
         if (playerInfo.hitBlock == BlockType.CraftingTable)
         {
             if (heldObjectStack.Count > 0 && playerInfo.CraftingTableObject != null)
