@@ -22,7 +22,7 @@ public class BlockPickup : NetworkBehaviour
     public Tile currentTile = null;
     
     [SerializeField] private PlayerInfo playerInfo;
-    private const int maxStackSize = 4;
+    private const int maxStackSize = 3;
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.2f, 0);
     
     private void OnEnable()
@@ -30,6 +30,7 @@ public class BlockPickup : NetworkBehaviour
         if (inputReader != null)
         {
             inputReader.InteractEvent += OnInteract;
+            inputReader.OneRailEvent += OneRail;
         }
     }
 
@@ -38,6 +39,7 @@ public class BlockPickup : NetworkBehaviour
         if (inputReader != null)
         {
             inputReader.InteractEvent -= OnInteract;
+            inputReader.OneRailEvent -= OneRail;
         }
     }
 
@@ -190,6 +192,24 @@ public class BlockPickup : NetworkBehaviour
         }
     }
 
+    private void OneRail(bool pressed)
+    {
+        if (!pressed || !IsOwner) return;
+    
+        // 레일을 들고 있는지 확인
+        if (heldObjectStack.Count > 0 && playerInfo.itemType == ItemType.Rail && currentTile != null)
+        {
+            // 스택에서 맨 위의 레일 하나만 가져오기
+            NetworkObject railObject = heldObjectStack.Peek();
+        
+            // 타일에 레일 하나만 내려놓기
+            RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
+        
+            // 타일 업데이트
+            UpdateTileServerRpc(ItemType.Rail);
+        }
+    }
+
     private void HandlePickupFromTile()
     {
         int tileStackSize = currentTile.GetStackSize();
@@ -290,7 +310,7 @@ public class BlockPickup : NetworkBehaviour
                 RequestPickUpFromStackServerRpc(currentTile.NetworkObjectId);
             }
         }
-        else if (isSameItemType && areBothStackable && heldObjectStack.Count < maxStackSize && tileStackSize < (maxStackSize - heldObjectStack.Count))
+        else if (isSameItemType && areBothStackable && heldObjectStack.Count < maxStackSize && tileStackSize <= (maxStackSize - heldObjectStack.Count))
         {
             int itemsToPickup = Mathf.Min(tileStackSize, maxStackSize - heldObjectStack.Count);
             RequestAddToStackFromTileServerRpc(currentTile.NetworkObjectId, itemsToPickup);
