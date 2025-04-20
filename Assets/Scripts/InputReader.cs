@@ -9,6 +9,7 @@ public class InputReader : ScriptableObject, IPlayerActions
     public event Action<Vector2> MoveEvent;
     public event Action<bool> InteractEvent;
     public event Action<bool> DashEvent;
+    public event Action<bool> OneRailEvent;
     
     private Controls controls;
 
@@ -53,6 +54,18 @@ public class InputReader : ScriptableObject, IPlayerActions
         else if (context.canceled)
         {
             DashEvent?.Invoke(false);
+        }
+    }
+
+    public void OnOneRail(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            OneRailEvent?.Invoke(true);
+        }
+        else if (context.canceled)
+        {
+            OneRailEvent?.Invoke(false);
         }
     }
 }
