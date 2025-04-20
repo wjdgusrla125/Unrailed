@@ -9,8 +9,9 @@ public class InputReader : ScriptableObject, IPlayerActions
     public event Action<Vector2> MoveEvent;
     public event Action<bool> InteractEvent;
     public event Action<bool> DashEvent;
-    
+
     private Controls controls;
+    private bool isInteractPressed = false; // Interact 입력 상태를 추적하는 변수
 
     private void OnEnable()
     {
