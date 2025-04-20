@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 using System.Linq;
@@ -207,7 +207,6 @@ public class BlockPickup : NetworkBehaviour
             return;
 
         if (!pressed || !IsOwner) return;
-<<<<<<< .merge_file_K8Mpl8
         
         if (playerInfo.hitBlock == BlockType.Water && playerInfo.itemType == ItemType.WoodPlank && heldObjectStack.Count > 0)
         {
@@ -245,11 +244,7 @@ public class BlockPickup : NetworkBehaviour
                 }
             }
         }
-        
-=======
 
-        // =======
->>>>>>> .merge_file_NxpWpE
         if (playerInfo.hitBlock == BlockType.CraftingTable)
         {
             if (heldObjectStack.Count > 0 && playerInfo.CraftingTableObject != null)
@@ -1427,4 +1422,4 @@ public class BlockPickup : NetworkBehaviour
             }
         }
     }
-}
+}*/
