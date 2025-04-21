@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 2339249324351430343}
   - component: {fileID: -8191548499110812881}
   - component: {fileID: -1735918711652087457}
+  - component: {fileID: 7273326525325383623}
   m_Layer: 0
   m_Name: Env_Mountain 00
   m_TagString: Untagged
@@ -236,6 +237,23 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &7273326525325383623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5359016652996111843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 0
+  blockType: 0
+  DropGameObject:
+  - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
+  - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
 --- !u!1 &5359016653723862701
 GameObject:
   m_ObjectHideFlags: 0

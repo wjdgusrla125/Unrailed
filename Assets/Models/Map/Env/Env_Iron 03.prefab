@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 4932612492528084243}
   - component: {fileID: 1134764358269337688}
   - component: {fileID: 6266430948333360449}
+  - component: {fileID: -7689758826102434462}
   m_Layer: 18
   m_Name: Env_Iron 03
   m_TagString: Invisible
@@ -236,6 +237,26 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &-7689758826102434462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1191618286484348492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 3
+  blockType: 2
+  DropGameObject:
+  - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
+  - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
+  HitParticle: {fileID: 227030518030461873, guid: 5eddf77157eed0744b7ed08cff904e54, type: 3}
+  DestroyParticle: {fileID: 227030518030461873, guid: 35a6a980a4e6b464ca17094dadba19f0, type: 3}
+  MeshObjectCount: 0
 --- !u!1 &1191618287153936655
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
 
 public class BlockPickup : NetworkBehaviour
 {
@@ -11,20 +12,56 @@ public class BlockPickup : NetworkBehaviour
     public Vector3 boxSize;
     public LayerMask tileLayerMask;
     public InputReader inputReader;
-    
+
     private Stack<NetworkObject> heldObjectStack = new Stack<NetworkObject>();
-    
+
     [SerializeField] private List<NetworkObject> heldObjectList = new List<NetworkObject>();
-    
+
     public NetworkObject MainHeldObject => heldObjectStack.Count > 0 ? heldObjectStack.Peek() : null;
-    
+
     private bool canInteract = false;
     public Tile currentTile = null;
-    
+
+    // 코루틴 관련 추가 한 부분 - 최원진
+    public bool IsTriggerOBJ = false;
+    public bool HoldInteract = false;
+    private Coroutine holdCoroutine;
+    public Vector3 TriggerOBJPos;
+    private GameObject ShopPanelOBJ;
+
     [SerializeField] private PlayerInfo playerInfo;
-    private const int maxStackSize = 3;
+    private const int maxStackSize = 4;
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.2f, 0);
-    
+
+    // 코루틴 - 최원진
+    private IEnumerator HoldTimer()
+    {
+        float time = 0f;
+
+        while (time < 2f)
+        {
+            ExpandingCircleDetector.Instance.SetGuageBar(TriggerOBJPos, HoldInteract);
+            if (!HoldInteract)
+                yield break;
+
+            time += Time.deltaTime;
+            yield return null;
+        }
+        if (PlayerPoket.Instance.BuyItem(ShopPanelOBJ.GetComponent<ShopPanelInfo>().ShopCost))
+        {
+            if (ShopPanelOBJ.GetComponent<ShopPanelInfo>().ShopCost == 0)
+                ExpandingCircleDetector.Instance.ExitShop();
+            ShopPanelOBJ.GetComponent<ShopPanelInfo>().BuyAterCostUp();
+        }
+        else
+        {
+            // 여기는 구매 실패했을 때 코드.
+        }
+        HoldInteract = false;
+        holdCoroutine = null;
+    }
+
+
     private void OnEnable()
     {
         if (inputReader != null)
@@ -43,6 +80,31 @@ public class BlockPickup : NetworkBehaviour
         }
     }
 
+    // Trigger 체크 - 최원진
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+        {
+            IsTriggerOBJ = true;
+            ShopPanelOBJ = other.gameObject;
+            TriggerOBJPos = other.transform.position - new Vector3(0, 0, 1.7f);
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
+        {
+            IsTriggerOBJ = false;
+            if (holdCoroutine != null)
+            {
+                StopCoroutine(holdCoroutine);
+                holdCoroutine = null;
+                ShopPanelOBJ = null;
+                ExpandingCircleDetector.Instance.SetGuageBar(TriggerOBJPos, false);
+            }
+        }
+    }
+
     void Update()
     {
         if (IsOwner)
@@ -50,7 +112,7 @@ public class BlockPickup : NetworkBehaviour
             DetectTiles();
             canInteract = (currentTile != null);
         }
-        
+
         if (heldObjectStack.Count > 0)
         {
             NetworkObject mainObject = heldObjectStack.Peek();
@@ -58,32 +120,32 @@ public class BlockPickup : NetworkBehaviour
             {
                 Item heldItem = mainObject.GetComponent<Item>();
                 Transform holdPosition = handPosition;
-        
+
                 if (heldItem != null && heldItem.WithTwoHanded)
                 {
                     holdPosition = twoHandPosition;
                 }
-                
+
                 mainObject.transform.position = holdPosition.position;
                 mainObject.transform.rotation = holdPosition.rotation;
-            
+
                 UpdateStackedItemPositions(holdPosition);
             }
         }
     }
-    
+
     private void DetectTiles()
     {
         Vector3 boxCenter = transform.position + Vector3.down * (detectionDistance * 0.5f);
         Vector3 boxSize = new Vector3(0.8f, 0.2f, 0.8f);
-        
+
         Collider[] tileColliders = Physics.OverlapBox(boxCenter, boxSize * 0.5f, Quaternion.identity, tileLayerMask);
-        
+
         if (tileColliders.Length > 0)
         {
             float closestDistance = float.MaxValue;
             Tile closestTile = null;
-            
+
             foreach (Collider collider in tileColliders)
             {
                 Tile tile = collider.GetComponent<Tile>();
@@ -97,7 +159,7 @@ public class BlockPickup : NetworkBehaviour
                     }
                 }
             }
-            
+
             currentTile = closestTile;
         }
         else
@@ -105,11 +167,11 @@ public class BlockPickup : NetworkBehaviour
             currentTile = null;
         }
     }
-    
+
     private void UpdateStackedItemPositions(Transform basePosition)
     {
         NetworkObject[] stackArray = heldObjectStack.ToArray();
-        
+
         for (int i = 1; i < stackArray.Length; i++)
         {
             NetworkObject stackedObject = stackArray[i];
@@ -121,17 +183,39 @@ public class BlockPickup : NetworkBehaviour
             }
         }
     }
-    
+
     private void OnInteract(bool pressed)
     {
+        // 코루틴 관련 코드 - 최원진
+        if (ExpandingCircleDetector.Instance.GetJoin() && IsTriggerOBJ)
+        {
+            HoldInteract = pressed;
+            if (HoldInteract)
+            {
+                holdCoroutine = StartCoroutine(HoldTimer());
+            }
+            else
+            {
+                if (holdCoroutine != null)
+                {
+                    StopCoroutine(holdCoroutine);
+                    ExpandingCircleDetector.Instance.SetGuageBar(TriggerOBJPos, HoldInteract);
+                    holdCoroutine = null;
+                }
+            }
+        }
+
+        if (ExpandingCircleDetector.Instance.GetJoin() || ExpandingCircleDetector.Instance.GetExit())
+            return;
+
         if (!pressed || !IsOwner) return;
-        
+
         if (playerInfo.hitBlock == BlockType.Water && playerInfo.itemType == ItemType.WoodPlank && heldObjectStack.Count > 0)
         {
             // Check if the hit object has a BridgeController component
             Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
             RaycastHit hit;
-        
+
             if (Physics.Raycast(ray, out hit, playerInfo.rayDistance))
             {
                 BridgeController bridgeController = hit.collider.GetComponent<BridgeController>();
@@ -140,12 +224,12 @@ public class BlockPickup : NetworkBehaviour
                     // Consume one wood plank and activate the bridge
                     NetworkObject woodPlank = heldObjectStack.Pop();
                     UpdateHeldObjectList();
-                
+
                     if (heldObjectStack.Count == 0)
                     {
                         UpdatePlayerItemType(ItemType.None);
                     }
-                
+
                     // Remove the wood plank object
                     if (IsServer)
                     {
@@ -155,14 +239,14 @@ public class BlockPickup : NetworkBehaviour
                     {
                         RequestDespawnObjectServerRpc(woodPlank.NetworkObjectId);
                     }
-                
+
                     // Activate the bridge
                     bridgeController.ActivateBridgeServerRpc();
                     return;
                 }
             }
         }
-        
+
         if (playerInfo.hitBlock == BlockType.CraftingTable)
         {
             if (heldObjectStack.Count > 0 && playerInfo.CraftingTableObject != null)
@@ -178,10 +262,10 @@ public class BlockPickup : NetworkBehaviour
                 RequestRailFromDeskServerRpc(playerInfo.deskInfo.NetworkObjectId);
             }
         }
-        
+
         int tileStackSize = currentTile.GetStackSize();
         bool hasTileItems = tileStackSize > 0;
-        
+
         if (heldObjectStack.Count == 0 && hasTileItems)
         {
             HandlePickupFromTile();
@@ -195,16 +279,16 @@ public class BlockPickup : NetworkBehaviour
     private void OneRail(bool pressed)
     {
         if (!pressed || !IsOwner) return;
-    
+
         // 레일을 들고 있는지 확인
         if (heldObjectStack.Count > 0 && playerInfo.itemType == ItemType.Rail && currentTile != null)
         {
             // 스택에서 맨 위의 레일 하나만 가져오기
             NetworkObject railObject = heldObjectStack.Peek();
-        
+
             // 타일에 레일 하나만 내려놓기
             RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
-        
+
             // 타일 업데이트
             UpdateTileServerRpc(ItemType.Rail);
         }
@@ -213,15 +297,15 @@ public class BlockPickup : NetworkBehaviour
     private void HandlePickupFromTile()
     {
         int tileStackSize = currentTile.GetStackSize();
-        
+
         if (tileStackSize == 0) return;
-        
+
         NetworkObject topItem = GetTopStackedItem(currentTile);
         if (topItem == null) return;
-        
+
         Item itemComponent = topItem.GetComponent<Item>();
         if (itemComponent == null) return;
-        
+
         if (itemComponent.IsStackable && tileStackSize > 1)
         {
             int itemsToPickup = Mathf.Min(tileStackSize, maxStackSize);
@@ -236,17 +320,17 @@ public class BlockPickup : NetworkBehaviour
     private void HandlePlacementOnTile()
     {
         if (heldObjectStack.Count == 0) return;
-    
+
         NetworkObject mainObject = heldObjectStack.Peek();
-        
+
         Item heldItem = mainObject.GetComponent<Item>();
-        
+
         if (heldItem == null) return;
-    
+
         int tileStackSize = currentTile.GetStackSize();
-        
+
         bool isTileEmpty = tileStackSize == 0;
-        
+
         if (isTileEmpty)
         {
             if (heldObjectStack.Count > 1)
@@ -257,27 +341,27 @@ public class BlockPickup : NetworkBehaviour
             {
                 RequestDropOnTileServerRpc(mainObject.NetworkObjectId, currentTile.NetworkObjectId);
             }
-            
+
             UpdateTileServerRpc(heldItem.ItemType);
             return;
         }
-        
+
         NetworkObject topTileItem = GetTopStackedItem(currentTile);
         if (topTileItem == null) return;
-        
+
         Item tileItem = topTileItem.GetComponent<Item>();
         if (tileItem == null) return;
-        
+
         bool isSameItemType = heldItem.ItemType == tileItem.ItemType;
         bool areBothStackable = heldItem.IsStackable && tileItem.IsStackable;
-        
+
         if (heldItem.IsStackable && tileItem.IsStackable && !isSameItemType)
         {
             if (tileStackSize <= 3)
             {
                 NetworkObject[] playerItems = heldObjectStack.ToArray();
                 ulong[] playerItemIds = new ulong[playerItems.Length];
-        
+
                 for (int i = 0; i < playerItems.Length; i++)
                 {
                     playerItemIds[i] = playerItems[i].NetworkObjectId;
@@ -286,7 +370,7 @@ public class BlockPickup : NetworkBehaviour
             }
             return;
         }
-        
+
         if (heldObjectStack.Count >= maxStackSize && tileStackSize >= 1 && isSameItemType && areBothStackable)
         {
             RequestPlaceStackOnTileServerRpc(currentTile.NetworkObjectId);
@@ -297,7 +381,7 @@ public class BlockPickup : NetworkBehaviour
             {
                 NetworkObject[] playerItems = heldObjectStack.ToArray();
                 ulong[] playerItemIds = new ulong[playerItems.Length];
-        
+
                 for (int i = 0; i < playerItems.Length; i++)
                 {
                     playerItemIds[i] = playerItems[i].NetworkObjectId;
@@ -328,14 +412,14 @@ public class BlockPickup : NetworkBehaviour
     private void HandlePlacementOnTable()
     {
         if (heldObjectStack.Count == 0) return;
-    
+
         NetworkObject mainObject = heldObjectStack.Peek();
-    
+
         Item heldItem = mainObject.GetComponent<Item>();
-    
+
         if (heldItem == null) return;
         if (heldItem.ItemType != ItemType.Iron && heldItem.ItemType != ItemType.WoodPlank) return;
-    
+
         int woodStackSize = playerInfo.CraftingTableObject.GetWoodStackSize();
         int ironStackSize = playerInfo.CraftingTableObject.GetIronStackSize();
 
@@ -355,7 +439,7 @@ public class BlockPickup : NetworkBehaviour
                 }
             }
         }
-        else if(heldItem.ItemType == ItemType.Iron)
+        else if (heldItem.ItemType == ItemType.Iron)
         {
             if (playerInfo.CraftingTableObject.CanAddIron())
             {
@@ -383,18 +467,18 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null || tile.GetStackSize() == 0) return;
-    
+
         ulong clientId = rpcParams.Receive.SenderClientId;
-        
+
         count = Mathf.Min(count, maxStackSize, tile.GetStackSize());
-        
+
         ItemType tileItemType = tile.GetCurrentItemType();
-    
+
         List<ulong> itemIds = new List<ulong>();
-        
+
         for (int i = 0; i < count; i++)
         {
             ulong itemId = tile.RemoveTopItemFromStack();
@@ -402,11 +486,11 @@ public class BlockPickup : NetworkBehaviour
             {
                 continue;
             }
-        
+
             netObj.ChangeOwnership(clientId);
             itemIds.Add(itemId);
         }
-    
+
         if (itemIds.Count > 0)
         {
             UpdateTileStackClientRpc(tileId);
@@ -421,10 +505,10 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null || tile.GetStackSize() == 0) return;
-    
+
         ulong topItemId = tile.RemoveTopItemFromStack();
         if (topItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(topItemId, out NetworkObject netObj))
         {
@@ -432,22 +516,22 @@ public class BlockPickup : NetworkBehaviour
         }
 
         netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
-        
+
         UpdateTileStackClientRpc(tileId);
         AddToHeldStackClientRpc(topItemId, NetworkObjectId);
     }
-    
+
     [ServerRpc]
     void RequestAddToStackFromTileServerRpc(ulong tileId, int count, ServerRpcParams rpcParams = default)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
             return;
-            
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null || tile.GetStackSize() == 0) return;
-        
+
         count = Mathf.Min(count, maxStackSize - heldObjectStack.Count, tile.GetStackSize());
-        
+
         for (int i = 0; i < count; i++)
         {
             ulong itemId = tile.RemoveTopItemFromStack();
@@ -455,21 +539,21 @@ public class BlockPickup : NetworkBehaviour
             {
                 continue;
             }
-            
+
             netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
             AddToHeldStackClientRpc(itemId, NetworkObjectId);
         }
     }
-    
+
     //아이템 드랍 관련
     [ServerRpc]
     void RequestDropAllServerRpc(ServerRpcParams rpcParams = default)
     {
         if (heldObjectStack.Count == 0) return;
-        
+
         DropStackedItemsClientRpc();
     }
-    
+
     [ServerRpc]
     void RequestDropOnTileServerRpc(ulong objectId, ulong tileId, ServerRpcParams rpcParams = default)
     {
@@ -480,7 +564,7 @@ public class BlockPickup : NetworkBehaviour
         netObj.RemoveOwnership();
         DropObjectOnTileClientRpc(objectId, tileId);
     }
-    
+
     [ServerRpc]
     void RequestDropAllOnTileServerRpc(ulong mainObjectId, ulong tileId, ServerRpcParams rpcParams = default)
     {
@@ -491,7 +575,7 @@ public class BlockPickup : NetworkBehaviour
         netObj.RemoveOwnership();
         DropStackedItemsOnTileClientRpc(tileId);
     }
-    
+
     //아이템 스왑 관련
     [ServerRpc]
     void SwapObjectWithTileServerRpc(ulong heldObjectId, ulong newTargetId, ulong tileId, ServerRpcParams rpcParams = default)
@@ -504,12 +588,12 @@ public class BlockPickup : NetworkBehaviour
         }
 
         ulong clientId = rpcParams.Receive.SenderClientId;
-        
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null) return;
-        
+
         tile.RemoveTopItemFromStack();
-        
+
         if (heldObjectStack.Count > 1)
         {
             DropStackedItemsOnTileClientRpc(tileId);
@@ -519,11 +603,11 @@ public class BlockPickup : NetworkBehaviour
             heldNetObj.RemoveOwnership();
             DropObjectOnTileClientRpc(heldObjectId, tileId);
         }
-        
+
         newNetObj.ChangeOwnership(clientId);
         AddToHeldStackClientRpc(newTargetId, NetworkObjectId);
     }
-    
+
     [ServerRpc]
     void RequestSwapWithAllStackedItemsServerRpc(ulong heldObjectId, ulong tileId, ServerRpcParams rpcParams = default)
     {
@@ -532,39 +616,39 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null || tile.GetStackSize() == 0) return;
-    
+
         ulong clientId = rpcParams.Receive.SenderClientId;
-        
+
         NetworkObject[] stackArray = heldObjectStack.ToArray();
         heldObjectStack.Clear();
-        
+
         List<ulong> tileItemIds = new List<ulong>();
         int itemsToPickup = Mathf.Min(tile.GetStackSize(), maxStackSize);
-    
+
         for (int i = 0; i < itemsToPickup; i++)
         {
             ulong itemId = tile.RemoveTopItemFromStack();
             if (itemId == 0) continue;
-        
+
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemId, out NetworkObject netObj))
             {
                 netObj.ChangeOwnership(clientId);
                 tileItemIds.Add(itemId);
             }
         }
-        
+
         heldNetObj.RemoveOwnership();
         tile.AddItemToStack(heldObjectId);
-        
+
         Item heldItem = heldNetObj.GetComponent<Item>();
         if (heldItem != null)
         {
             tile.AddItem(heldItem.ItemType);
         }
-        
+
         if (tileItemIds.Count > 0)
         {
             SetHeldObjectStackClientRpc(tileItemIds.ToArray(), NetworkObjectId);
@@ -574,7 +658,7 @@ public class BlockPickup : NetworkBehaviour
             UpdatePlayerItemTypeClientRpc(ItemType.None, NetworkObjectId);
         }
     }
-    
+
     [ServerRpc]
     void RequestSwapStackWithSingleItemServerRpc(ulong tileId, ulong[] playerItemIds, ServerRpcParams rpcParams = default)
     {
@@ -590,13 +674,13 @@ public class BlockPickup : NetworkBehaviour
         }
 
         ulong clientId = rpcParams.Receive.SenderClientId;
-        
+
         ulong tileItemId = tile.PeekTopItemFromStack();
         if (tileItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileItemId, out NetworkObject tileItemObj))
         {
             return;
         }
-        
+
         ItemType playerItemType = ItemType.None;
         if (playerItemIds.Length > 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerItemIds[0], out NetworkObject firstItem))
         {
@@ -606,14 +690,14 @@ public class BlockPickup : NetworkBehaviour
                 playerItemType = item.ItemType;
             }
         }
-        
+
         tile.RemoveTopItemFromStack();
-        
+
         if (playerItemType != ItemType.None)
         {
             tile.AddItem(playerItemType);
         }
-        
+
         foreach (ulong id in playerItemIds)
         {
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject netObj))
@@ -622,10 +706,10 @@ public class BlockPickup : NetworkBehaviour
                 tile.ForceAddItemToStackFromServer(id);
             }
         }
-        
+
         UpdateTileStackClientRpc(tileId);
         tileItemObj.ChangeOwnership(clientId);
-        
+
         ulong[] singleItemArray = new ulong[] { tileItemId };
         SetHeldObjectStackClientRpc(singleItemArray, NetworkObjectId);
     }
@@ -637,15 +721,15 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-        
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null || tile.GetStackSize() == 0)
         {
             return;
         }
-        
+
         ulong clientId = rpcParams.Receive.SenderClientId;
-        
+
         ItemType playerItemType = ItemType.None;
         if (playerItemIds.Length > 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerItemIds[0], out NetworkObject firstItem))
         {
@@ -655,10 +739,10 @@ public class BlockPickup : NetworkBehaviour
                 playerItemType = item.ItemType;
             }
         }
-        
+
         List<ulong> tileItemIds = new List<ulong>();
         int tileStackSize = tile.GetStackSize();
-        
+
         for (int i = 0; i < tileStackSize; i++)
         {
             ulong itemId = tile.RemoveTopItemFromStack();
@@ -668,12 +752,12 @@ public class BlockPickup : NetworkBehaviour
                 tileItemIds.Add(itemId);
             }
         }
-        
+
         if (playerItemType != ItemType.None)
         {
             tile.AddItem(playerItemType);
         }
-        
+
         if (playerItemIds.Length > 0)
         {
             foreach (ulong id in playerItemIds)
@@ -686,7 +770,7 @@ public class BlockPickup : NetworkBehaviour
             }
             UpdateTileStackClientRpc(tileId);
         }
-        
+
         if (tileItemIds.Count > 0)
         {
             SetHeldObjectStackClientRpc(tileItemIds.ToArray(), NetworkObjectId);
@@ -696,14 +780,14 @@ public class BlockPickup : NetworkBehaviour
             UpdatePlayerItemTypeClientRpc(ItemType.None, NetworkObjectId);
         }
     }
-    
+
     //타일 업데이트 관련
     [ServerRpc]
     private void UpdateTileServerRpc(ItemType itemType, ServerRpcParams rpcParams = default)
     {
         UpdateTileClientRpc(itemType);
     }
-    
+
     [ServerRpc]
     void RequestPlaceStackOnTileServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
     {
@@ -712,7 +796,7 @@ public class BlockPickup : NetworkBehaviour
 
         DropStackedItemsOnTileClientRpc(tileId);
     }
-    
+
     //제작대 관련
     [ServerRpc]
     private void RequestDropAllOnWoodStackServerRpc(ulong mainObjectId, ulong stackId, ServerRpcParams rpcParams = default)
@@ -723,25 +807,25 @@ public class BlockPickup : NetworkBehaviour
         netObj.RemoveOwnership();
         DropStackedItemsOnWoodStackClientRpc(stackId);
     }
-    
+
     [ServerRpc]
     private void RequestDropAllOnIronStackServerRpc(ulong mainObjectId, ulong stackId, ServerRpcParams rpcParams = default)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(mainObjectId, out NetworkObject netObj) ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject tileObj))
             return;
-        
+
         netObj.RemoveOwnership();
         DropStackedItemsOnIronStackClientRpc(stackId);
     }
-    
+
     [ServerRpc]
     private void RequestDropPartialOnWoodStackServerRpc(ulong mainObjectId, ulong stackId, int count, ServerRpcParams rpcParams = default)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(mainObjectId, out NetworkObject netObj) ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject craftObj))
             return;
-    
+
         DropPartialItemsOnWoodStackClientRpc(stackId, count);
     }
 
@@ -751,10 +835,10 @@ public class BlockPickup : NetworkBehaviour
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(mainObjectId, out NetworkObject netObj) ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject craftObj))
             return;
-    
+
         DropPartialItemsOnIronStackClientRpc(stackId, count);
     }
-    
+
     [ServerRpc]
     private void RequestRailFromDeskServerRpc(ulong deskId, ServerRpcParams rpcParams = default)
     {
@@ -804,7 +888,7 @@ public class BlockPickup : NetworkBehaviour
             deskInfo.GetRail();
         }
     }
-    
+
     [ServerRpc]
     private void RequestDespawnObjectServerRpc(ulong objectId, ServerRpcParams rpcParams = default)
     {
@@ -813,7 +897,7 @@ public class BlockPickup : NetworkBehaviour
             netObj.Despawn();
         }
     }
-    
+
     #endregion
 
     #region ClientRPC
@@ -830,7 +914,7 @@ public class BlockPickup : NetworkBehaviour
 
         BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
         if (playerPickup == null) return;
-        
+
         if (playerPickup.IsLocalPlayer || playerPickup.IsOwner)
         {
             bool alreadyInStack = false;
@@ -842,24 +926,24 @@ public class BlockPickup : NetworkBehaviour
                     break;
                 }
             }
-            
+
             if (!alreadyInStack)
             {
                 playerPickup.heldObjectStack.Push(netObj);
                 playerPickup.UpdateHeldObjectList();
-            
+
                 Item heldItem = netObj.GetComponent<Item>();
                 if (heldItem != null && playerPickup.playerInfo != null)
                 {
                     playerPickup.UpdatePlayerItemType(heldItem.ItemType);
                 }
-                
-                Transform holdPosition = heldItem != null && heldItem.WithTwoHanded ? 
+
+                Transform holdPosition = heldItem != null && heldItem.WithTwoHanded ?
                     playerPickup.twoHandPosition : playerPickup.handPosition;
-                    
+
                 netObj.transform.position = holdPosition.position;
                 netObj.transform.rotation = holdPosition.rotation;
-                
+
                 playerPickup.UpdateStackedItemPositions(holdPosition);
             }
         }
@@ -867,17 +951,17 @@ public class BlockPickup : NetworkBehaviour
         {
             Transform holdPosition = playerPickup.handPosition;
             Item heldItem = netObj.GetComponent<Item>();
-            
+
             if (heldItem != null && heldItem.WithTwoHanded)
             {
                 holdPosition = playerPickup.twoHandPosition;
             }
-            
+
             netObj.transform.position = holdPosition.position;
             netObj.transform.rotation = holdPosition.rotation;
         }
     }
-    
+
     [ClientRpc]
     void SetHeldObjectStackClientRpc(ulong[] objectIds, ulong playerId)
     {
@@ -888,10 +972,10 @@ public class BlockPickup : NetworkBehaviour
 
         BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
         if (playerPickup == null) return;
-        
+
         Transform holdPosition = playerPickup.handPosition;
         ItemType itemType = ItemType.None;
-        
+
         if (playerPickup.IsLocalPlayer || playerPickup.IsOwner)
         {
             playerPickup.heldObjectStack.Clear();
@@ -901,14 +985,14 @@ public class BlockPickup : NetworkBehaviour
             for (int i = objectIds.Length - 1; i >= 0; i--)
             {
                 ulong objectId = objectIds[i];
-                
+
                 if (processedIds.Contains(objectId)) continue;
-                
+
                 if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
                 {
                     playerPickup.heldObjectStack.Push(netObj);
                     processedIds.Add(objectId);
-                    
+
                     if (i == 0)
                     {
                         Item item = netObj.GetComponent<Item>();
@@ -923,7 +1007,7 @@ public class BlockPickup : NetworkBehaviour
                     }
                 }
             }
-            
+
             playerPickup.UpdateHeldObjectList();
 
             if (playerPickup.playerInfo != null)
@@ -931,7 +1015,7 @@ public class BlockPickup : NetworkBehaviour
                 playerPickup.UpdatePlayerItemType(itemType);
             }
         }
-        
+
         for (int i = 0; i < objectIds.Length; i++)
         {
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectIds[i], out NetworkObject netObj))
@@ -942,7 +1026,7 @@ public class BlockPickup : NetworkBehaviour
             }
         }
     }
-    
+
     [ClientRpc]
     void UpdatePlayerItemTypeClientRpc(ItemType itemType, ulong playerId)
     {
@@ -950,7 +1034,7 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-    
+
         BlockPickup playerPickup = playerObj.GetComponent<BlockPickup>();
         if (playerPickup != null && playerPickup.IsOwner)
         {
@@ -973,16 +1057,16 @@ public class BlockPickup : NetworkBehaviour
             {
                 netObj.gameObject.SetActive(true);
                 netObj.transform.SetParent(null);
-                
+
                 if (IsServer)
                 {
                     netObj.RemoveOwnership();
                 }
-            
+
                 Vector3 position = transform.position;
                 position.y = 0.1f;
                 position += new Vector3(Random.Range(-dropOffset, dropOffset), 0, Random.Range(-dropOffset, dropOffset));
-            
+
                 netObj.transform.position = position;
                 netObj.transform.rotation = Quaternion.identity;
             }
@@ -992,17 +1076,17 @@ public class BlockPickup : NetworkBehaviour
         UpdateHeldObjectList();
         UpdatePlayerItemType(ItemType.None);
     }
-    
+
     [ClientRpc]
     private void DropObjectOnTileClientRpc(ulong objectId, ulong tileId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
             return;
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null) return;
-        
+
         if (IsServer)
         {
             tile.AddItemToStack(objectId);
@@ -1013,7 +1097,7 @@ public class BlockPickup : NetworkBehaviour
         {
             NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
             localPickup.heldObjectStack.Clear();
-        
+
             foreach (NetworkObject obj in stackArray)
             {
                 if (obj.NetworkObjectId != objectId)
@@ -1021,9 +1105,9 @@ public class BlockPickup : NetworkBehaviour
                     localPickup.heldObjectStack.Push(obj);
                 }
             }
-            
+
             localPickup.UpdateHeldObjectList();
-        
+
             if (localPickup.heldObjectStack.Count == 0)
             {
                 localPickup.UpdatePlayerItemType(ItemType.None);
@@ -1038,22 +1122,22 @@ public class BlockPickup : NetworkBehaviour
             }
         }
     }
-    
+
     [ClientRpc]
     private void DropStackedItemsOnTileClientRpc(ulong tileId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
             return;
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null) return;
 
         BlockPickup localPickup = GetLocalBlockPickup();
-        
+
         if (localPickup != null && (IsLocalPlayer || IsOwner))
         {
             ItemType itemType = ItemType.None;
-    
+
             if (localPickup.heldObjectStack.Count > 0)
             {
                 NetworkObject mainObject = localPickup.heldObjectStack.Peek();
@@ -1063,14 +1147,14 @@ public class BlockPickup : NetworkBehaviour
                     itemType = heldItem.ItemType;
                 }
             }
-    
+
             NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
-            
+
             if (itemType != ItemType.None)
             {
                 tile.AddItem(itemType);
             }
-    
+
             foreach (NetworkObject netObj in stackArray)
             {
                 if (netObj != null)
@@ -1080,13 +1164,13 @@ public class BlockPickup : NetworkBehaviour
                     tile.AddItemToStack(netObj.NetworkObjectId);
                 }
             }
-    
+
             localPickup.heldObjectStack.Clear();
             localPickup.UpdateHeldObjectList();
             localPickup.UpdatePlayerItemType(ItemType.None);
         }
     }
-    
+
     //타일 업데이트 관련
     [ClientRpc]
     private void UpdateTileClientRpc(ItemType itemType)
@@ -1096,7 +1180,7 @@ public class BlockPickup : NetworkBehaviour
             currentTile.AddItem(itemType);
         }
     }
-    
+
     [ClientRpc]
     void UpdateTileStackClientRpc(ulong tileId)
     {
@@ -1104,30 +1188,30 @@ public class BlockPickup : NetworkBehaviour
         {
             return;
         }
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile != null)
         {
             tile.UpdateVisibleStack();
         }
     }
-    
+
     //제작대 관련
     [ClientRpc]
     private void DropStackedItemsOnWoodStackClientRpc(ulong stackId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject stackObj))
             return;
-        
+
         CraftingTable craftingTable = stackObj.GetComponent<CraftingTable>();
-        if(craftingTable == null) return;
-        
+        if (craftingTable == null) return;
+
         BlockPickup localPickup = GetLocalBlockPickup();
-        
+
         if (localPickup != null && (IsLocalPlayer || IsOwner))
         {
             ItemType itemType = ItemType.None;
-    
+
             if (localPickup.heldObjectStack.Count > 0)
             {
                 NetworkObject mainObject = localPickup.heldObjectStack.Peek();
@@ -1137,9 +1221,9 @@ public class BlockPickup : NetworkBehaviour
                     itemType = heldItem.ItemType;
                 }
             }
-    
+
             NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
-            
+
             foreach (NetworkObject netObj in stackArray)
             {
                 if (netObj != null)
@@ -1149,28 +1233,28 @@ public class BlockPickup : NetworkBehaviour
                     craftingTable.AddWoodItem(netObj.NetworkObjectId);
                 }
             }
-    
+
             localPickup.heldObjectStack.Clear();
             localPickup.UpdateHeldObjectList();
             localPickup.UpdatePlayerItemType(ItemType.None);
         }
     }
-    
+
     [ClientRpc]
     private void DropStackedItemsOnIronStackClientRpc(ulong stackId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject stackObj))
             return;
-        
+
         CraftingTable craftingTable = stackObj.GetComponent<CraftingTable>();
-        if(craftingTable == null) return;
-        
+        if (craftingTable == null) return;
+
         BlockPickup localPickup = GetLocalBlockPickup();
-        
+
         if (localPickup != null && (IsLocalPlayer || IsOwner))
         {
             ItemType itemType = ItemType.None;
-    
+
             if (localPickup.heldObjectStack.Count > 0)
             {
                 NetworkObject mainObject = localPickup.heldObjectStack.Peek();
@@ -1180,9 +1264,9 @@ public class BlockPickup : NetworkBehaviour
                     itemType = heldItem.ItemType;
                 }
             }
-    
+
             NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
-            
+
             foreach (NetworkObject netObj in stackArray)
             {
                 if (netObj != null)
@@ -1192,24 +1276,24 @@ public class BlockPickup : NetworkBehaviour
                     craftingTable.AddIronItem(netObj.NetworkObjectId);
                 }
             }
-    
+
             localPickup.heldObjectStack.Clear();
             localPickup.UpdateHeldObjectList();
             localPickup.UpdatePlayerItemType(ItemType.None);
         }
     }
-    
+
     [ClientRpc]
     private void DropPartialItemsOnWoodStackClientRpc(ulong stackId, int count)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject stackObj))
             return;
-        
+
         CraftingTable craftingTable = stackObj.GetComponent<CraftingTable>();
-        if(craftingTable == null) return;
-        
+        if (craftingTable == null) return;
+
         BlockPickup localPickup = GetLocalBlockPickup();
-        
+
         if (localPickup != null && (IsLocalPlayer || IsOwner))
         {
             if (localPickup.heldObjectStack.Count > 0)
@@ -1217,7 +1301,7 @@ public class BlockPickup : NetworkBehaviour
                 // 들고 있는 아이템을 임시 리스트에 복사
                 List<NetworkObject> tempStack = new List<NetworkObject>(localPickup.heldObjectStack);
                 localPickup.heldObjectStack.Clear();
-                
+
                 // count만큼만 크래프팅 테이블에 추가
                 for (int i = 0; i < count && i < tempStack.Count; i++)
                 {
@@ -1229,15 +1313,15 @@ public class BlockPickup : NetworkBehaviour
                         craftingTable.AddWoodItem(netObj.NetworkObjectId);
                     }
                 }
-                
+
                 // 나머지 아이템은 다시 플레이어 스택에 추가
                 for (int i = count; i < tempStack.Count; i++)
                 {
                     localPickup.heldObjectStack.Push(tempStack[i]);
                 }
-                
+
                 localPickup.UpdateHeldObjectList();
-                
+
                 // 스택이 비어있으면 아이템 타입을 None으로 설정
                 if (localPickup.heldObjectStack.Count == 0)
                 {
@@ -1261,12 +1345,12 @@ public class BlockPickup : NetworkBehaviour
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stackId, out NetworkObject stackObj))
             return;
-        
+
         CraftingTable craftingTable = stackObj.GetComponent<CraftingTable>();
-        if(craftingTable == null) return;
-        
+        if (craftingTable == null) return;
+
         BlockPickup localPickup = GetLocalBlockPickup();
-        
+
         if (localPickup != null && (IsLocalPlayer || IsOwner))
         {
             if (localPickup.heldObjectStack.Count > 0)
@@ -1274,7 +1358,7 @@ public class BlockPickup : NetworkBehaviour
                 // 들고 있는 아이템을 임시 리스트에 복사
                 List<NetworkObject> tempStack = new List<NetworkObject>(localPickup.heldObjectStack);
                 localPickup.heldObjectStack.Clear();
-                
+
                 // count만큼만 크래프팅 테이블에 추가
                 for (int i = 0; i < count && i < tempStack.Count; i++)
                 {
@@ -1286,15 +1370,15 @@ public class BlockPickup : NetworkBehaviour
                         craftingTable.AddIronItem(netObj.NetworkObjectId);
                     }
                 }
-                
+
                 // 나머지 아이템은 다시 플레이어 스택에 추가
                 for (int i = count; i < tempStack.Count; i++)
                 {
                     localPickup.heldObjectStack.Push(tempStack[i]);
                 }
-                
+
                 localPickup.UpdateHeldObjectList();
-                
+
                 // 스택이 비어있으면 아이템 타입을 None으로 설정
                 if (localPickup.heldObjectStack.Count == 0)
                 {
@@ -1312,9 +1396,9 @@ public class BlockPickup : NetworkBehaviour
             }
         }
     }
-    
+
     #endregion
-    
+
     private void UpdatePlayerItemType(ItemType type)
     {
         if (playerInfo != null)
@@ -1322,19 +1406,19 @@ public class BlockPickup : NetworkBehaviour
             playerInfo.SetItemType(type);
         }
     }
-    
+
     public NetworkObject GetTopStackedItem(Tile tile)
     {
         if (tile == null || tile.GetStackSize() == 0) return null;
-    
+
         ulong topItemId = tile.PeekTopItemFromStack();
 
-        if (topItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(topItemId, out NetworkObject netObj)) 
+        if (topItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(topItemId, out NetworkObject netObj))
             return null;
-        
+
         return netObj;
     }
-    
+
     private BlockPickup GetLocalBlockPickup()
     {
         foreach (var player in FindObjectsOfType<BlockPickup>())
@@ -1346,7 +1430,7 @@ public class BlockPickup : NetworkBehaviour
         }
         return null;
     }
-    
+
     private void UpdateHeldObjectList()
     {
         heldObjectList.Clear();
