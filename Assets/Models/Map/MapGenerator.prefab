@@ -69,8 +69,8 @@ MonoBehaviour:
   clusterPrefab: {fileID: 5415564128649301798, guid: b0a18d9106d02aa4b82a52cbea6ca75c, type: 3}
   grass0Prefab: {fileID: 3258400204647497964, guid: 7bdb7df4dbdca624baa75c5257ac8f65, type: 3}
   grass1Prefab: {fileID: 3258400204647497964, guid: 348ea7d36941d334ebb03828f4c552ca, type: 3}
-  wood0Prefab: {fileID: 3258400204647497964, guid: 2ac2f5ed8d1e2764c850606c5dfb2cd1, type: 3}
-  wood1Prefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
+  wood0Prefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
+  wood1Prefab: {fileID: 3258400204647497964, guid: 2ac2f5ed8d1e2764c850606c5dfb2cd1, type: 3}
   iron0Prefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
   iron1Prefab: {fileID: 3258400204647497964, guid: 049de7cfe090ed84d9cc791a64e4a160, type: 3}
   mountain0Prefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}

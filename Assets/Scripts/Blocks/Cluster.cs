@@ -24,6 +24,9 @@ public class Cluster : NetworkBehaviour
     //타일 스폰 애니메이션
     private IEnumerator SpawnCoroutine(int delay)
     {
+        float fadeDuration = isSpecial ? 0f : 3.0f;
+        float moveDuration = isSpecial ? 0f : 2.5f;
+        
         Vector3 finalPos;
         if (ClusterGroup is { Direction: ClusterDirection.Upper })
             finalPos = transform.position + Vector3.down * _spawnOffset;
@@ -39,6 +42,11 @@ public class Cluster : NetworkBehaviour
         }
 
         yield return new WaitForSeconds(delay * 0.02f);
+
+        if (isSpecial)
+        {
+            RpcManager.Instance.ToggleLoadingScreenRpc(false);
+        }
 
         // 레일 생성
         if (MapGenerator.Instance.IsInitialGeneration && ClusterGroup.Tiles.Contains(MapGenerator.Instance.GetPosA()))
@@ -62,12 +70,11 @@ public class Cluster : NetworkBehaviour
                 block.SetRendererActive(true);
             if (block is StartPoint or EndPoint)
             {
-                block.StartCoroutine(block.AnimateEnvDrop(3.0f, _spawnOffset * 2));
+                block.StartCoroutine(block.AnimateEnvDrop(fadeDuration, _spawnOffset * 2));
             }
         }
 
         // 클러스터 위치 이동 애니메이션
-        float moveDuration = 2.5f;
         float elapsed = 0f;
         Vector3 startPos = transform.position;
         while (elapsed < moveDuration)

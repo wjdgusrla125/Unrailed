@@ -25,6 +25,14 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         }
     }
 
+    //로딩스크린을 토글한다.
+    [Rpc(SendTo.Everyone)]
+    public void ToggleLoadingScreenRpc(bool open)
+    {
+        if (UIManager.Instance.IsLoading == open || !NetworkManager.Singleton.IsHost) return;
+        UIManager.Instance.ToggleLoadingScreen(open);
+    }
+
     #endregion
     
     #region 맵 생성 RPC

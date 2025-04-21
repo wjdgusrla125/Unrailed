@@ -1,8 +1,10 @@
 ﻿
 
+using System;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class UIManager: NetworkSingletonManager<UIManager>
@@ -13,10 +15,13 @@ public class UIManager: NetworkSingletonManager<UIManager>
     [SerializeField]private GameObject lobbyUI;
     [SerializeField]private GameObject sessionUI;
     [SerializeField]private GameObject gameUI;
+    [SerializeField]private GameObject loadingScreen;
     
     [SerializeField]private Button startButton;
     [SerializeField]private TextMeshProUGUI startButtonText;
-
+    
+    [NonSerialized]public bool IsLoading = false;
+    
     //서버 시작
     public void StartHost()
     {
@@ -77,7 +82,14 @@ public class UIManager: NetworkSingletonManager<UIManager>
     public void OnStartGameClicked()
     {
         // Debug.Log("버튼클릭");
+        
         RpcManager.Instance.StartGameClientRpc();
+        RpcManager.Instance.ToggleLoadingScreenRpc(true);
+    }
+    public void ToggleLoadingScreen(bool open)
+    {
+        IsLoading = open;
+        loadingScreen.SetActive(open);
     }
     
     

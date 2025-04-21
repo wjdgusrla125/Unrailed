@@ -2860,6 +2860,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #region 디버그 함수
 
+    [Header("디버그용 변수")]
     public int visitX;
     public int visitY;
     private int _checkCount;
