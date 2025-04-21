@@ -316,7 +316,7 @@ public abstract class Train : NetworkBehaviour
         
         transform.position = finalPos;
 
-        if (index == 3)
+        if (index == 3) //마지막 열차가 소환된 이후 열차 출발 카운트다운 시작
         {
             manager.StartTrainCount();
         }

@@ -9,11 +9,14 @@ public class TrainManager: MonoBehaviour
 {
     public Dictionary<int, Train> trains = new ();
     public RailController firstRail;
+    private CameraController _cameraController;
     [Header("기차 속도")] public float speed;
+    private const float START_COUNTDOWN = 5.0F;
 
     private void Awake()
     {
         if(NetworkManager.Singleton.IsServer) StartCoroutine(Spawn());
+        if (Camera.main != null) _cameraController = Camera.main.GetComponent<CameraController>();
         // firstRail = WorkSceneManager.Instance.firstRail;
     }
 
@@ -30,8 +33,6 @@ public class TrainManager: MonoBehaviour
             StopAllTrains();
         }
     }
-
-    private const float START_COUNTDOWN = 5.0F;
 
     public void StartTrainCount()
     {
@@ -52,7 +53,10 @@ public class TrainManager: MonoBehaviour
         Debug.Log("1초 전");
 
         yield return new WaitForSeconds(1f);
-        // StartAllTrains();
+        
+        _cameraController.InitCamera(this);
+        _cameraController.StartCamera();
+        StartAllTrains();
     }
 
     public void StartAllTrains()
