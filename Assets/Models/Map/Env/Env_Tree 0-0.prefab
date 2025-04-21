@@ -335,6 +335,7 @@ GameObject:
   - component: {fileID: 1002665952210386064}
   - component: {fileID: -2422026759038212155}
   - component: {fileID: -675421336297785047}
+  - component: {fileID: 3410541983641695731}
   m_Layer: 18
   m_Name: Env_Tree 0-0
   m_TagString: Invisible
@@ -440,6 +441,26 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &3410541983641695731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5019990921700754394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 3
+  blockType: 1
+  DropGameObject:
+  - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
+  - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
+  HitParticle: {fileID: 227030518030461873, guid: ce108df7694058e4396b99bf73014c10, type: 3}
+  DestroyParticle: {fileID: 227030518030461873, guid: 01c9349d26f608444a308f5c6d82bc89, type: 3}
+  MeshObjectCount: 0
 --- !u!1 &5019990921733027023
 GameObject:
   m_ObjectHideFlags: 0
