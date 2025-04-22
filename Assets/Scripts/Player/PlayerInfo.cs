@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using Unity.AppUI.UI;
 using UnityEngine;
 
 public class PlayerInfo : MonoBehaviour
@@ -21,11 +23,23 @@ public class PlayerInfo : MonoBehaviour
     public CraftingTable CraftingTableObject;
     public DeskInfo deskInfo;
 
-    private Coroutine digCoroutine;
+    [Header("양동이 체크")]
+    public GameObject Bucket;
 
+    private Coroutine digCoroutine;
+    private Coroutine waterCoroutine;
+
+    public void Start()
+    {
+        BucketInfo temp = FindObjectOfType<BucketInfo>();
+        Bucket = temp.gameObject;
+    }
     public void Update()
     {
-        PlayerRaycast();
+        if (itemType == ItemType.WaterInBucket)
+            WaterRaycast();
+        else
+            PlayerRaycast();
     }
 
     public void SetItemType(ItemType newItemType)
@@ -70,6 +84,11 @@ public class PlayerInfo : MonoBehaviour
                 StopCoroutine(digCoroutine);
                 digCoroutine = null;
             }
+            if(waterCoroutine != null)
+            {
+                StopCoroutine(waterCoroutine);
+                waterCoroutine = null;
+            }
         }
 
         Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
@@ -103,13 +122,30 @@ public class PlayerInfo : MonoBehaviour
                 blockType = breakable.BlockTypeProperty;
             }
 
-            if (blockType == BlockType.None) return;
+            if (blockType == BlockType.None && hit.collider.gameObject.GetComponent<BurnTrainObject>() == null) return;
 
             hitBlock = blockType;
             hitOBJ = hit.collider.gameObject;
 
-            // Dig 조건 체크 및 코루틴 실행
-            if (!IsDig && digCoroutine == null)
+            // 불 끄는 체크 및 코루틴 실행.
+            if(blockType == BlockType.None)
+            {
+
+                if (hitOBJ.GetComponent<BurnTrainObject>().Isburn)
+                {
+                    hitOBJ.GetComponent<BurnTrainObject>().Isburn = false;
+                }
+                return;
+            }
+
+            // 물 뜨는 체크 및 코루틴 실행.
+            if(blockType == BlockType.Water && HandleCheckDigBlock() && waterCoroutine == null && itemType == ItemType.Bucket)
+            {
+                waterCoroutine = StartCoroutine(BucketInWaterCorutine());
+            }
+
+            // Dig 조건 체크 및 코루틴 실행.
+            if (!IsDig && digCoroutine == null && blockType != BlockType.Water)
             {
                 digCoroutine = StartCoroutine(DigBlockCorutine());
             }
@@ -132,6 +168,25 @@ public class PlayerInfo : MonoBehaviour
         Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
     }
 
+    private void WaterRaycast()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
+
+        if (hits.Length > 0)
+        {
+            Debug.Log("감지됨");
+            foreach(Collider col in hits)
+            {
+                if (col.gameObject.GetComponent<BurnTrainObject>().Isburn)
+                {
+                    col.gameObject.GetComponent<BurnTrainObject>().Isburn = false;
+                    itemType = ItemType.Bucket;
+                    Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
+                }
+            }
+        }
+        
+    }
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
@@ -142,5 +197,20 @@ public class PlayerInfo : MonoBehaviour
         }
 
         digCoroutine = null;
+    }
+
+    IEnumerator BucketInWaterCorutine()
+    {
+        yield return new WaitForSeconds(digwaitTime);
+        itemType = ItemType.WaterInBucket;
+        Bucket.GetComponent<Item>().ItemType = ItemType.WaterInBucket;
+        waterCoroutine = null;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        // 편의를 위해 Scene 뷰에 감지 범위를 그려줌
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(gameObject.transform.position, 0.8f);
     }
 }
