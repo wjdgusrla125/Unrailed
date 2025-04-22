@@ -10,27 +10,23 @@ public abstract class Train : NetworkBehaviour
 
     protected enum TrainType
     {
-        Head,      // 기차 머리
+        Head, // 기차 머리
         WaterTank, // 물탱크
-        ChestBox,  // 재료보관함
+        ChestBox, // 재료보관함
         CraftDesk, // 작업대
     }
 
     [SerializeField] protected TrainManager manager; // 모든 기차를 관리하는 매니저
 
-    [Header("기차 번호 (0~)")]
-    [SerializeField]
+    [Header("기차 번호 (0~)")] [SerializeField]
     protected int index; // 기차 번호(머리는 고정으로 0)
 
-    [Header("기차 속도")]
-    protected float Speed => manager.speed;
+    [Header("기차 속도")] protected float Speed => manager.speed;
 
-    [Header("앞/뒤 기차")]
-    [SerializeField] protected Train frontTrainCar;
+    [Header("앞/뒤 기차")] [SerializeField] protected Train frontTrainCar;
     [SerializeField] protected Train backTrainCar;
 
-    [Header("기차 프리팹")]
-    [SerializeField] protected GameObject headPrefab;
+    [Header("기차 프리팹")] [SerializeField] protected GameObject headPrefab;
     [SerializeField] protected GameObject waterTankPrefab;
     [SerializeField] protected GameObject chestBoxPrefab;
     [SerializeField] protected GameObject craftDeskPrefab;
@@ -39,8 +35,8 @@ public abstract class Train : NetworkBehaviour
     private readonly Vector3 HEAD_OFFSET = new(0, 0.5f, 0);
     private readonly Vector3 OTHER_OFFSET = new(0, 0.35f, 0);
 
-    private RailController _passedRail;      // 지나친 레일
-    [SerializeField, Header("확인용")]protected RailController destinationRail; // 목적지 레일
+    private RailController _passedRail; // 지나친 레일
+    [SerializeField, Header("확인용")] protected RailController destinationRail; // 목적지 레일
 
     // 기차 타입
     private TrainType _type;
@@ -69,7 +65,7 @@ public abstract class Train : NetworkBehaviour
         InitManager();
         InitPrefabs();
         InitPosition();
-        if(NetworkManager.Singleton.IsServer) InitTrainCar();
+        if (NetworkManager.Singleton.IsServer) InitTrainCar();
     }
 
     private void InitManager()
@@ -173,64 +169,70 @@ public abstract class Train : NetworkBehaviour
 
     private IEnumerator MoveToRail(bool isHead)
     {
-        while (destinationRail)
+        while (true)
         {
-            // 일시 정지 상태면 계속 대기
             while (isPaused)
                 yield return null;
 
-            if (destinationRail.nextRail)
+            if (destinationRail)
             {
-                RailController nextRailController = destinationRail.nextRail.GetComponent<RailController>();
-                if (!nextRailController)
+                float offsetY = this is Train_Head ? HEAD_OFFSET.y : OTHER_OFFSET.y;
+                Vector3 currentCenter = new Vector3(
+                    destinationRail.transform.position.x,
+                    offsetY,
+                    destinationRail.transform.position.z
+                );
+
+                if (destinationRail.nextRail)
                 {
-                    Debug.LogError("[MoveToRail] 다음 레일에 RailController 컴포넌트가 없음");
+                    var nextRailController = destinationRail.nextRail.GetComponent<RailController>();
+                    if (!nextRailController)
+                    {
+                        Debug.LogError("[MoveToRail] 다음 레일에 RailController 컴포넌트가 없음");
+                        yield break;
+                    }
+
+                    Vector3 nextCenter = new Vector3(
+                        nextRailController.transform.position.x,
+                        offsetY,
+                        nextRailController.transform.position.z
+                    );
+                    Vector3 nextDirection = (nextCenter - currentCenter).normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(nextDirection);
+                    Vector3 targetHead = isHead
+                        ? currentCenter + (targetRotation * Vector3.forward * 1f)
+                        : nextCenter;
+
+                    yield return StartCoroutine(MoveAndRotate(targetHead, targetRotation, isHead));
+                    SetDestinationRail(nextRailController);
+                }
+                else
+                {
+                    // 다음 레일 없음: 마지막 레일 중심까지 이동 후 게임오버 판단
+                    if (Vector3.Distance(transform.position, currentCenter) > 0.01f)
+                    {
+                        transform.position = Vector3.MoveTowards(
+                            transform.position,
+                            currentCenter,
+                            Speed * Time.deltaTime
+                        );
+                        yield return null;
+                        continue;
+                    }
+
+                    // 이미 중심에 도착했는데 nextRail이 추가되지 않음: 게임오버
+                    Debug.Log("게임오버");
                     break;
                 }
-
-                // 현재 rail 중심(A)와 다음 rail 중심(B) 계산 (Y는 HEAD_OFFSET 적용)
-                float offsetY = this is Train_Head ? HEAD_OFFSET.y : OTHER_OFFSET.y;
-                Vector3 currentCenter = new Vector3(destinationRail.transform.position.x, offsetY,
-                    destinationRail.transform.position.z);
-                Vector3 nextCenter = new Vector3(nextRailController.transform.position.x, offsetY,
-                    nextRailController.transform.position.z);
-
-                // 다음 rail로의 이동 방향과 목표 회전 계산 (레일의 연결 방향)
-                Vector3 nextDirection = (nextCenter - currentCenter).normalized;
-                Quaternion targetRotation = Quaternion.LookRotation(nextDirection);
-
-                // 목표 머리 위치 설정
-                float cellOffset = isHead ? 1f : 0f;
-                Vector3 targetHead = isHead
-                    ? currentCenter + (targetRotation * Vector3.forward * cellOffset)
-                    : nextCenter;
-
-                // 이동 및 회전 코루틴 호출
-                yield return StartCoroutine(MoveAndRotate(targetHead, targetRotation, isHead));
-
-                // 이동 완료 후, 다음 rail로 업데이트
-                SetDestinationRail(nextRailController);
             }
             else
             {
-                // 다음 rail이 없는 경우, 마지막 rail 중심으로 머리를 이동
-                Vector3 currentCenter = new Vector3(destinationRail.transform.position.x, HEAD_OFFSET.y,
-                    destinationRail.transform.position.z);
-                while (Vector3.Distance(transform.position, currentCenter) > 0.01f)
-                {
-                    while (isPaused)
-                        yield return null;
-
-                    transform.position = Vector3.MoveTowards(transform.position, currentCenter, Speed * Time.deltaTime);
-                    yield return null;
-                }
-
-                Debug.Log("[MoveToRail] 기차가 레일 끝에 도달");
+                // 목적지 레일 자체가 없을 때
+                Debug.LogWarning("목표 레일이 없음");
                 break;
             }
         }
 
-        Debug.Log("목적지 없음2");
         movementCoroutine = null;
     }
 
@@ -291,17 +293,17 @@ public abstract class Train : NetworkBehaviour
     private void UpdateTrainCar(TrainType trainType)
     {
     }
-    
+
     public void PlaySpawnAnimation(float spawnOffset)
     {
         StartCoroutine(SpawnCoroutine(spawnOffset));
     }
-    
+
     //스폰 애니메이션
     private IEnumerator SpawnCoroutine(float spawnOffset)
     {
         Vector3 finalPos = transform.position + Vector3.down * spawnOffset;
-        
+
         float moveDuration = 2.5f;
         float elapsed = 0f;
         Vector3 startPos = transform.position;
@@ -313,7 +315,7 @@ public abstract class Train : NetworkBehaviour
             transform.position = Vector3.Lerp(startPos, finalPos, easedT);
             yield return null;
         }
-        
+
         transform.position = finalPos;
 
         if (index == 3) //마지막 열차가 소환된 이후 열차 출발 카운트다운 시작
@@ -321,7 +323,7 @@ public abstract class Train : NetworkBehaviour
             manager.StartTrainCount();
         }
     }
-    
+
     private float EaseOutQuart(float t)
     {
         return 1f - Mathf.Pow(1f - t, 4f);
