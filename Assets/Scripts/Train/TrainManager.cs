@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Sound;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,14 +11,21 @@ public class TrainManager: MonoBehaviour
     public Dictionary<int, Train> trains = new ();
     public RailController firstRail;
     private CameraController _cameraController;
-    [Header("기차 속도")] public float speed;
+    public float Speed { get; private set; }
     private const float START_COUNTDOWN = 5.0F;
 
     private void Awake()
     {
         if(NetworkManager.Singleton.IsServer) StartCoroutine(Spawn());
         if (Camera.main != null) _cameraController = Camera.main.GetComponent<CameraController>();
+        GameManager.Instance.trainManager = this;
+        Speed = 0.1f;
         // firstRail = WorkSceneManager.Instance.firstRail;
+    }
+
+    public void SetSpeed(float value)
+    {
+        Speed = value;
     }
 
     private void Update()
@@ -42,21 +50,26 @@ public class TrainManager: MonoBehaviour
     private IEnumerator CountDownAndStart()
     {
         Debug.Log("카운트다운 시작");
-        
-        yield return new WaitForSeconds(START_COUNTDOWN - 3f);
-        Debug.Log("3초 전");
 
-        yield return new WaitForSeconds(1f);
-        Debug.Log("2초 전");
+        int maxDisplay = Mathf.Min(trains[0].countdownObject.Length, (int)START_COUNTDOWN);
 
-        yield return new WaitForSeconds(1f);
-        Debug.Log("1초 전");
+        if (START_COUNTDOWN > maxDisplay)
+            yield return new WaitForSeconds(START_COUNTDOWN - maxDisplay);
 
-        yield return new WaitForSeconds(1f);
-        
+        for (int n = maxDisplay; n >= 1; n--)
+        {
+            if (n <= 5)
+            {
+                trains[0].CallCountdown(n); //5초남았을때부터 카운트다운을 띄움
+            }
+            yield return new WaitForSeconds(1f);
+        }
+
+        trains[0].RecallCountdown();
         _cameraController.InitCamera(this);
         _cameraController.StartCamera();
         StartAllTrains();
+        SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[1], 0.5f);
     }
 
     public void StartAllTrains()
@@ -91,5 +104,11 @@ public class TrainManager: MonoBehaviour
         {
             keyValuePair.Value.PlaySpawnAnimation(MapGenerator.SPAWN_OFFSET);
         }
+    }
+
+    //게임 오버 시 기차 속도를 빠르게 함.
+    public void GameOver()
+    {
+        Speed = 0.8f;
     }
 }

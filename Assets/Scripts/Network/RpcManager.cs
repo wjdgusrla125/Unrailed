@@ -1,5 +1,6 @@
 ﻿
 
+using Sound;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,12 +13,21 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     }
 
     #region UI관련
+
+    [Rpc(SendTo.Everyone)]
+    public void ChangeGameStateRpc(int value)
+    {
+        GameManager.Instance.CurrentGameState = (GameState)value;
+    }
     
     //게임 시작 시 호출. UI를 인게임 UI로 변경하고, 맵을 생성한다.
     [Rpc(SendTo.Everyone)]
     public void StartGameClientRpc()
     {
         UIManager.Instance.OpenGameUI();
+        GameManager.Instance.CurrentGameState = GameState.InGame;
+        
+        SoundManager.Instance.FadeOutBGM();
 
         if (NetworkManager.Singleton.IsHost)
         {

@@ -220,7 +220,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (!NetworkManager.Singleton.IsServer) return;
             Debug.Log($"T입력, ({visitX}, {visitY}) visit 확인");
             CheckVisit();
-        }    
+        }
     }
 
     #endregion

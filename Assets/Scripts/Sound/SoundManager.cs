@@ -19,12 +19,12 @@ namespace Sound
     /// <para>PlaySound(SoundType, 위치, 강도, SoundGroup, 볼륨): 사운드를 재생하고, 소리의 위치와 강도를 이벤트로 발행함.<br/>
     /// ㄴ현재 사용되지 않음.</para>
     /// <para>PlayRandomSound(AudioClip[], SoundGroup, 볼륨, 위치) : 배열 내의 랜덤한 사운드를 1회 재생</para>
-    /// <para>PlaySoundsSeq(AudioClip, 태그, SoundGroup, 볼륨) : 태그별로 순차적으로 사운드를 재생함. 같은 태그의 사운드가 재생중이면 대기열에 추가됨.</para>
+    /// <para>PlaySoundsSeq(AudioClip, 태그, SoundGroup, 루프 여부, 볼륨) : 태그별로 순차적으로 사운드를 재생함. 같은 태그의 사운드가 재생중이면 대기열에 추가됨. 루프 여부를 true로 설정할 경우 무한재생됨.</para>
     /// <para>PlaySoundOverride(AudioClip, 태그, SoundGroup, 볼륨) : 같은 태그의 현재 재생중인 사운드를 중단하고 재생 대기열도 모두 취소한 뒤 새 사운드를 재생함.</para>
     /// <para>StopSound() : PlaySound 메소드로 실행된 모든 사운드를 재생 중지한다.</para>
     /// <para>StopSoundWithTag(태그) : 해당 태그의 현재 재생중인 사운드를 중단하고, 대기열을 지운다.</para>
     /// <para>StopAllSounds() : PlaySound 메소드로 실행된 모든 사운드와 태그가 있는 모든 사운드의 재생을 중단하고, 대기열을 지운다. (BGM 제외)</para>
-    /// <para>PlayBGM(AudioClip, 볼륨) : 실행 시 해당 사운드를 루프하여 재생한다. 재차 실행 시 FadeOut된 후 새로운 사운드가 FadeIn 된다. 또한, Resources/Sound/BGM 폴더에 있는 AudioClip들은 모두 SoundManager.Instance.bgmClips[]에 담기며, Start()에서 bgmClips[0]을 게임 시작 시 자동으로 재생한다.</para>
+    /// <para>PlayBGM(사운드, 볼륨, 대기시간) : 실행 시 대기시간이 지난 뒤 해당 사운드를 루프하여 재생한다. 재차 실행 시 FadeOut된 후 새로운 사운드가 FadeIn 된다. 또한, Resources/Sound/BGM 폴더에 있는 AudioClip들은 모두 SoundManager.Instance.bgmClip[]에 담기며, Start()에서 bgmClip[0]을 게임 시작 시 자동으로 재생한다.</para>
     /// <para>FadeOutBGM(시간) : 입력한 시간에 걸쳐 BGM을 FadeOut 시킨다. 기본값은 0.2초.</para>
     /// <para>FadeInBGM(시간, 볼륨) : 입력한 시간에 걸쳐 현재 볼륨에서 입력한 볼륨까지 BGM의 볼륨을 변화시킨다. 기본값은 0.2초.</para>
     /// <para>SaveVolumeSettings(): 호출 시 현재 믹서에 설정된 볼륨 값을 PlayerPrefs에 저장함</para>>
@@ -68,7 +68,7 @@ namespace Sound
         private AudioSource _sfxSource;
         private AudioSource _bgmSource; // BGM 전용 AudioSource
         private AudioSource _uiSource; // UI 사운드 전용 오디오소스
-        [HideInInspector] public AudioClip[] bgmClips;
+        public AudioClip[] bgmClips;
 
         private bool _isFading = false; // 페이드 상태를 추적하는 플래그
 
@@ -140,7 +140,6 @@ namespace Sound
         
         public void SetMasterVolume(float volume)
         {
-            Debug.Log($"마스터 볼륨 설정: {volume}");
             float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f; 
 
             mixer.SetFloat(MasterVolume, dB);
@@ -382,30 +381,52 @@ namespace Sound
         }
 
         /// <summary>
-        /// PlaySoundsSeq(AudioClip, 태그, SoundGroup, 볼륨) : 태그별로 순차적으로 사운드를 재생함. 같은 태그의 사운드가 재생중이면 대기열에 추가됨.
+        /// PlaySoundsSeq(AudioClip, 태그, SoundGroup, 루프 여부, 볼륨) : 태그별로 순차적으로 사운드를 재생함. 같은 태그의 사운드가 재생중이면 대기열에 추가됨. 루프 여부를 true로 설정할 경우 무한재생됨.
         /// </summary>
-        public void PlaySoundsSeq(AudioClip clip, string tagString = "Default", SoundGroup soundGroup = SoundGroup.Sfx, float volume = -1.0f)
+        public void PlaySoundsSeq(AudioClip clip, string tagString = "Default", SoundGroup soundGroup = SoundGroup.Sfx, bool loop = false, float volume = -1.0f)
         {
             if (!clip)
             {
                 Debug.Log($"PlaySoundsSeq: clip이 null임 (태그: {tagString})");
                 return;
             }
-
-            if (!_taggedSequentialQueues.ContainsKey(tagString))
+            
+            if (loop)
             {
-                _taggedSequentialQueues[tagString] = new Queue<AudioClip>();
-                _isPlayingSequential[tagString] = false;
-                _sequentialVolumes[tagString] = -1.0f;
+                // AudioSource가 없으면 새로 생성
+                if (!_taggedAudioSources.ContainsKey(tagString))
+                {
+                    GameObject audioSourceObj = new GameObject($"AudioSource_{tagString}");
+                    audioSourceObj.transform.SetParent(this.transform);
+                    AudioSource src = audioSourceObj.AddComponent<AudioSource>();
+                    src.outputAudioMixerGroup = GetMixerGroup(soundGroup);
+                    _taggedAudioSources[tagString] = src;
+                }
+
+                AudioSource loopSource = _taggedAudioSources[tagString];
+                loopSource.loop = true;
+                loopSource.clip = clip;
+                loopSource.volume = CalculateVolume(volume);
+                loopSource.Play();
+            }
+            else
+            {
+                if (!_taggedSequentialQueues.ContainsKey(tagString))
+                {
+                    _taggedSequentialQueues[tagString] = new Queue<AudioClip>();
+                    _isPlayingSequential[tagString] = false;
+                    _sequentialVolumes[tagString] = -1.0f;
+                }
+
+                _taggedSequentialQueues[tagString].Enqueue(clip);
+                _sequentialVolumes[tagString] = volume;
+
+                if (!_isPlayingSequential[tagString] && !_activeOverrideCoroutines.ContainsKey(tagString))
+                {
+                    _sequentialCoroutines[tagString] = StartCoroutine(PlaySequentialSounds(tagString, soundGroup));
+                }
             }
 
-            _taggedSequentialQueues[tagString].Enqueue(clip);
-            _sequentialVolumes[tagString] = volume;
-
-            if (!_isPlayingSequential[tagString] && !_activeOverrideCoroutines.ContainsKey(tagString))
-            {
-                _sequentialCoroutines[tagString] = StartCoroutine(PlaySequentialSounds(tagString, soundGroup));
-            }
         }
 
         private IEnumerator PlaySequentialSounds(string tagString, SoundGroup soundGroup)
@@ -530,9 +551,18 @@ namespace Sound
         {
             if (_taggedAudioSources.ContainsKey(tagString))
             {
-                _taggedAudioSources[tagString].Stop();
+                AudioSource src = _taggedAudioSources[tagString];
+                if (src.loop)
+                {
+                    src.loop = false;
+                }
+                src.Stop();
             }
-
+            else
+            {
+                Debug.Log($"{tagString} 키를 가진 사운드가 현재 재생중이 아님.");
+            }
+            
             // 순차 재생 큐 초기화
             if (_taggedSequentialQueues.ContainsKey(tagString))
             {
@@ -553,8 +583,6 @@ namespace Sound
                 StopCoroutine(_activeOverrideCoroutines[tagString]);
                 _activeOverrideCoroutines.Remove(tagString);
             }
-
-            Debug.Log($"태그 '{tagString}'의 모든 사운드가 중지되었습니다.");
         }
 
         /// <summary>
@@ -575,13 +603,20 @@ namespace Sound
         }
 
         /// <summary>
-        /// PlayBGM(사운드, 볼륨) : 실행 시 해당 사운드를 루프하여 재생한다. 재차 실행 시 FadeOut된 후 새로운 사운드가 FadeIn 된다. 또한, Resources/Sound/BGM 폴더에 있는 AudioClip들은 모두 SoundManager.Instance.bgmClip[]에 담기며, Start()에서 bgmClip[0]을 게임 시작 시 자동으로 재생한다.
+        /// PlayBGM(사운드, 볼륨, 대기시간) : 실행 시 대기시간이 지난 뒤 해당 사운드를 루프하여 재생한다. 재차 실행 시 FadeOut된 후 새로운 사운드가 FadeIn 된다. 또한, Resources/Sound/BGM 폴더에 있는 AudioClip들은 모두 SoundManager.Instance.bgmClip[]에 담기며, Start()에서 bgmClip[0]을 게임 시작 시 자동으로 재생한다.
         /// </summary>
-        public void PlayBGM(AudioClip bgmClip = null, float volume = -1.0f)
+        public void PlayBGM(AudioClip bgmClip = null, float volume = -1.0f, float waitTime = 0.0f)
         {
+            StartCoroutine(PlayBGMCoroutine(bgmClip, volume, waitTime));
+        }
+
+        private IEnumerator PlayBGMCoroutine(AudioClip bgmClip, float volume, float waitTime)
+        {
+            yield return new WaitForSeconds(waitTime);
+            
             if (!bgmClip) bgmClip = bgmClips[0]; //클립을 비워놓을 경우 bgmClips의 첫 번째 곡을 재생
             
-            if (_bgmSource.clip == bgmClip) return; // 같은 BGM이면 다시 재생하지 않음
+            if (_bgmSource.clip == bgmClip) yield break; // 같은 BGM이면 다시 재생하지 않음
 
             float finalVolume = CalculateVolume(volume);
 
@@ -711,7 +746,7 @@ namespace Sound
             _bgmSource = gameObject.AddComponent<AudioSource>();
             _bgmSource.loop = true;
             _bgmSource.outputAudioMixerGroup = _musicGroup;
-            bgmClips = Resources.LoadAll<AudioClip>($"Sounds/BGM");
+            // bgmClips = Resources.LoadAll<AudioClip>($"Sounds/BGM");
 
             //볼륨 설정 불러오기
             LoadVolumeSettings();

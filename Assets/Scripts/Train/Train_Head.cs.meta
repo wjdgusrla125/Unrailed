@@ -1,3 +1,29 @@
-﻿fileFormatVersion: 2
+fileFormatVersion: 2
 guid: 75da1a0e593c4923ba527e6fef51bcca
-timeCreated: 1744787390
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - manager: {instanceID: 0}
+  - frontTrainCar: {instanceID: 0}
+  - backTrainCar: {instanceID: 0}
+  - trainObject: {instanceID: 0}
+  - destroyObject: {instanceID: 0}
+  - fire: {instanceID: 0}
+  - warning: {instanceID: 0}
+  - headPrefab: {instanceID: 0}
+  - waterTankPrefab: {instanceID: 0}
+  - chestBoxPrefab: {instanceID: 0}
+  - craftDeskPrefab: {instanceID: 0}
+  - hornSound: {instanceID: 0}
+  - destroySound: {instanceID: 0}
+  - countdownSound: {instanceID: 0}
+  - fireSound: {instanceID: 0}
+  - warningSound: {instanceID: 0}
+  - engineSound: {instanceID: 0}
+  - destinationRail: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

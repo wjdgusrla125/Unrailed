@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
+using Sound;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 public abstract class Train : NetworkBehaviour
 {
@@ -21,16 +23,32 @@ public abstract class Train : NetworkBehaviour
     [Header("기차 번호 (0~)")] [SerializeField]
     protected int index; // 기차 번호(머리는 고정으로 0)
 
-    [Header("기차 속도")] protected float Speed => manager.speed;
+    [Header("기차 속도")] protected float Speed => manager.Speed;
 
     [Header("앞/뒤 기차")] [SerializeField] protected Train frontTrainCar;
     [SerializeField] protected Train backTrainCar;
+
+    [Header("기차 몸통 / 파괴 오브젝트 / 불 이펙트 / 경고(캔버스) 오브젝트")] 
+    [SerializeField] protected GameObject trainObject;
+    [SerializeField] protected GameObject destroyObject;
+    [SerializeField] protected GameObject fire;
+    [SerializeField] protected GameObject warning;
+    [SerializeField, Tooltip("Head에만 있음")] protected ParticleSystem smoke;
+    public GameObject[] countdownObject;
 
     [Header("기차 프리팹")] [SerializeField] protected GameObject headPrefab;
     [SerializeField] protected GameObject waterTankPrefab;
     [SerializeField] protected GameObject chestBoxPrefab;
     [SerializeField] protected GameObject craftDeskPrefab;
 
+    [Header("사운드")] 
+    [SerializeField] protected AudioClip hornSound;
+    [SerializeField] protected AudioClip destroySound;
+    [SerializeField] protected AudioClip countdownSound;
+    [SerializeField] protected AudioClip fireSound;
+    [SerializeField] protected AudioClip warningSound; 
+    [SerializeField] protected AudioClip engineSound;
+    
     // 위치 오프셋
     private readonly Vector3 HEAD_OFFSET = new(0, 0.5f, 0);
     private readonly Vector3 OTHER_OFFSET = new(0, 0.35f, 0);
@@ -55,16 +73,23 @@ public abstract class Train : NetworkBehaviour
     // 이동 일시정지를 위한 플래그와 코루틴 참조
     private bool isPaused = false;
     private Coroutine movementCoroutine;
+    private Camera _camera;
 
     #endregion
 
     #region 초기화
 
+    private void Start()
+    {
+        _camera = Camera.main;
+    }
+
     public void InitTrain()
     {
-        InitManager();
-        InitPrefabs();
-        InitPosition();
+        InitManager(); //매니저를 등록
+        InitPrefabs(); //프리팹을 등록
+        InitPosition(); //위치 설정
+        InitObject(); //오브젝트를 셋팅
         if (NetworkManager.Singleton.IsServer) InitTrainCar();
     }
 
@@ -98,6 +123,15 @@ public abstract class Train : NetworkBehaviour
             // trainPos += HEAD_OFFSET;
             // transform.position = trainPos;
         }
+    }
+
+    private void InitObject()
+    {
+        StopSmoke();
+        trainObject.SetActive(true);
+        destroyObject.SetActive(false);
+        fire.SetActive(false);
+        warning.SetActive(false);
     }
 
     protected abstract void InitTrainCar();
@@ -141,6 +175,8 @@ public abstract class Train : NetworkBehaviour
 
     #endregion
 
+    #region 명령
+    
     public void StartTrain()
     {
         isPaused = false;
@@ -167,12 +203,124 @@ public abstract class Train : NetworkBehaviour
         isPaused = true;
     }
 
+    public void CallCountdown(int idx)
+    {
+        if (countdownObject is not { Length: > 0 }) return;
+        
+        if (idx == 0)
+        {
+            Debug.LogWarning("CallCountdown은 1-Index로 취급할 것!!");
+            return;
+        }
+
+        for (int i = 0; i < countdownObject.Length; i++)
+        {
+            if (i == 0) continue;
+            countdownObject[i].SetActive(i == idx);
+        }
+        
+        SoundManager.Instance.PlaySound(countdownSound);
+    }
+
+    private void DestroyTrain()
+    {
+        trainObject.SetActive(false);
+        destroyObject.SetActive(true);
+        SoundManager.Instance.PlaySound(destroySound);
+        StartCoroutine(CameraShake(0.5f, 0.3f));
+    }
+
+    public void RecallCountdown()
+    {
+        if (countdownObject is not { Length: > 0 }) return;
+
+        for (int i = 0; i < countdownObject.Length; i++)
+        {
+            if (i == 0) continue;
+            countdownObject[i].SetActive(false);
+        }
+    }
+
+    private void UpdateTrainCar(TrainType trainType)
+    {
+    }
+
+    public void PlaySpawnAnimation(float spawnOffset)
+    {
+        StartCoroutine(SpawnCoroutine(spawnOffset));
+    }
+
+    private void StartSmoke()
+    {
+        if (this is not Train_Head) return;
+        smoke.Play();
+    }
+
+    private void StopSmoke()
+    {
+        if (this is not Train_Head) return;
+        smoke.Stop();
+    }
+    #endregion
+
+    #region 기능
+
+    private IEnumerator PlayHornSound()
+    {
+        SoundManager.Instance.PlaySound(hornSound, volume: 0.1f);
+        yield return new WaitForSeconds(hornSound.length - 0.15f);
+        SoundManager.Instance.PlaySoundsSeq(engineSound, "Engine", loop: true, volume: 0.1f);
+    }
+
+    private IEnumerator CameraShake(float duration, float magnitude)
+    {
+        if (_camera)
+        {
+            Vector3 originalPos = _camera.transform.localPosition;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float x = Random.Range(-1f, 1f) * magnitude;
+                float y = Random.Range(-1f, 1f) * magnitude;
+                _camera.transform.localPosition = new Vector3(originalPos.x + x, originalPos.y + y, originalPos.z);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            _camera.transform.localPosition = originalPos;
+        }
+    }
+    
     private IEnumerator MoveToRail(bool isHead)
     {
+
+        Debug.Log("멈춤");
+        StartCoroutine(PlayHornSound());
+        StartSmoke();
+        bool pause = false;
+        
         while (true)
         {
             while (isPaused)
+            {
+                if(!pause)
+                {
+                    Debug.Log("멈춤");
+                    pause = true;
+                    SoundManager.Instance.StopSoundWithTag("Engine");
+                    StopSmoke();
+                }
                 yield return null;
+            }
+
+            if (pause)
+            {
+                Debug.Log("재출발");
+                pause = false;
+                StartCoroutine(PlayHornSound()); //멈췄다가 출발하면 다시 경적소리를 낸다.
+                StartSmoke();
+            }
 
             if (destinationRail)
             {
@@ -221,7 +369,13 @@ public abstract class Train : NetworkBehaviour
                     }
 
                     // 이미 중심에 도착했는데 nextRail이 추가되지 않음: 게임오버
-                    Debug.Log("게임오버");
+                    if (this is Train_Head)
+                    {
+                        GameManager.Instance.GameOver();
+                        manager.GameOver();
+                    }
+
+                    DestroyTrain();
                     break;
                 }
             }
@@ -238,65 +392,79 @@ public abstract class Train : NetworkBehaviour
 
     private IEnumerator MoveAndRotate(Vector3 targetHead, Quaternion targetRot, bool isHead)
     {
-        // 목표 보간 시간 계산
-        float duration = Mathf.Max(Vector3.Distance(transform.position, targetHead) / Speed,
-            Quaternion.Angle(transform.rotation, targetRot) / (Speed * 90f));
-        float elapsed = 0f;
-        Vector3 startHead = transform.position;
-        Quaternion startRot = transform.rotation;
+        const float angularSpeedFactor = 90f;
+        float cellOffset = isHead ? 1f : 0f;
+        bool pause = false;
 
-        if (isHead)
+        while (true)
         {
-            float cellOffset = 1f;
-            Vector3 currentRailCenter = new Vector3(destinationRail.transform.position.x, HEAD_OFFSET.y,
-                destinationRail.transform.position.z);
-            Vector3 startTail = startHead + (startRot * new Vector3(0, 0, -cellOffset));
-            Vector3 endTail = currentRailCenter;
-
-            while (elapsed < duration)
+            // 일시정지 처리
+            while (isPaused)
             {
-                while (isPaused)
-                    yield return null;
-
-                float t = elapsed / duration;
-                Quaternion newRot = Quaternion.Slerp(startRot, targetRot, t);
-                Vector3 tailAnchor = Vector3.Lerp(startTail, endTail, t);
-                Vector3 newHeadPos = tailAnchor + (newRot * (Vector3.forward * cellOffset));
-
-                transform.rotation = newRot;
-                transform.position = newHeadPos;
-
-                elapsed += Time.deltaTime;
+                if(!pause)
+                {
+                    Debug.Log("멈춤");
+                    pause = true;
+                    SoundManager.Instance.StopSoundWithTag("Engine");
+                    StopSmoke();
+                }
                 yield return null;
             }
-        }
-        else
-        {
-            while (elapsed < duration)
+
+            if (pause)
             {
-                while (isPaused)
-                    yield return null;
-
-                float t = elapsed / duration;
-                transform.position = Vector3.Lerp(startHead, targetHead, t);
-                transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
-                elapsed += Time.deltaTime;
-                yield return null;
+                Debug.Log("재출발");
+                pause = false;
+                StartCoroutine(PlayHornSound()); //멈췄다가 출발하면 다시 경적소리를 낸다.
+                StartSmoke();
             }
+
+            if (isHead)
+            {
+                Vector3 currentRailCenter = new Vector3(
+                    destinationRail.transform.position.x,
+                    HEAD_OFFSET.y,
+                    destinationRail.transform.position.z
+                );
+
+                Vector3 tailAnchor = Vector3.MoveTowards(
+                    transform.position - transform.rotation * Vector3.forward * cellOffset,
+                    currentRailCenter,
+                    Speed * Time.deltaTime
+                );
+                transform.position = tailAnchor + (transform.rotation * Vector3.forward * cellOffset);
+
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    targetRot,
+                    Speed * angularSpeedFactor * Time.deltaTime
+                );
+            }
+            else
+            {
+                transform.position = Vector3.MoveTowards(
+                    transform.position,
+                    targetHead,
+                    Speed * Time.deltaTime
+                );
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    targetRot,
+                    Speed * angularSpeedFactor * Time.deltaTime
+                );
+            }
+
+            if (Vector3.Distance(transform.position, targetHead) < 0.01f
+                && Quaternion.Angle(transform.rotation, targetRot) < 0.5f)
+            {
+                break;
+            }
+
+            yield return null;
         }
 
-        // 최종 보정
-        transform.rotation = targetRot;
         transform.position = targetHead;
-    }
-
-    private void UpdateTrainCar(TrainType trainType)
-    {
-    }
-
-    public void PlaySpawnAnimation(float spawnOffset)
-    {
-        StartCoroutine(SpawnCoroutine(spawnOffset));
+        transform.rotation = targetRot;
     }
 
     //스폰 애니메이션
@@ -328,4 +496,6 @@ public abstract class Train : NetworkBehaviour
     {
         return 1f - Mathf.Pow(1f - t, 4f);
     }
+
+    #endregion
 }

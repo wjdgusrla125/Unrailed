@@ -1,6 +1,7 @@
 ﻿
 
 using System;
+using Sound;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -19,6 +20,8 @@ public class UIManager: NetworkSingletonManager<UIManager>
     
     [SerializeField]private Button startButton;
     [SerializeField]private TextMeshProUGUI startButtonText;
+    [SerializeField]private AudioClip mousePressSound;
+    [SerializeField]private AudioClip mouseUpSound;
     
     [NonSerialized]public bool IsLoading = false;
     
@@ -91,6 +94,15 @@ public class UIManager: NetworkSingletonManager<UIManager>
         IsLoading = open;
         loadingScreen.SetActive(open);
     }
-    
+
+    public void PlayUIButtonPressSound()
+    {
+        SoundManager.Instance.PlaySound(mousePressSound, SoundManager.SoundGroup.Ui, 1.0f);
+    }
+
+    public void PlayUIButtonUpSound()
+    {
+        SoundManager.Instance.PlaySound(mouseUpSound, SoundManager.SoundGroup.Ui, 0.5f);
+    }
     
 }
