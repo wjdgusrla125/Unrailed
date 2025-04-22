@@ -87,10 +87,7 @@ public class BreakableObject : MonoBehaviour
         {
             BlockHpCount--;
         }
-        else if (itemType == ItemType.Bucket && blockType == BlockType.Water)
-        {
-            BlockHpCount--;
-        }
+        
         SetMeshObject();
         if (BlockHpCount == 0)
             DestroyBlock();
