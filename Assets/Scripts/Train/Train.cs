@@ -89,7 +89,7 @@ public abstract class Train : NetworkBehaviour
         {
             Vector3 trainPos = frontTrainCar.transform.position;
             trainPos.x -= index == 1 ? 1.6f : 0.95f;
-            // trainPos += OTHER_OFFSET;
+            if (index == 1) trainPos -= (HEAD_OFFSET - OTHER_OFFSET);
             transform.position = trainPos;
         }
         else

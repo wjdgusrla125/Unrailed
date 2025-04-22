@@ -1147,9 +1147,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
         _specialClusterGroups.Clear();
 
         List<Vector2Int> specialCellsA = new List<Vector2Int>();
-        for (int dx = -2; dx <= 2; dx++)
+        for (int dx = -2; dx <= 5; dx++)
         {
-            for (int dy = -2; dy <= 2; dy++)
+            for (int dy = -3; dy <= 2; dy++)
             {
                 int nx = _posA.x + dx;
                 int ny = _posA.y + dy;
