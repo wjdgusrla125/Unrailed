@@ -27,6 +27,7 @@ public abstract class Train : NetworkBehaviour
 
     [Header("앞/뒤 기차")] [SerializeField] protected Train frontTrainCar;
     [SerializeField] protected Train backTrainCar;
+    public bool IsTail => backTrainCar == null;
 
     [Header("기차 몸통 / 파괴 오브젝트 / 불 이펙트 / 경고(캔버스) 오브젝트")] 
     [SerializeField] protected GameObject trainObject;
@@ -79,7 +80,7 @@ public abstract class Train : NetworkBehaviour
 
     #region 초기화
 
-    private void Start()
+    private void Awake()
     {
         _camera = Camera.main;
     }
@@ -224,10 +225,15 @@ public abstract class Train : NetworkBehaviour
 
     private void DestroyTrain()
     {
+        if(IsTail)
+        {
+            SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[0], 0.5f); //마지막 열차가 파괴되면 bgm을 변경
+            _camera.GetComponent<CameraController>().GameOverCameraMoving();
+        }
         trainObject.SetActive(false);
         destroyObject.SetActive(true);
         SoundManager.Instance.PlaySound(destroySound);
-        StartCoroutine(CameraShake(0.5f, 0.3f));
+        StartCoroutine(CameraShake(0.5f, 0.15f));
     }
 
     public void RecallCountdown()
@@ -282,7 +288,7 @@ public abstract class Train : NetworkBehaviour
             while (elapsed < duration)
             {
                 float x = Random.Range(-1f, 1f) * magnitude;
-                float y = Random.Range(-1f, 1f) * magnitude;
+                float y = Random.Range(-1f, 1f) * magnitude * 0.5f;
                 _camera.transform.localPosition = new Vector3(originalPos.x + x, originalPos.y + y, originalPos.z);
                 elapsed += Time.deltaTime;
                 yield return null;

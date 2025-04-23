@@ -18,6 +18,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     private bool _isMapGenerating = false;
     public Action<bool> IsMapGenerated; // 맵 생성 성공 여부 전달
+    public GameObject gameOverObj;
 
     [Header("맵 크기 설정")] [SerializeField] private int width; // 맵의 가로 길이
     [SerializeField] private int height; // 맵의 세로 길이
@@ -56,6 +57,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private GameObject grass1Prefab;
     [SerializeField] private GameObject wood0Prefab; //wood: 랜덤(50%)
     [SerializeField] private GameObject wood1Prefab;
+    [SerializeField] private GameObject gameOverPrefab;
 
 
     [SerializeField]
@@ -132,38 +134,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             if (!NetworkManager.Singleton.IsServer) return;
             _lastGenerateTime = Time.time;
             Debug.Log("Q입력, 시드 랜덤화 후 맵 생성");
-            List<Transform> children = new List<Transform>();
-            for (int i = 0; i < _oldMapParent.childCount; i++)
-            {
-                children.Add(_oldMapParent.GetChild(i));
-            }
-
-            foreach (var t in children)
-            {
-                Cluster cluster = t.GetComponent<Cluster>();
-                if (cluster)
-                {
-                    cluster.DespawnCluster();
-                }else Debug.LogError("네트워크 오브젝트가 없음.");
-            }
-            
-            children.Clear();
-            for (int i = 0; i < _clusterParent.childCount; i++)
-            {
-                children.Add(_clusterParent.GetChild(i));
-            }
-
-            foreach (var t in children)
-            {
-                Cluster cluster = t.GetComponent<Cluster>();
-                if (cluster)
-                {
-                    cluster.DespawnCluster();
-                }else Debug.LogError("네트워크 오브젝트가 없음.");
-                // Destroy(t.gameObject);
-            }
-
-
+            AllTileDespawn();
             mapSeed = string.Empty;
             StartCoroutine(GenerateMapCoroutine());
         }
@@ -174,35 +145,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             _lastGenerateTime = Time.time;
             Debug.Log("E입력, 시드 유지 맵 생성");
             List<Transform> children = new List<Transform>();
-            for (int i = 0; i < _oldMapParent.childCount; i++)
-            {
-                children.Add(_oldMapParent.GetChild(i));
-            }
-
-            foreach (var t in children)
-            {
-                Cluster cluster = t.GetComponent<Cluster>();
-                if (cluster)
-                {
-                    cluster.DespawnCluster();
-                }else Debug.LogError("네트워크 오브젝트가 없음.");
-            }
-            
-            children.Clear();
-            for (int i = 0; i < _clusterParent.childCount; i++)
-            {
-                children.Add(_clusterParent.GetChild(i));
-            }
-
-            foreach (var t in children)
-            {
-                Cluster cluster = t.GetComponent<Cluster>();
-                if (cluster)
-                {
-                    cluster.DespawnCluster();
-                }else Debug.LogError("네트워크 오브젝트가 없음.");
-                // Destroy(t.gameObject);
-            }
+            AllTileDespawn();
             StartCoroutine(GenerateMapCoroutine());
         }
         
@@ -225,19 +168,49 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #endregion
 
+    #region 모든 타일 제거
+    
+    public void AllTileDespawn()
+    {
+        List<Transform> children = new List<Transform>();
+        for (int i = 0; i < _oldMapParent.childCount; i++)
+        {
+            children.Add(_oldMapParent.GetChild(i));
+        }
+
+        foreach (var t in children)
+        {
+            Cluster cluster = t.GetComponent<Cluster>();
+            if (cluster)
+            {
+                cluster.DespawnCluster();
+            }else Debug.LogError("네트워크 오브젝트가 없음.");
+        }
+            
+        children.Clear();
+        for (int i = 0; i < _clusterParent.childCount; i++)
+        {
+            children.Add(_clusterParent.GetChild(i));
+        }
+
+        foreach (var t in children)
+        {
+            Cluster cluster = t.GetComponent<Cluster>();
+            if (cluster)
+            {
+                cluster.DespawnCluster();
+            }else Debug.LogError("네트워크 오브젝트가 없음.");
+            // Destroy(t.gameObject);
+        }
+    }
+
+    #endregion
+
     #region 맵 생성 메인 코루틴
 
     public void StartMapGeneration()
     {
         StartCoroutine(GenerateMapCoroutine());
-    }
-
-    private void InstantiateParent()
-    {
-        _clusterParent = Instantiate(clusterParentPrefab);
-        _clusterParent.GetComponent<NetworkObject>().Spawn();
-        _oldMapParent = Instantiate(oldMapParentPrefab);
-        _oldMapParent.GetComponent<NetworkObject>().Spawn();
     }
     
     private IEnumerator GenerateMapCoroutine()
@@ -503,7 +476,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #endregion
 
-    #region 시드 및 맵 초기화
+    #region 시드 및 맵 초기화, 오브젝트 생성
 
     private void InitializeSeed(string seed = null)
     {
@@ -524,6 +497,14 @@ public class MapGenerator : SingletonManager<MapGenerator>
         for (int x = 0; x < _curWidth; x++)
         for (int y = 0; y < height; y++)
             Map[x, y] = TileType.Grass;
+    }
+
+    private void InstantiateParent()
+    {
+        _clusterParent = Instantiate(clusterParentPrefab);
+        _clusterParent.GetComponent<NetworkObject>().Spawn();
+        _oldMapParent = Instantiate(oldMapParentPrefab);
+        _oldMapParent.GetComponent<NetworkObject>().Spawn();
     }
 
     #endregion
@@ -2536,6 +2517,13 @@ public class MapGenerator : SingletonManager<MapGenerator>
     {
         // 마지막 보정 작업 실행
         EnsurePathConnectivity();
+        
+        //게임오버 생성
+        if (oldWidth == 0)
+        {
+            
+            gameOverObj = Instantiate(gameOverPrefab, new Vector3(-15f, 0f, 15f), Quaternion.identity);
+        }
 
         //(디버그용) 경로 출력
         // CheckPath();
@@ -2726,65 +2714,76 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public void SpawnRails(int oldWidth = 0)
     {
         int railYAdjustment = -1;
-        GameObject railGo;
+        List<RailController> posARails = new List<RailController>();
+        List<RailController> posBRails = new List<RailController>();
         RailController firstDestination = null;
 
         if (oldWidth == 0)
         {
-            // posA에 대한 Rail 생성 (좌우 2칸씩, 총 5칸)
-            for (int dx = -2; dx <= 2; dx++)
+            // posA에 대한 Rail 생성 (왼쪽2칸 오른쪽3칸)
+            for (int dx = -2; dx <= 3; dx++)
             {
-                Vector3 railPos = new Vector3(_posA.x + dx, 0, _posA.y + railYAdjustment);
-                railPos += _railSpawnOffset;
-                railPos.y += SPAWN_OFFSET;
-                railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
-                
-
+                Vector3 railPos = new Vector3(_posA.x + dx, 0, _posA.y + railYAdjustment) + _railSpawnOffset + Vector3.up * SPAWN_OFFSET;
+                GameObject railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
+                railGo.name = $"Rail ({_posA.x + dx}:{_posA.y + railYAdjustment})";
                 if (railGo)
                 {
-                    RailController rc = railGo.GetComponent<RailController>();
-                    if (dx == 1) firstDestination = rc;
+                    var rc = railGo.GetComponent<RailController>();
                     rc.NetworkObject.Spawn();
                     rc.PlaySpawnAnimation(SPAWN_OFFSET);
+                    posARails.Add(rc);
+                    if (dx == 1) firstDestination = rc;
                 }
             }
+            
             // posB에 대한 Rail 생성 (좌우 2칸씩, 총 5칸)
             for (int dx = -2; dx <= 2; dx++)
             {
-                Vector3 railPos = new Vector3(_posB.x + dx, 0, _posB.y + railYAdjustment);
-                railPos += _railSpawnOffset;
-                railPos.y += SPAWN_OFFSET;
-                railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
-                
-
+                Vector3 railPos = new Vector3(_posB.x + dx, 0, _posB.y + railYAdjustment) + _railSpawnOffset + Vector3.up * SPAWN_OFFSET;
+                GameObject railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
                 if (railGo)
                 {
-                    RailController rc = railGo.GetComponent<RailController>();
+                    var rc = railGo.GetComponent<RailController>();
                     rc.NetworkObject.Spawn();
                     rc.PlaySpawnAnimation(SPAWN_OFFSET);
+                    posBRails.Add(rc);
                 }
             }
+            ConnectRails(posARails);
+            ConnectRails(posBRails);
 
-            //첫 생성일 시 열차도 함께 스폰
+            // 4) 첫 생성일 때 기차 스폰
             SpawnTrain(firstDestination);
         }
         else
         {
             for (int dx = -2; dx <= 2; dx++)
             {
-                Vector3 railPos = new Vector3(_posB.x + dx, 0, _posB.y + railYAdjustment);
-                railPos += _railSpawnOffset;
-                railPos.y += SPAWN_OFFSET;
-                railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
-                
-
+                Vector3 railPos = new Vector3(_posB.x + dx, 0, _posB.y + railYAdjustment) + _railSpawnOffset + Vector3.up * SPAWN_OFFSET;
+                GameObject railGo = Instantiate(railPrefab, railPos, Quaternion.identity);
                 if (railGo)
                 {
-                    RailController rc = railGo.GetComponent<RailController>();
+                    var rc = railGo.GetComponent<RailController>();
                     rc.NetworkObject.Spawn();
                     rc.PlaySpawnAnimation(SPAWN_OFFSET);
+                    posBRails.Add(rc);
                 }
             }
+
+            ConnectRails(posBRails);
+        }
+    }
+    
+    //레일을 연결한다.
+    private void ConnectRails(List<RailController> rails)
+    {
+        Debug.Log("레일 연결");
+        for (int i = 0; i < rails.Count - 1; i++)
+        {
+            rails[i].nextRail = rails[i + 1].gameObject;
+            Debug.Log($"{rails[i]}의 nextRail: {rails[i].nextRail}");
+            rails[i + 1].prevRail = rails[i].gameObject;
+            Debug.Log($"{rails[i + 1]}의 prevRail: {rails[i + 1].prevRail}");
         }
     }
 

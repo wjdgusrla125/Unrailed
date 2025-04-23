@@ -97,17 +97,53 @@ public class Cluster : NetworkBehaviour
 
     public void DespawnCluster()
     {
-        // 클러스터 내부의 모든 자식 Block들을 순회
+        StartCoroutine(DespawnCoroutine());
+        // // 클러스터 내부의 모든 자식 Block들을 순회
+        // foreach (Transform child in transform)
+        // {
+        //     Blocks block = child.GetComponent<Blocks>();
+        //     if (block)
+        //     {
+        //         // Block과 그 자식 env Despawn 처리
+        //         block.DespawnBlockAndEnv();
+        //     }
+        // }
+        //
+        // NetworkObject.Despawn();
+    }
+    
+    private IEnumerator DespawnCoroutine()
+    {
+        //디스폰도 순차적으로 딜레이를 준다.
+        int siblingCount = transform.parent.childCount;
+        int myIndex = transform.GetSiblingIndex();
+        int reversedIdx = (siblingCount - 1) - myIndex;
+        yield return new WaitForSeconds(reversedIdx * 0.02f);
+
+        Vector3 startPos = transform.position;
+        Vector3 endPos = (ClusterGroup.Direction == ClusterDirection.Upper)
+            ? startPos + Vector3.up   * _spawnOffset
+            : startPos + Vector3.down * _spawnOffset;
+
+        float duration = isSpecial ? 0f : 2.5f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float easedT = 1f - EaseOutQuart(1f - t);
+            transform.position = Vector3.Lerp(startPos, endPos, easedT);
+            yield return null;
+        }
+        transform.position = endPos;
+
         foreach (Transform child in transform)
         {
-            Blocks block = child.GetComponent<Blocks>();
-            if (block)
-            {
-                // Block과 그 자식 env Despawn 처리
+            if (child.TryGetComponent<Blocks>(out var block))
                 block.DespawnBlockAndEnv();
-            }
         }
 
+        // 5) 네트워크 Despawn
         NetworkObject.Despawn();
     }
 }

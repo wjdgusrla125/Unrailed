@@ -3090,6 +3090,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: gameOverPrefab
+      value: 
+      objectReference: {fileID: 1901379270106373271, guid: bb98dbf17c008ee449b4f1548efc4f66, type: 3}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator
