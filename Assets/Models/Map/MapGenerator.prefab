@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapSeed: 638798434893155023
+  gameOverObj: {fileID: 0}
   width: 43
   height: 19
   pathLength: 39
@@ -71,6 +72,7 @@ MonoBehaviour:
   grass1Prefab: {fileID: 3258400204647497964, guid: 348ea7d36941d334ebb03828f4c552ca, type: 3}
   wood0Prefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
   wood1Prefab: {fileID: 3258400204647497964, guid: 2ac2f5ed8d1e2764c850606c5dfb2cd1, type: 3}
+  gameOverPrefab: {fileID: 1901379270106373271, guid: bb98dbf17c008ee449b4f1548efc4f66, type: 3}
   iron0Prefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
   iron1Prefab: {fileID: 3258400204647497964, guid: 049de7cfe090ed84d9cc791a64e4a160, type: 3}
   mountain0Prefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}

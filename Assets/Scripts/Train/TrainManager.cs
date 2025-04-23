@@ -42,6 +42,24 @@ public class TrainManager: MonoBehaviour
         }
     }
 
+    public void AllTrainsDespawn()
+    {
+        //헤드를 제외한 모든 객체를 디스폰한 뒤
+        foreach (var kvp in trains)
+        {
+            if (kvp.Value is not Train_Head)
+            {
+                kvp.Value.NetworkObject.Despawn();
+            }
+        }
+        
+        //헤드를 디스폰한다.
+        foreach (var kvp in trains)
+        { 
+            kvp.Value.NetworkObject.Despawn();
+        }
+    }
+
     public void StartTrainCount()
     {
         StartCoroutine(CountDownAndStart());
@@ -67,7 +85,7 @@ public class TrainManager: MonoBehaviour
 
         trains[0].RecallCountdown();
         _cameraController.InitCamera(this);
-        _cameraController.StartCamera();
+        // _cameraController.StartCamera();
         StartAllTrains();
         SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[1], 0.5f);
     }

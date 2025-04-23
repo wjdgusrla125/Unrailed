@@ -2,9 +2,16 @@ using System;
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class RailController : NetworkBehaviour
 {
+    public bool isStartFirstRail = false;//시작점의 최초 레일
+    public bool isStartHeadRail = false; //true인 레일이 마지막 레일
+    
+    public bool isEndFirstRail = false; //끝점의 최초 레일
+    public bool isEndHeadRail = false; //끝점의 마지막(가장 오른쪽) 레일
+    
     public GameObject RailRight;
     public GameObject RailLeftBottom;
     public GameObject RailLeftTop;
@@ -16,25 +23,33 @@ public class RailController : NetworkBehaviour
     
     public float raycastDistance = 1.0f;
     public LayerMask railLayer;
-    
-    private bool connectedFront = false;
-    private bool connectedBack = false;
-    private bool connectedLeft = false;
-    private bool connectedRight = false;
 
     public GameObject prevRail;
     public GameObject nextRail;
+    
+    private Vector2Int _gridPos;
+    public Vector2Int GridPos => _gridPos;
     
     private void Awake()
     {
         RailRight.SetActive(true);
     }
+    
+    // public override void OnNetworkSpawn()
+    // {
+    //     SetRail();
+    // }
 
-    private void Update()
+    public void SetRail()
     {
-        ScanningRail();
-    }
+        _gridPos = new Vector2Int(
+            Mathf.RoundToInt(transform.position.x),
+            Mathf.RoundToInt(transform.position.z)
+        );
 
+        RailManager.Instance.RegisterRail(this, _gridPos);
+    }
+    
     private void ResetRails()
     {
         RailRight.SetActive(false);
@@ -46,258 +61,41 @@ public class RailController : NetworkBehaviour
         RailDown.SetActive(false);
         RailLeft.SetActive(false);
     }
-
-    private void ScanningRail()
-    {
-        // Save previous connection states
-        bool prevConnectedFront = connectedFront;
-        bool prevConnectedBack = connectedBack;
-        bool prevConnectedLeft = connectedLeft;
-        bool prevConnectedRight = connectedRight;
-        
-        // Reset connection states
-        connectedFront = false;
-        connectedBack = false;
-        connectedLeft = false;
-        connectedRight = false;
-        
-        GameObject oldPrevRail = prevRail;
-        GameObject oldNextRail = nextRail;
-        
-        RaycastHit hit;
-        
-        // Front rail detection
-        if (Physics.Raycast(transform.position, transform.forward, out hit, raycastDistance, railLayer))
-        {
-            GameObject detectedRail = hit.collider.gameObject;
-            
-            // Get RailController of detected rail
-            RailController railController = detectedRail.GetComponent<RailController>();
-            
-            // Only consider the rail if it has connection slots available
-            if (railController != null && (railController.prevRail == null || railController.nextRail == null || 
-                                          railController.prevRail == gameObject || railController.nextRail == gameObject))
-            {
-                connectedFront = true;
-                
-                // Only update our connections if the detected rail has a slot for us
-                if (railController.prevRail == null || railController.nextRail == null)
-                {
-                    if (prevRail == null)
-                        prevRail = detectedRail;
-                    else if (nextRail == null && prevRail != detectedRail)
-                        nextRail = detectedRail;
-                    else if (prevRail != null && nextRail != null && prevRail != detectedRail && nextRail != detectedRail)
-                    {
-                        // Both connections are already full and neither is to this rail
-                        connectedFront = false;
-                    }
-                }
-                else if (railController.prevRail != gameObject && railController.nextRail != gameObject)
-                {
-                    // The detected rail has both connections full and neither is to us
-                    connectedFront = false;
-                }
-            }
-        }
-        
-        // Back rail detection
-        if (Physics.Raycast(transform.position, -transform.forward, out hit, raycastDistance, railLayer))
-        {
-            GameObject detectedRail = hit.collider.gameObject;
-            
-            // Get RailController of detected rail
-            RailController railController = detectedRail.GetComponent<RailController>();
-            
-            // Only consider the rail if it has connection slots available
-            if (railController != null && (railController.prevRail == null || railController.nextRail == null || 
-                                          railController.prevRail == gameObject || railController.nextRail == gameObject))
-            {
-                connectedBack = true;
-                
-                // Only update our connections if the detected rail has a slot for us
-                if (railController.prevRail == null || railController.nextRail == null)
-                {
-                    if (prevRail == null)
-                        prevRail = detectedRail;
-                    else if (nextRail == null && prevRail != detectedRail)
-                        nextRail = detectedRail;
-                    else if (prevRail != null && nextRail != null && prevRail != detectedRail && nextRail != detectedRail)
-                    {
-                        // Both connections are already full and neither is to this rail
-                        connectedBack = false;
-                    }
-                }
-                else if (railController.prevRail != gameObject && railController.nextRail != gameObject)
-                {
-                    // The detected rail has both connections full and neither is to us
-                    connectedBack = false;
-                }
-            }
-        }
-        
-        // Left rail detection
-        if (Physics.Raycast(transform.position, -transform.right, out hit, raycastDistance, railLayer))
-        {
-            GameObject detectedRail = hit.collider.gameObject;
-            
-            // Get RailController of detected rail
-            RailController railController = detectedRail.GetComponent<RailController>();
-            
-            // Only consider the rail if it has connection slots available
-            if (railController != null && (railController.prevRail == null || railController.nextRail == null || 
-                                          railController.prevRail == gameObject || railController.nextRail == gameObject))
-            {
-                connectedLeft = true;
-                
-                // Only update our connections if the detected rail has a slot for us
-                if (railController.prevRail == null || railController.nextRail == null)
-                {
-                    if (prevRail == null)
-                        prevRail = detectedRail;
-                    else if (nextRail == null && prevRail != detectedRail)
-                        nextRail = detectedRail;
-                    else if (prevRail != null && nextRail != null && prevRail != detectedRail && nextRail != detectedRail)
-                    {
-                        // Both connections are already full and neither is to this rail
-                        connectedLeft = false;
-                    }
-                }
-                else if (railController.prevRail != gameObject && railController.nextRail != gameObject)
-                {
-                    // The detected rail has both connections full and neither is to us
-                    connectedLeft = false;
-                }
-            }
-        }
-        
-        // Right rail detection
-        if (Physics.Raycast(transform.position, transform.right, out hit, raycastDistance, railLayer))
-        {
-            GameObject detectedRail = hit.collider.gameObject;
-            
-            // Get RailController of detected rail
-            RailController railController = detectedRail.GetComponent<RailController>();
-            
-            // Only consider the rail if it has connection slots available
-            if (railController != null && (railController.prevRail == null || railController.nextRail == null || 
-                                          railController.prevRail == gameObject || railController.nextRail == gameObject))
-            {
-                connectedRight = true;
-                
-                // Only update our connections if the detected rail has a slot for us
-                if (railController.prevRail == null || railController.nextRail == null)
-                {
-                    if (prevRail == null)
-                        prevRail = detectedRail;
-                    else if (nextRail == null && prevRail != detectedRail)
-                        nextRail = detectedRail;
-                    else if (prevRail != null && nextRail != null && prevRail != detectedRail && nextRail != detectedRail)
-                    {
-                        // Both connections are already full and neither is to this rail
-                        connectedRight = false;
-                    }
-                }
-                else if (railController.prevRail != gameObject && railController.nextRail != gameObject)
-                {
-                    // The detected rail has both connections full and neither is to us
-                    connectedRight = false;
-                }
-            }
-        }
-        
-        // If no rails detected, reset prevRail and nextRail
-        if (!connectedFront && !connectedBack && !connectedLeft && !connectedRight)
-        {
-            prevRail = null;
-            nextRail = null;
-        }
-        
-        // Update appearance if connection state changed or rail references changed
-        if (prevConnectedFront != connectedFront || 
-            prevConnectedBack != connectedBack || 
-            prevConnectedLeft != connectedLeft || 
-            prevConnectedRight != connectedRight ||
-            prevRail != oldPrevRail || nextRail != oldNextRail)
-        {
-            UpdateRailAppearance();
-        }
-    }
     
-    private void UpdateRailAppearance()
+    public void UpdateRailAppearance()
     {
-        int connectionCount = 0;
-        if (connectedFront) connectionCount++;
-        if (connectedBack) connectionCount++;
-        if (connectedLeft) connectionCount++;
-        if (connectedRight) connectionCount++;
+        ResetRails();
 
-        if (connectionCount < 3)
+        bool left = prevRail && Mathf.RoundToInt(prevRail.transform.position.x) < _gridPos.x;
+        bool right = nextRail && Mathf.RoundToInt(nextRail.transform.position.x) > _gridPos.x;
+        bool up = nextRail && Mathf.RoundToInt(nextRail.transform.position.z) > _gridPos.y;
+        bool down = prevRail && Mathf.RoundToInt(prevRail.transform.position.z) < _gridPos.y;
+
+        int count = (left ? 1 : 0) + (right ? 1 : 0) + (up ? 1 : 0) + (down ? 1 : 0);
+
+        if (count <= 1)
         {
-            ResetRails();
+            if (left) RailLeft.SetActive(true);
+            else if (right) RailRight.SetActive(true);
+            else if (up) RailUp.SetActive(true);
+            else if (down) RailDown.SetActive(true);
         }
-        
-        if (connectionCount == 0)
+        else if (count == 2)
         {
-            RailRight.SetActive(true);
-            return;
-        }
-        
-        if (connectionCount == 1)
-        {
-            if (connectedLeft)
-            {
-                RailLeft.SetActive(true);
-            }
-            else if (connectedRight)
-            {
-                RailRight.SetActive(true);
-            }
-            else if (connectedFront)
-            {
-                RailUp.SetActive(true);
-            }
-            else if (connectedBack)
-            {
-                RailDown.SetActive(true);
-            }
-            return;
-        }
-        
-        if (connectionCount == 2)
-        {
-            // 직선 레일 (가로)
-            if (connectedLeft && connectedRight)
+            if (left && right)
             {
                 RailLeft.SetActive(true);
                 RailRight.SetActive(true);
             }
-            // 직선 레일 (세로)
-            else if (connectedFront && connectedBack)
+            else if (up && down)
             {
                 RailUp.SetActive(true);
                 RailDown.SetActive(true);
             }
-            // 코너 레일 (왼쪽-위) - 수정된 부분
-            else if (connectedLeft && connectedFront)
-            {
-                RailLeftBottom.SetActive(true);
-            }
-            // 코너 레일 (오른쪽-위)
-            else if (connectedRight && connectedFront)
-            {
-                RailRightTop.SetActive(true);
-            }
-            // 코너 레일 (왼쪽-아래) - 수정된 부분
-            else if (connectedLeft && connectedBack)
-            {
-                RailLeftTop.SetActive(true);
-            }
-            // 코너 레일 (오른쪽-아래)
-            else if (connectedRight && connectedBack)
-            {
-                RailRightBottom.SetActive(true);
-            }
+            else if (left && up) RailLeftBottom.SetActive(true);
+            else if (right && up) RailRightTop.SetActive(true);
+            else if (left && down) RailLeftTop.SetActive(true);
+            else if (right && down) RailRightBottom.SetActive(true);
         }
     }
     

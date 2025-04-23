@@ -300,8 +300,6 @@ public abstract class Train : NetworkBehaviour
     
     private IEnumerator MoveToRail(bool isHead)
     {
-
-        Debug.Log("멈춤");
         StartCoroutine(PlayHornSound());
         StartSmoke();
         bool pause = false;
@@ -312,7 +310,6 @@ public abstract class Train : NetworkBehaviour
             {
                 if(!pause)
                 {
-                    Debug.Log("멈춤");
                     pause = true;
                     SoundManager.Instance.StopSoundWithTag("Engine");
                     StopSmoke();
@@ -322,7 +319,6 @@ public abstract class Train : NetworkBehaviour
 
             if (pause)
             {
-                Debug.Log("재출발");
                 pause = false;
                 StartCoroutine(PlayHornSound()); //멈췄다가 출발하면 다시 경적소리를 낸다.
                 StartSmoke();

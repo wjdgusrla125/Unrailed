@@ -39,6 +39,7 @@ public class GameManager: SingletonManager<GameManager>
         // StartCoroutine(GameOverBGMCoroutine());
         SoundManager.Instance.StopSoundWithTag("Engine");
         if (!NetworkManager.Singleton.IsHost) return;
+        MapGenerator.Instance.gameOverObj.SetActive(true);
         RpcManager.Instance.ChangeGameStateRpc((int)GameState.GameOver);
         // if (trainManager) 
     }

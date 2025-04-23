@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -8,26 +9,48 @@ public class CameraController: MonoBehaviour
     private float _offsetX;
     private bool _isFollowing = false;
     private Vector3 _initPosition;
+    
+    private float _initialTargetX;
+    private const float FollowThreshold = 3f; // 따라가기 시작할 거리
 
-    public void InitCamera(TrainManager target)
+    private void Awake()
     {
-        _initPosition = transform.position; //초기 위치 저장
-        _cameraTarget = target;
-        _offsetX = transform.position.x - _cameraTarget.transform.position.x;
+        // 카메라 원래 위치 저장
+        _initPosition = transform.position;
         
+        // 카메라를 오른쪽으로 이동
         Vector3 pos = transform.position;
-        pos.x = transform.position.x + 5f;
+        pos.x = _initPosition.x + FollowThreshold;
         transform.position = pos;
     }
 
-    public void StartCamera()
+    public void InitCamera(TrainManager target)
     {
-        // _isFollowing = true;
+        _cameraTarget = target;
+        _offsetX = _initPosition.x - _cameraTarget.transform.position.x;
+
+        // 기차의 시작 X 저장
+        _initialTargetX = _cameraTarget.transform.position.x;
     }
+
+    // public void StartCamera()
+    // {
+    //     _isFollowing = true;
+    // }
     
     private void LateUpdate()
     {
-        if (_isFollowing && _cameraTarget)
+        if (!_cameraTarget) return;
+
+        // 기차가 _initialTargetX만큼 이동했는지 체크
+        if (!_isFollowing)
+        {
+            float moved = _cameraTarget.transform.position.x - _initialTargetX;
+            if (moved >= FollowThreshold)
+                _isFollowing = true;
+        }
+
+        if (_isFollowing)
         {
             Vector3 pos = transform.position;
             pos.x = _cameraTarget.transform.position.x + _offsetX;
@@ -48,7 +71,7 @@ public class CameraController: MonoBehaviour
         Vector3 targetPos = _initPosition;                     
         targetPos.x -= 14.0f;
 
-        const float duration = 10f;                           
+        const float duration = 13f;
         float elapsed = 0f;
 
         float totalDistance = Vector3.Distance(startPos, targetPos);
