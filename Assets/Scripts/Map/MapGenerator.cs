@@ -20,6 +20,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public Action<bool> IsMapGenerated; // 맵 생성 성공 여부 전달
     public GameObject gameOverObj;
     private Train _trainHead;
+    private CameraController _camera;
 
     [Header("맵 크기 설정")] [SerializeField] private int width; // 맵의 가로 길이
     [SerializeField] private int height; // 맵의 세로 길이
@@ -75,6 +76,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private GameObject railPrefab;
     [SerializeField] private GameObject trainCarHeadPrefab;
 
+
     //오브젝트 소환 오프셋
     [NonSerialized] public static float SPAWN_OFFSET = 20F;
     private Vector3 _railSpawnOffset = new Vector3(0f, 0.53f, 0f);
@@ -122,9 +124,10 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #region Event Function
 
-    private void Start()
+    protected override void Awake()
     {
-        // StartMapGeneration();
+        base.Awake();
+        _camera = Camera.main.GetComponent<CameraController>();
     }
 
     private void Update()
@@ -225,6 +228,8 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     private IEnumerator GenerateMapCoroutine()
     {
+        _camera.ResetCamera(); //카메라를 초기상태로 전환
+        
         _isMapGenerating = true;
         try
         {
@@ -268,7 +273,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     public void NextMapGeneration()
     {
-        Debug.Log("디스폰1");
+        //카메라의 현재위치(정상적으로 게임이 진행됐다면 새로운 시작위치에 근접)를 이니셜 포지션으로 설정
+        if (_camera) _camera.GetComponent<CameraController>().SetInitPosition();
+
         //기존 oldPath 자식들 전부 삭제
         List<Transform> children = new List<Transform>();
         for (int i = 0; i < _oldMapParent.childCount; i++)
@@ -2901,7 +2908,6 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [Header("디버그용 변수")] public int visitX;
     public int visitY;
     private int _checkCount;
-
     private void CheckVisit()
     {
         if (visitX < 0 || visitX >= _curWidth || visitY < 0 || visitY >= height)

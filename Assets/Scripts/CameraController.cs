@@ -8,6 +8,8 @@ public class CameraController: MonoBehaviour
     private TrainManager _cameraTarget;
     private float _offsetX;
     private bool _isFollowing = false;
+    
+    public Vector3 originInitPosition; //최초의 InitPosition
     private Vector3 _initPosition;
     
     private float _initialTargetX;
@@ -16,6 +18,7 @@ public class CameraController: MonoBehaviour
     private void Awake()
     {
         // 카메라 원래 위치 저장
+        originInitPosition = transform.position;
         _initPosition = transform.position;
         
         // 카메라를 오른쪽으로 이동
@@ -24,6 +27,19 @@ public class CameraController: MonoBehaviour
         transform.position = pos;
     }
 
+    //카메라를 초기상태로 전환
+    public void ResetCamera()
+    {
+        _isFollowing = false;
+        _cameraTarget = null;
+        _initPosition = originInitPosition;
+        Vector3 pos = transform.position;
+        pos.x = _initPosition.x + FollowThreshold;
+        transform.position = pos;
+        
+    }
+
+    //기차가 생성될 때 호출
     public void InitCamera(TrainManager target)
     {
         _cameraTarget = target;
@@ -31,6 +47,12 @@ public class CameraController: MonoBehaviour
 
         // 기차의 시작 X 저장
         _initialTargetX = _cameraTarget.transform.position.x;
+    }
+
+    //맵이 확장될 때 호출
+    public void SetInitPosition()
+    {
+        _initPosition = transform.position;
     }
 
     // public void StartCamera()

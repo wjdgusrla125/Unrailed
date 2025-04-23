@@ -37,10 +37,10 @@ public class GameManager: SingletonManager<GameManager>
         if (CurrentGameState != GameState.InGame) return;
         Debug.Log("게임오버");
         // StartCoroutine(GameOverBGMCoroutine());
-        SoundManager.Instance.StopSoundWithTag("Engine");
+        SoundManager.Instance.StopSoundWithTag("Engine"); //엔진 소리 끄기
         if (!NetworkManager.Singleton.IsHost) return;
-        MapGenerator.Instance.gameOverObj.SetActive(true);
-        RpcManager.Instance.ChangeGameStateRpc((int)GameState.GameOver);
+        MapGenerator.Instance.gameOverObj.SetActive(true); //게임오버 오브젝트 활성화
+        RpcManager.Instance.ChangeGameStateRpc((int)GameState.GameOver); //게임스테이트를 게임오버로 바꾸기 전파
         // if (trainManager) 
     }
 
