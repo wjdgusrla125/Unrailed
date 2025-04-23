@@ -20,7 +20,7 @@ public class ExpandingCircleDetector : MonoBehaviour
     [Header("References")]
     public Material material;
     public Transform planeTransform;
-    [Header("»óÁ¡ °ÔÀÌÁö")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public GameObject ShopGuage;
     private Coroutine FillCoroutine;
     public bool IsHold = false;
@@ -28,14 +28,14 @@ public class ExpandingCircleDetector : MonoBehaviour
 
     IEnumerator FillImageOverTime()
     {
-        float elapsedTime = 0f; // °æ°ú ½Ã°£
+        float elapsedTime = 0f; // ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
 
         while (elapsedTime < 2f)
         {
             if (IsHold)
                 yield break;
             elapsedTime += Time.deltaTime; 
-            ShopGuage.transform.GetChild(0).GetComponent<Image>().fillAmount = Mathf.Lerp(0f, 1f, elapsedTime / 2f); // 0¿¡¼­ 1±îÁö ¼±Çü º¸°£
+            ShopGuage.transform.GetChild(0).GetComponent<Image>().fillAmount = Mathf.Lerp(0f, 1f, elapsedTime / 2f); // 0ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             yield return null; 
         }
         ShopGuage.transform.GetChild(0).GetComponent<Image>().fillAmount = 1f;
@@ -45,11 +45,16 @@ public class ExpandingCircleDetector : MonoBehaviour
         FillCoroutine = null;
     }
 
-    public void JoinShop() => IsJoinShop = true;
+    public void JoinShop()
+    {
+        IsJoinShop = true;
+        gameObject.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x, 0.5f, MapGenerator.Instance.GetPosB().y);
+    }
     public void ExitShop()
     {
         IsExitShop = true; 
         IsJoinShop = false;
+        gameObject.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x, 0.5f, MapGenerator.Instance.GetPosB().y);
     }
     public bool GetJoin() => IsJoinShop;
     public bool GetExit() => IsExitShop;
@@ -76,7 +81,7 @@ public class ExpandingCircleDetector : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject); // Áßº¹ ¹æÁö
+            Destroy(gameObject); // ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½
             return;
         }
         Instance = this;
@@ -151,7 +156,35 @@ public class ExpandingCircleDetector : MonoBehaviour
                     if (obj.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
                         obj.transform.GetChild(0).gameObject.SetActive(true);
                     else
-                        obj.transform.GetChild(0).gameObject.SetActive(false);
+                    {
+                        if (obj.transform.childCount == 2 && obj.gameObject.layer == LayerMask.NameToLayer("Tile"))
+                        {
+                            obj.transform.GetChild(0).gameObject.SetActive(false);
+                            obj.transform.GetChild(1).gameObject.SetActive(false);
+                            obj.GetComponent<MeshRenderer>().enabled = false;
+                        }
+                        else if(obj.transform.childCount == 1 && obj.gameObject.layer == LayerMask.NameToLayer("Tile"))
+                        {
+                            obj.GetComponent<MeshRenderer>().enabled = false;
+                        }
+                        else if (obj.gameObject.layer == LayerMask.NameToLayer("Item"))
+                        {
+                            obj.transform.GetChild(0).gameObject.SetActive(false);
+                        }
+                        else if(obj.gameObject.layer == LayerMask.NameToLayer("Water"))
+                        {
+                            foreach (Transform child in obj.transform)
+                            {
+                                if (child.gameObject.activeSelf)
+                                {
+                                    if (child.childCount == 0)
+                                        child.GetComponent<MeshRenderer>().enabled = false;
+                                    else
+                                        child.GetChild(0).gameObject.SetActive(false);
+                                }
+                            }
+                        }
+                    }
                 }
                 else if (obj.TryGetComponent<MeshRenderer>(out var renderer))
                 {
@@ -172,7 +205,36 @@ public class ExpandingCircleDetector : MonoBehaviour
                         if (obj.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
                             obj.transform.GetChild(0).gameObject.SetActive(false);
                         else
-                            obj.transform.GetChild(0).gameObject.SetActive(true);
+                        {
+                            if (obj.transform.childCount == 2 && obj.gameObject.layer == LayerMask.NameToLayer("Tile"))
+                            {
+                                obj.transform.GetChild(0).gameObject.SetActive(true);
+                                obj.transform.GetChild(1).gameObject.SetActive(true);
+                                obj.GetComponent<MeshRenderer>().enabled = true;
+                            }
+                            else if (obj.transform.childCount == 1 && obj.gameObject.layer == LayerMask.NameToLayer("Tile"))
+                            {
+                                obj.GetComponent<MeshRenderer>().enabled = true;
+                            }
+                            else if (obj.gameObject.layer == LayerMask.NameToLayer("Item"))
+                            {
+                                obj.transform.GetChild(0).gameObject.SetActive(true);
+                            }
+                            else if (obj.gameObject.layer == LayerMask.NameToLayer("Water"))
+                            {
+                                foreach (Transform child in obj.transform)
+                                {
+                                    if (child.gameObject.activeSelf)
+                                    {
+                                        if (child.childCount == 0)
+                                            child.GetComponent<MeshRenderer>().enabled = true;
+                                        else
+                                            child.GetChild(0).gameObject.SetActive(true);
+                                    }
+
+                                }
+                            }
+                        }
                     }
                     else if (obj.TryGetComponent<MeshRenderer>(out var renderer))
                     {

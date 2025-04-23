@@ -344,6 +344,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaveWater
       objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.142869
@@ -446,6 +450,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HorizontalWave (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.5
@@ -476,6 +484,10 @@ PrefabInstance:
     - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_Name
       value: WaveWater (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x
@@ -579,6 +591,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HorizontalWave (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.5
@@ -650,6 +666,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HorizontalWave
       objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.5
@@ -679,6 +699,10 @@ PrefabInstance:
     - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_Name
       value: WaveWater (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x
@@ -741,6 +765,10 @@ PrefabInstance:
     - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_Name
       value: WaveWater (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x
@@ -844,6 +872,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HorizontalWave (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.5
@@ -874,6 +906,10 @@ PrefabInstance:
     - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_Name
       value: WaveWater (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x
@@ -936,6 +972,10 @@ PrefabInstance:
     - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_Name
       value: WaveWater (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1039,6 +1079,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HorizontalWave (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.5
@@ -1109,6 +1153,10 @@ PrefabInstance:
     - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_Name
       value: HorizontalWave (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1181,6 +1229,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HorizontalWave (6)
       objectReference: {fileID: 0}
+    - target: {fileID: 844013927420157074, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5512208467150767260, guid: 0ad6f33687cd23e4b92aedad2b88d54e, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.5
@@ -1211,6 +1263,10 @@ PrefabInstance:
     - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_Name
       value: WaveWater (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2672249481453358904, guid: d10008b356a0461478198d315bb96980, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2672249481453358907, guid: d10008b356a0461478198d315bb96980, type: 3}
       propertyPath: m_LocalPosition.x

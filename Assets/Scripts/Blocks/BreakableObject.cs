@@ -15,7 +15,8 @@ public class BreakableObject : MonoBehaviour
     [SerializeField] private GameObject HitParticle;
     [SerializeField] private GameObject DestroyParticle;
     public int MeshObjectCount;
-    
+    public Tile TileInfo;
+
     public BlockType BlockTypeProperty
     {
         get { return blockType; }
@@ -98,9 +99,7 @@ public class BreakableObject : MonoBehaviour
         GameObject temp = GameObject.Instantiate(DestroyParticle);
         temp.transform.position = gameObject.transform.position + new Vector3(0,0.5f,0);
 
-        GameObject dropObject = GameObject.Instantiate(DropGameObject[(int)blockType - 1]);
-        dropObject.transform.position = gameObject.transform.position;
-        dropObject.GetComponent<NetworkObject>().Spawn();
+        TileInfo.DropitialItems(DropGameObject[(int)blockType - 1]);
         Destroy(gameObject);
     }
 }

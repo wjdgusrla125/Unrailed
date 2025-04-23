@@ -190,6 +190,7 @@ public class PlayerInfo : MonoBehaviour
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
+        Debug.Log("디크 코루틴");
         if (hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() &&
             PlayerPos == transform.position && PlayerFront == transform.forward && hitOBJ != null)
         {

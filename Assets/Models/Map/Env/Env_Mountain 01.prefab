@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 6473153273282713779}
   - component: {fileID: 8480427101502777666}
   - component: {fileID: 1985370489581024065}
-  m_Layer: 26
+  m_Layer: 0
   m_Name: Env_Mountain 01
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -393,6 +393,10 @@ MonoBehaviour:
   DropGameObject:
   - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
   - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
+  HitParticle: {fileID: 0}
+  DestroyParticle: {fileID: 0}
+  MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &5195923981340097074
 GameObject:
   m_ObjectHideFlags: 0

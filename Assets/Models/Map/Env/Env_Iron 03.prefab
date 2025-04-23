@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 1134764358269337688}
   - component: {fileID: 6266430948333360449}
   - component: {fileID: -7689758826102434462}
-  m_Layer: 18
+  m_Layer: 0
   m_Name: Env_Iron 03
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -174,8 +174,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1.2265365, z: 1}
-  m_Center: {x: 0, y: 0.61426246, z: 0}
+  m_Size: {x: 1, y: 1.5773697, z: 1}
+  m_Center: {x: 0, y: 0.78967905, z: 0}
 --- !u!114 &1134764358269337688
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -257,6 +257,7 @@ MonoBehaviour:
   HitParticle: {fileID: 227030518030461873, guid: 5eddf77157eed0744b7ed08cff904e54, type: 3}
   DestroyParticle: {fileID: 227030518030461873, guid: 35a6a980a4e6b464ca17094dadba19f0, type: 3}
   MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &1191618287153936655
 GameObject:
   m_ObjectHideFlags: 0

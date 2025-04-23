@@ -185,7 +185,7 @@ GameObject:
   - component: {fileID: -7878464939378890227}
   - component: {fileID: 4542948860234953512}
   - component: {fileID: -2813347641135225584}
-  m_Layer: 18
+  m_Layer: 0
   m_Name: Env_Tree 1-0
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -227,8 +227,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.60413605, y: 1.2724779, z: 0.6709703}
-  m_Center: {x: -0.0025705397, y: 0.6400658, z: -0.000000044703484}
+  m_Size: {x: 0.60413605, y: 1.3654557, z: 0.6709703}
+  m_Center: {x: -0.0025705397, y: 0.68655473, z: -0.000000059604645}
 --- !u!114 &-7878464939378890227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -310,6 +310,7 @@ MonoBehaviour:
   HitParticle: {fileID: 227030518030461873, guid: ce108df7694058e4396b99bf73014c10, type: 3}
   DestroyParticle: {fileID: 227030518030461873, guid: 01c9349d26f608444a308f5c6d82bc89, type: 3}
   MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &430936053508983177
 GameObject:
   m_ObjectHideFlags: 0

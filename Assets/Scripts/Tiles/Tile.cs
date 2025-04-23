@@ -8,7 +8,7 @@ public class Tile : NetworkBehaviour
     private NetworkVariable<int> itemCount = new NetworkVariable<int>(0);
 
     [SerializeField] private Transform itemPoint;
-    [SerializeField] private float stackHeight = 0.1f;
+    [SerializeField] private float stackHeight = 0.2f;
     [SerializeField] private GameObject initialItemPrefab;
     [SerializeField] private int initialItemCount = 1;
 
@@ -21,9 +21,9 @@ public class Tile : NetworkBehaviour
         base.OnNetworkSpawn();
 
         if (IsServer && !IsClient && initialItemPrefab != null)
-            SpawnInitialItems();
+            Invoke("SpawnInitialItems", 4.5f);
         else if (IsServer && IsClient && initialItemPrefab != null && stackedItemIds.Count == 0)
-            SpawnInitialItems();
+            Invoke("SpawnInitialItems", 4.5f);
 
         currentItemType.OnValueChanged += OnItemTypeChanged;
         itemCount.OnValueChanged += OnItemCountChanged;
@@ -335,6 +335,29 @@ public class Tile : NetworkBehaviour
         for (int i = 0; i < count; i++)
         {
             GameObject itemInstance = Instantiate(initialItemPrefab, GetItemPositionAtHeight(i), itemPoint.rotation);
+            NetworkObject netObj = itemInstance.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                netObj.Spawn();
+                stackedItemIds.Push(netObj.NetworkObjectId);
+                itemCount.Value++;
+            }
+        }
+
+        SyncStackedItemsClientRpc(stackedItemIds.ToArray());
+    }
+
+    public void DropitialItems(GameObject obj)
+    {
+        Item itemComponent = obj.GetComponent<Item>();
+        if (itemComponent == null) return;
+
+        currentItemType.Value = itemComponent.ItemType;
+        int count = itemComponent.IsStackable ? Mathf.Clamp(initialItemCount, 1, 3) : 1;
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject itemInstance = Instantiate(obj, GetItemPositionAtHeight(i), itemPoint.rotation);
             NetworkObject netObj = itemInstance.GetComponent<NetworkObject>();
             if (netObj != null)
             {
