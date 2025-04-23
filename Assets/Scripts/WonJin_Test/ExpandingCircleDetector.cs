@@ -20,7 +20,7 @@ public class ExpandingCircleDetector : MonoBehaviour
     [Header("References")]
     public Material material;
     public Transform planeTransform;
-    [Header("»óÁ¡ °ÔÀÌÁö")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public GameObject ShopGuage;
     private Coroutine FillCoroutine;
     public bool IsHold = false;
@@ -28,14 +28,14 @@ public class ExpandingCircleDetector : MonoBehaviour
 
     IEnumerator FillImageOverTime()
     {
-        float elapsedTime = 0f; // °æ°ú ½Ã°£
+        float elapsedTime = 0f; // ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
 
         while (elapsedTime < 2f)
         {
             if (IsHold)
                 yield break;
             elapsedTime += Time.deltaTime; 
-            ShopGuage.transform.GetChild(0).GetComponent<Image>().fillAmount = Mathf.Lerp(0f, 1f, elapsedTime / 2f); // 0¿¡¼­ 1±îÁö ¼±Çü º¸°£
+            ShopGuage.transform.GetChild(0).GetComponent<Image>().fillAmount = Mathf.Lerp(0f, 1f, elapsedTime / 2f); // 0ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             yield return null; 
         }
         ShopGuage.transform.GetChild(0).GetComponent<Image>().fillAmount = 1f;
@@ -81,7 +81,7 @@ public class ExpandingCircleDetector : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject); // Áßº¹ ¹æÁö
+            Destroy(gameObject); // ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½
             return;
         }
         Instance = this;
@@ -177,7 +177,7 @@ public class ExpandingCircleDetector : MonoBehaviour
                             {
                                 if (child.gameObject.activeSelf)
                                 {
-                                    if (child.GetChildCount() == 0)
+                                    if (child.childCount == 0)
                                         child.GetComponent<MeshRenderer>().enabled = false;
                                     else
                                         child.GetChild(0).gameObject.SetActive(false);
@@ -226,7 +226,7 @@ public class ExpandingCircleDetector : MonoBehaviour
                                 {
                                     if (child.gameObject.activeSelf)
                                     {
-                                        if (child.GetChildCount() == 0)
+                                        if (child.childCount == 0)
                                             child.GetComponent<MeshRenderer>().enabled = true;
                                         else
                                             child.GetChild(0).gameObject.SetActive(true);

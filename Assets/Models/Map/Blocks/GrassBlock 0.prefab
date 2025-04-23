@@ -238,7 +238,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   itemPoint: {fileID: 7085282171598390198}
-  stackHeight: 0.1
-  initialItemPrefab: {fileID: 5844127213111809277, guid: 8f33f65feff17184995a88867a94d02a, type: 3}
+  stackHeight: 0.2
+  initialItemPrefab: {fileID: 8647543255831081959, guid: e62ad7bd0010d2742996e68dc67e70df, type: 3}
   initialItemCount: 1
   debugStackItems: 

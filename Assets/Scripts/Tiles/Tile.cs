@@ -8,7 +8,7 @@ public class Tile : NetworkBehaviour
     private NetworkVariable<int> itemCount = new NetworkVariable<int>(0);
 
     [SerializeField] private Transform itemPoint;
-    [SerializeField] private float stackHeight = 0.1f;
+    [SerializeField] private float stackHeight = 0.2f;
     [SerializeField] private GameObject initialItemPrefab;
     [SerializeField] private int initialItemCount = 1;
 
@@ -334,7 +334,7 @@ public class Tile : NetworkBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            GameObject itemInstance = Instantiate(initialItemPrefab, new Vector3(itemPoint.position.x,0.5f,itemPoint.position.z), itemPoint.rotation);
+            GameObject itemInstance = Instantiate(initialItemPrefab, GetItemPositionAtHeight(i), itemPoint.rotation);
             NetworkObject netObj = itemInstance.GetComponent<NetworkObject>();
             if (netObj != null)
             {
