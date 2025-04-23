@@ -49,7 +49,6 @@ MonoBehaviour:
   waterFall: {fileID: 0}
   brightObject: {fileID: 5901527704983412238}
   normalObject: {fileID: 1997647802570243110}
-  direction: 0
 --- !u!1 &1997647802570243110
 GameObject:
   m_ObjectHideFlags: 0

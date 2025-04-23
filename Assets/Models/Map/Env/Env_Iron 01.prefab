@@ -219,7 +219,7 @@ GameObject:
   - component: {fileID: 7278084904721996157}
   - component: {fileID: 720171504095951872}
   - component: {fileID: -886553764838452244}
-  m_Layer: 18
+  m_Layer: 0
   m_Name: Env_Iron 01
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -344,6 +344,7 @@ MonoBehaviour:
   HitParticle: {fileID: 227030518030461873, guid: 5eddf77157eed0744b7ed08cff904e54, type: 3}
   DestroyParticle: {fileID: 227030518030461873, guid: 35a6a980a4e6b464ca17094dadba19f0, type: 3}
   MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &6463121478977635208
 GameObject:
   m_ObjectHideFlags: 0

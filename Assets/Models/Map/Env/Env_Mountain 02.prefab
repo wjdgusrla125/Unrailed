@@ -254,6 +254,10 @@ MonoBehaviour:
   DropGameObject:
   - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
   - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
+  HitParticle: {fileID: 0}
+  DestroyParticle: {fileID: 0}
+  MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &696980883927229703
 GameObject:
   m_ObjectHideFlags: 0

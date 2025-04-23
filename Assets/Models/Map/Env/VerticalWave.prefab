@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a89c6defd35403aa1da9ff38e2a102d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  waterFall: {fileID: 0}
   brightObject: {fileID: 9170813874248224164}
   normalObject: {fileID: 3826411071190232972}
 --- !u!1 &3826411071190232972

@@ -24,7 +24,11 @@ public class CraftingTable : NetworkBehaviour
     // 레일 제작에 필요한 재료 정의
     private const int WOOD_REQUIRED = 1;
     private const int IRON_REQUIRED = 1;
-    
+    private void Start()
+    {
+        targetDesk = FindObjectOfType<DeskInfo>();
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();

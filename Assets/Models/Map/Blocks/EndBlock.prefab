@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: -6613430608222225931}
   - component: {fileID: -6338087770834217597}
   - component: {fileID: 5663709040611209567}
-  m_Layer: 31
+  m_Layer: 7
   m_Name: EndBlock
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -155,6 +155,7 @@ MonoBehaviour:
   fragPrefab: {fileID: 0}
   envOffset: {x: 0, y: 0.5, z: 0}
   desiredParent: {fileID: 0}
+  railed: 0
 --- !u!114 &5663709040611209567
 MonoBehaviour:
   m_ObjectHideFlags: 0

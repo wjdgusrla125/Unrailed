@@ -540,7 +540,7 @@ GameObject:
   - component: {fileID: 2105549565150649217}
   - component: {fileID: -7317601582716024010}
   - component: {fileID: -6927390778415263900}
-  m_Layer: 18
+  m_Layer: 0
   m_Name: Env_Tree 0-1
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -666,6 +666,7 @@ MonoBehaviour:
   HitParticle: {fileID: 227030518030461873, guid: ce108df7694058e4396b99bf73014c10, type: 3}
   DestroyParticle: {fileID: 227030518030461873, guid: 01c9349d26f608444a308f5c6d82bc89, type: 3}
   MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &5019990921733027023
 GameObject:
   m_ObjectHideFlags: 0

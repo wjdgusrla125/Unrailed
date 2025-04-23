@@ -15,7 +15,8 @@ public class BreakableObject : MonoBehaviour
     [SerializeField] private GameObject HitParticle;
     [SerializeField] private GameObject DestroyParticle;
     public int MeshObjectCount;
-    
+    public Tile TileInfo;
+
     public BlockType BlockTypeProperty
     {
         get { return blockType; }

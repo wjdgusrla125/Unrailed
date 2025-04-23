@@ -11957,7 +11957,8 @@ GameObject:
   - component: {fileID: -6291277285027499837}
   - component: {fileID: -7090672028969431134}
   - component: {fileID: 2740634083671255965}
-  m_Layer: 0
+  - component: {fileID: 1268089699776271930}
+  m_Layer: 10
   m_Name: Train_Craft_Desk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12028,6 +12029,7 @@ MonoBehaviour:
   destroyObject: {fileID: 8978791300100044420}
   fire: {fileID: 3774393876545337365}
   warning: {fileID: 3916089870997391993}
+  smoke: {fileID: 0}
   countdownObject: []
   headPrefab: {fileID: 0}
   waterTankPrefab: {fileID: 0}
@@ -12090,6 +12092,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   RailPrefab: {fileID: 7402043901895155594, guid: 1c3fcc82479a1c540aa989011f27cf38, type: 3}
+--- !u!65 &1268089699776271930
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179319214146732209}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.89126307, y: 0.99427736, z: 1.5722995}
+  m_Center: {x: 0.0028615196, y: 0.70678985, z: -0.37199432}
 --- !u!1 &6280144526196900584
 GameObject:
   m_ObjectHideFlags: 0

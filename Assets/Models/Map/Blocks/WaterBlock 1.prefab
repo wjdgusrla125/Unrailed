@@ -99,7 +99,7 @@ GameObject:
   - component: {fileID: -3938506336611743750}
   - component: {fileID: 1775186517129209259}
   - component: {fileID: -3119068308291943466}
-  m_Layer: 31
+  m_Layer: 4
   m_Name: WaterBlock 1
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -158,7 +158,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3442370596
+  GlobalObjectIdHash: 3925258469
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -189,6 +189,7 @@ MonoBehaviour:
   fragPrefab: {fileID: 0}
   envOffset: {x: 0, y: 0.5, z: 0}
   desiredParent: {fileID: 0}
+  railed: 0
   waterFall1: {fileID: 198667179049958434}
   waterFall3: {fileID: 5357457287126564632}
   waterFall7: {fileID: 4521459790889563862}
