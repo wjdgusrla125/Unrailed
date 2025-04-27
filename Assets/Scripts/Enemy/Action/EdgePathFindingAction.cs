@@ -59,7 +59,11 @@ public partial class EdgePathFindingAction : Action
         }
         else
         {
-            Agent.Value.transform.position = Vector3.MoveTowards(agentPos, targetWorld, Time.deltaTime * 2f);
+            Vector3 moveDir = (targetWorld - agentPos).normalized;
+            if (moveDir != Vector3.zero)
+                Agent.Value.transform.forward = new Vector3(moveDir.x, 0f, moveDir.z);
+            
+            Agent.Value.transform.position = Vector3.MoveTowards(agentPos, targetWorld, Time.deltaTime * 1f);
         }
 
         return (_pathIndex >= _path.Count) ? Status.Success : Status.Running;

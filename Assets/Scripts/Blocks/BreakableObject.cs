@@ -9,9 +9,9 @@ public class BreakableObject : MonoBehaviour
     [SerializeField] private int BlockHpCount;
     [SerializeField] private BlockType blockType;
     [SerializeField] private List<GameObject> DropGameObject;
-    private float shakeDuration = 0.29f;   // Èçµé¸®´Â ½Ã°£ (ÃÊ)
-    private float shakeAmount = 0.1f;   // Èçµé¸² °­µµ
-    private float decreaseFactor = 1f;  // ½Ã°£ ÁÙ¾îµå´Â ¼Óµµ
+    private float shakeDuration = 0.29f;   // ï¿½ï¿½é¸®ï¿½ï¿½ ï¿½Ã°ï¿½ (ï¿½ï¿½)
+    private float shakeAmount = 0.1f;   // ï¿½ï¿½é¸² ï¿½ï¿½ï¿½ï¿½
+    private float decreaseFactor = 1f;  // ï¿½Ã°ï¿½ ï¿½Ù¾ï¿½ï¿½ï¿½ ï¿½Óµï¿½
     private Vector3 originalPos;
     [SerializeField] private GameObject HitParticle;
     [SerializeField] private GameObject DestroyParticle;
@@ -98,10 +98,23 @@ public class BreakableObject : MonoBehaviour
 
     public void DestroyBlock()
     {
-        GameObject temp = GameObject.Instantiate(DestroyParticle);
-        temp.transform.position = gameObject.transform.position + new Vector3(0,0.5f,0);
+        if (TileInfo != null)
+        {
+            // ë¸”ë¡ì´ íŒŒê´´ë  ë•Œ íƒ€ì¼ íƒ€ì…ì„ Grassë¡œ ë³€ê²½
+            Vector2Int tilePos = new Vector2Int(Mathf.RoundToInt(TileInfo.transform.position.x), Mathf.RoundToInt(TileInfo.transform.position.z));
+            MapGenerator.Instance.Map[tilePos.x, tilePos.y] = MapGenerator.TileType.Grass;
+            MapGenerator.Instance.ReassignTile(tilePos);
+        }
+
+        GameObject temp = Instantiate(DestroyParticle);
+        temp.transform.position = transform.position + new Vector3(0, 0.5f, 0);
         SoundManager.Instance.PlaySound(BrokenSound);
-        TileInfo.DropitialItems(DropGameObject[(int)blockType - 1]);
+
+        if (TileInfo != null)
+        {
+            TileInfo.DropitialItems(DropGameObject[(int)blockType - 1]);
+        }
+
         Destroy(gameObject);
     }
 }

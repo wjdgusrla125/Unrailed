@@ -224,4 +224,9 @@ public abstract class Blocks : NetworkBehaviour
         
         NetworkObject.Despawn();
     }
+    
+    public bool HasEnvObject()
+    {
+        return _env != null;
+    }
 }

@@ -14,7 +14,36 @@ public class Pathfinder
             return false;
 
         var tile = MapGenerator.Instance.Map[pos.x, pos.y];
-        return tile == MapGenerator.TileType.Grass;
+
+        if (tile == MapGenerator.TileType.Grass)
+            return true;
+    
+        if (tile == MapGenerator.TileType.Wood || tile == MapGenerator.TileType.Iron)
+        {
+            Tile tileComponent = GetTileAt(pos);
+            if (tileComponent != null)
+            {
+                Blocks block = tileComponent.GetComponent<Blocks>();
+                if (block != null && !block.HasEnvObject())
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static Tile GetTileAt(Vector2Int pos)
+    {
+        Collider[] hits = Physics.OverlapSphere(new Vector3(pos.x, 0, pos.y), 0.4f);
+        foreach (var hit in hits)
+        {
+            Blocks block = hit.GetComponent<Blocks>();
+            if (block != null)
+                return block.GetComponent<Tile>();
+        }
+        return null;
     }
 
     public static bool IsInBounds(Vector2Int pos)

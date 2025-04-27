@@ -11,7 +11,7 @@ public partial class RunAwayAction : Action
 {
     [SerializeReference] public BlackboardVariable<GameObject> Agent;
     [SerializeReference] public BlackboardVariable<GameObject> Target;
-    [SerializeField] public float MoveSpeed = 3f;
+    [SerializeField] public float MoveSpeed = 1f;
     [SerializeField] public float TriggerDistance = 5f;
     [SerializeField] public float SafeDistance = 8f;
 
@@ -63,6 +63,10 @@ public partial class RunAwayAction : Action
 
         Vector3 targetWorldPos = TileToWorld(_path[_currentIndex]);
         targetWorldPos.y = _agentTransform.position.y;
+        
+        Vector3 moveDir = (targetWorldPos - _agentTransform.position).normalized;
+        if (moveDir != Vector3.zero)
+            _agentTransform.forward = new Vector3(moveDir.x, 0f, moveDir.z);
 
         _agentTransform.position = Vector3.MoveTowards(_agentTransform.position, targetWorldPos, MoveSpeed * Time.deltaTime);
 

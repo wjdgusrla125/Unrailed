@@ -380,7 +380,7 @@ public class Tile : NetworkBehaviour
             return netObj;
         return null;
     }
-
+    
     //이벤트 핸들러
     private void OnItemTypeChanged(ItemType previous, ItemType current)
     {

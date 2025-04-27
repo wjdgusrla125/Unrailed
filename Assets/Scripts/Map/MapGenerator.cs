@@ -430,7 +430,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     }
 
     // 타일의 타입 변경에 따른 재할당 메서드.
-    private void ReassignTile(Vector2Int tile)
+    public void ReassignTile(Vector2Int tile)
     {
         if (_tileClusterGroupMap.TryGetValue(tile, out ClusterGroup oldGroup))
         {
