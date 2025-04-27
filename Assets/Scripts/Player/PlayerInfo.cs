@@ -1,3 +1,4 @@
+using Sound;
 using System.Collections;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -26,6 +27,11 @@ public class PlayerInfo : MonoBehaviour
     [Header("양동이 체크")]
     public GameObject Bucket;
 
+    [Header("사운드")]
+    public AudioClip PickAxeHitSound;
+    public AudioClip AxeHitSound;
+    public AudioClip WaterDrawSound;
+    public AudioClip WaterSpraySound;
     private Coroutine digCoroutine;
     private Coroutine waterCoroutine;
 
@@ -50,6 +56,10 @@ public class PlayerInfo : MonoBehaviour
     public void DigDone()
     {
         hitOBJ.GetComponent<BreakableObject>()?.CheckRay(itemType);
+        if (itemType == ItemType.Pickaxe)
+            SoundManager.Instance.PlaySound(PickAxeHitSound);
+        if(itemType == ItemType.Axe)
+            SoundManager.Instance.PlaySound(AxeHitSound);
     }
 
     private bool HandleCheckDigBlock()
@@ -182,6 +192,7 @@ public class PlayerInfo : MonoBehaviour
                     col.gameObject.GetComponent<BurnTrainObject>().Isburn = false;
                     itemType = ItemType.Bucket;
                     Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
+                    SoundManager.Instance.PlaySound(WaterSpraySound);
                 }
             }
         }
@@ -190,7 +201,6 @@ public class PlayerInfo : MonoBehaviour
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
-        Debug.Log("디크 코루틴");
         if (hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() &&
             PlayerPos == transform.position && PlayerFront == transform.forward && hitOBJ != null)
         {
@@ -205,13 +215,7 @@ public class PlayerInfo : MonoBehaviour
         yield return new WaitForSeconds(digwaitTime);
         itemType = ItemType.WaterInBucket;
         Bucket.GetComponent<Item>().ItemType = ItemType.WaterInBucket;
+        SoundManager.Instance.PlaySound(WaterDrawSound);
         waterCoroutine = null;
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        // 편의를 위해 Scene 뷰에 감지 범위를 그려줌
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(gameObject.transform.position, 0.8f);
     }
 }

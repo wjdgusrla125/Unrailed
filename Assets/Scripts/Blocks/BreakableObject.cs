@@ -1,3 +1,4 @@
+using Sound;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -14,6 +15,7 @@ public class BreakableObject : MonoBehaviour
     private Vector3 originalPos;
     [SerializeField] private GameObject HitParticle;
     [SerializeField] private GameObject DestroyParticle;
+    public AudioClip BrokenSound;
     public int MeshObjectCount;
     public Tile TileInfo;
 
@@ -98,7 +100,7 @@ public class BreakableObject : MonoBehaviour
     {
         GameObject temp = GameObject.Instantiate(DestroyParticle);
         temp.transform.position = gameObject.transform.position + new Vector3(0,0.5f,0);
-
+        SoundManager.Instance.PlaySound(BrokenSound);
         TileInfo.DropitialItems(DropGameObject[(int)blockType - 1]);
         Destroy(gameObject);
     }

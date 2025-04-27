@@ -137,6 +137,7 @@ MonoBehaviour:
   - {fileID: 9043740789192840749, guid: e9ea948b5baee254a94c64ecba50279d, type: 3}
   HitParticle: {fileID: 227030518030461873, guid: 5eddf77157eed0744b7ed08cff904e54, type: 3}
   DestroyParticle: {fileID: 227030518030461873, guid: 35a6a980a4e6b464ca17094dadba19f0, type: 3}
+  BrokenSound: {fileID: 8300000, guid: f5b4fbe96edd46046bfb2bdef75d4ba6, type: 3}
   MeshObjectCount: 0
   TileInfo: {fileID: 0}
 --- !u!1 &6347817238919311856

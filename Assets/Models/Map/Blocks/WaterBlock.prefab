@@ -99,6 +99,7 @@ GameObject:
   - component: {fileID: -3938506336611743750}
   - component: {fileID: 1775186517129209259}
   - component: {fileID: -3119068308291943466}
+  - component: {fileID: 2002479978597818886}
   m_Layer: 4
   m_Name: WaterBlock
   m_TagString: Invisible
@@ -144,8 +145,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1, y: 2, z: 1}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &-3938506336611743750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,6 +230,26 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &2002479978597818886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 0
+  blockType: 3
+  DropGameObject: []
+  HitParticle: {fileID: 0}
+  DestroyParticle: {fileID: 0}
+  BrokenSound: {fileID: 0}
+  MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1001 &1272914674535273997
 PrefabInstance:
   m_ObjectHideFlags: 0

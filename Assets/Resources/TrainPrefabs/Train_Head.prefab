@@ -21286,6 +21286,7 @@ GameObject:
   - component: {fileID: -8287592718465894367}
   - component: {fileID: 1217013138676881746}
   - component: {fileID: 2131916239848950005}
+  - component: {fileID: 5780626107455363897}
   m_Layer: 10
   m_Name: Train_Head
   m_TagString: Untagged
@@ -21447,6 +21448,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1.0693948, z: 2.0200937}
   m_Center: {x: 4.0377383e-15, y: 0.55515385, z: -0.5100479}
+--- !u!114 &5780626107455363897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7916100667047651537}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357c8217d7d04964195a3a82ea2747be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Isburn: 0
+  FireEffect: {fileID: 0}
 --- !u!1 &7922636340948305211
 GameObject:
   m_ObjectHideFlags: 0

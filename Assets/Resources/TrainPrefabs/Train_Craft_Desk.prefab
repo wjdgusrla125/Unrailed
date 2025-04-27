@@ -11958,6 +11958,7 @@ GameObject:
   - component: {fileID: -7090672028969431134}
   - component: {fileID: 2740634083671255965}
   - component: {fileID: 1268089699776271930}
+  - component: {fileID: 4161929413256172751}
   m_Layer: 10
   m_Name: Train_Craft_Desk
   m_TagString: Untagged
@@ -12113,6 +12114,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.89126307, y: 0.99427736, z: 1.5722995}
   m_Center: {x: 0.0028615196, y: 0.70678985, z: -0.37199432}
+--- !u!114 &4161929413256172751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179319214146732209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357c8217d7d04964195a3a82ea2747be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Isburn: 0
+  FireEffect: {fileID: 0}
 --- !u!1 &6280144526196900584
 GameObject:
   m_ObjectHideFlags: 0
