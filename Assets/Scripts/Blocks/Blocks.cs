@@ -27,10 +27,6 @@ public abstract class Blocks : NetworkBehaviour
     
     [SerializeField]
     private Vector3 envOffset = new Vector3(0, 0.5f, 0);
-    
-    // [NonSerialized]
-    // private GameObject _selectedPrefab;
-    
     private MeshRenderer _meshRenderer;
     private GameObject _env;
 
@@ -43,8 +39,6 @@ public abstract class Blocks : NetworkBehaviour
     private void Awake()
     {
         _meshRenderer = GetComponent<MeshRenderer>();
-        
-        // BlockInit();
     }
 
     public override void OnNetworkSpawn()
