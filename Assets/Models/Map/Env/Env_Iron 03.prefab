@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1191618286101468726}
   - component: {fileID: 1191618286101468723}
   - component: {fileID: 1191618286101468724}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -95,7 +95,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1191618286356051810}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 4932612492528084243}
   - component: {fileID: 1134764358269337688}
   - component: {fileID: 6266430948333360449}
-  m_Layer: 18
+  m_Layer: 9
   m_Name: Env_Iron 03
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -247,7 +247,7 @@ GameObject:
   - component: {fileID: 1191618287153936654}
   - component: {fileID: 1191618287153936651}
   - component: {fileID: 1191618287153936652}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

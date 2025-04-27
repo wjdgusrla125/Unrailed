@@ -7,6 +7,10 @@ TagManager:
   - Invisible
   - Train
   - WaterBox
+  - Rooting
+  - Map
+  - Obstacle
+  - Tile
   layers:
   - Default
   - TransparentFX
@@ -17,7 +21,7 @@ TagManager:
   - Item
   - Tile
   - Rail
-  - 
+  - Obstacle
   - 
   - 
   - 

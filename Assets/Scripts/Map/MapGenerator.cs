@@ -2,10 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.AI.Navigation;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
+using UnityEngine.AI;
 
 public class MapGenerator : SingletonManager<MapGenerator>
 {
@@ -92,7 +94,17 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public TileType[,] Map;
     private Vector2Int _posA; // 시작점
     private Vector2Int _posB; // 도착점
+    
+    public Vector2Int GetStartPos()
+    {
+        return _posA;
+    }
 
+    public Vector2Int GetEndPos()
+    {
+        return _posB;
+    }
+    
     // 디버그용, Q키 쿨다운 (1초)
     private const float GenerateCooldown = 1f;
     private float _lastGenerateTime = -10f;
@@ -236,6 +248,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     {
         _clusterParent = Instantiate(clusterParentPrefab);
         _clusterParent.GetComponent<NetworkObject>().Spawn();
+        
         _oldMapParent = Instantiate(oldMapParentPrefab);
         _oldMapParent.GetComponent<NetworkObject>().Spawn();
     }
@@ -269,9 +282,10 @@ public class MapGenerator : SingletonManager<MapGenerator>
             FinalizeUnassignedClusters(); // 미할당 타일들의 클러스터 그룹 생성
             SplitDisconnectedClusterGroups(); // 분리된(연결되지 않은) 클러스터 그룹 분할
             StartCoroutine(InstantiateMap()); // 맵 오브젝트(타일) 생성 및 배치
-
+            
             _isMapGenerating = false;
             IsMapGenerated?.Invoke(true);
+            
         }
         catch (MapGenerationException ex)
         {
@@ -377,6 +391,19 @@ public class MapGenerator : SingletonManager<MapGenerator>
             SplitDisconnectedClusterGroups(); // 분리된(연결되지 않은) 클러스터 그룹 분할
             StartCoroutine(InstantiateMap(oldWidth)); // 맵 오브젝트(타일) 생성 및 배치
 
+            
+            // 네비메쉬 서피스를 가져와 베이킹 실행
+            var navMeshSurface = _clusterParent.GetComponent<NavMeshSurface>();
+            if (navMeshSurface != null)
+            {
+                navMeshSurface.BuildNavMesh();
+                Debug.Log("네비메쉬 빌드");
+            }
+            else
+            {
+                Debug.LogWarning("NavMeshSurface가 clusterParentPrefab에 존재하지 않습니다.");
+            }
+            
             _isMapGenerating = false;
             IsMapGenerated?.Invoke(true);
         }
@@ -2720,6 +2747,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
             }
         }
         yield return null;
+        
+        
+        yield return new WaitForEndOfFrame(); // 모든 오브젝트 생성 대기
     }
 
     //레일을 스폰(MapGenerator이 아닌 Cluster에서 호출)

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5359016652606530475}
   - component: {fileID: 5359016652606530486}
   - component: {fileID: 5359016652606530473}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -95,7 +95,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5359016652625525950}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 2339249324351430343}
   - component: {fileID: -8191548499110812881}
   - component: {fileID: -1735918711652087457}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Env_Mountain 00
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -247,7 +247,7 @@ GameObject:
   - component: {fileID: 5359016653723862698}
   - component: {fileID: 5359016653723862697}
   - component: {fileID: 5359016653723862696}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

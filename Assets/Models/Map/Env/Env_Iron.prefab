@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3258400204647497963}
   - component: {fileID: -3086100162415034250}
   - component: {fileID: 3329410435209895858}
-  m_Layer: 31
+  m_Layer: 9
   m_Name: Env_Iron
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -128,7 +128,7 @@ GameObject:
   - component: {fileID: 4083061367281016984}
   - component: {fileID: 6865442360452768794}
   - component: {fileID: 4035016499308238695}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}

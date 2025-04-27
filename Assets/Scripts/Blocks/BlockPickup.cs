@@ -11,8 +11,8 @@ public class BlockPickup : NetworkBehaviour
     public Vector3 boxSize;
     public LayerMask tileLayerMask;
     public InputReader inputReader;
-    
-    private Stack<NetworkObject> heldObjectStack = new Stack<NetworkObject>();
+
+    public Stack<NetworkObject> heldObjectStack = new Stack<NetworkObject>();
     
     [SerializeField] private List<NetworkObject> heldObjectList = new List<NetworkObject>();
     
@@ -415,7 +415,7 @@ public class BlockPickup : NetworkBehaviour
     }
 
     [ServerRpc]
-    void RequestPickUpFromStackServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
+    public void RequestPickUpFromStackServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
         {
@@ -471,7 +471,7 @@ public class BlockPickup : NetworkBehaviour
     }
     
     [ServerRpc]
-    void RequestDropOnTileServerRpc(ulong objectId, ulong tileId, ServerRpcParams rpcParams = default)
+    public void RequestDropOnTileServerRpc(ulong objectId, ulong tileId, ServerRpcParams rpcParams = default)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
@@ -996,13 +996,14 @@ public class BlockPickup : NetworkBehaviour
     [ClientRpc]
     private void DropObjectOnTileClientRpc(ulong objectId, ulong tileId)
     {
+        Debug.LogWarning("DropObjectOnTileClientRpc");
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj) ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
             return;
-    
+
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null) return;
-        
+
         if (IsServer)
         {
             tile.AddItemToStack(objectId);
@@ -1011,29 +1012,24 @@ public class BlockPickup : NetworkBehaviour
         BlockPickup localPickup = GetLocalBlockPickup();
         if (localPickup != null && (IsLocalPlayer || IsOwner))
         {
-            NetworkObject[] stackArray = localPickup.heldObjectStack.ToArray();
-            localPickup.heldObjectStack.Clear();
-        
-            foreach (NetworkObject obj in stackArray)
+            // 드랍한 objectId가 heldObjectStack 맨 위에 있는지 확인
+            if (localPickup.heldObjectStack.Count > 0 && localPickup.MainHeldObject != null &&
+                localPickup.MainHeldObject.NetworkObjectId == objectId)
             {
-                if (obj.NetworkObjectId != objectId)
-                {
-                    localPickup.heldObjectStack.Push(obj);
-                }
-            }
+                localPickup.heldObjectStack.Pop();
+                localPickup.UpdateHeldObjectList();
             
-            localPickup.UpdateHeldObjectList();
-        
-            if (localPickup.heldObjectStack.Count == 0)
-            {
-                localPickup.UpdatePlayerItemType(ItemType.None);
-            }
-            else
-            {
-                Item item = localPickup.heldObjectStack.Peek().GetComponent<Item>();
-                if (item != null)
+                if (localPickup.heldObjectStack.Count == 0)
                 {
-                    localPickup.UpdatePlayerItemType(item.ItemType);
+                    localPickup.UpdatePlayerItemType(ItemType.None);
+                }
+                else
+                {
+                    Item item = localPickup.MainHeldObject.GetComponent<Item>();
+                    if (item != null)
+                    {
+                        localPickup.UpdatePlayerItemType(item.ItemType);
+                    }
                 }
             }
         }
@@ -1314,8 +1310,8 @@ public class BlockPickup : NetworkBehaviour
     }
     
     #endregion
-    
-    private void UpdatePlayerItemType(ItemType type)
+
+    public void UpdatePlayerItemType(ItemType type)
     {
         if (playerInfo != null)
         {
@@ -1346,8 +1342,8 @@ public class BlockPickup : NetworkBehaviour
         }
         return null;
     }
-    
-    private void UpdateHeldObjectList()
+
+    public void UpdateHeldObjectList()
     {
         heldObjectList.Clear();
         if (heldObjectStack.Count > 0)

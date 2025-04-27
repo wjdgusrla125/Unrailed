@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2624253160243733736}
   - component: {fileID: 4184954402716565054}
   - component: {fileID: 5965446730655168112}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: -2556001631204266359}
   - component: {fileID: 3623355029795579547}
   - component: {fileID: 4216348347083393631}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Env_Mountain
   m_TagString: Untagged
   m_Icon: {fileID: 0}

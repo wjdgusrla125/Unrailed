@@ -21,9 +21,16 @@ public class Tile : NetworkBehaviour
         base.OnNetworkSpawn();
 
         if (IsServer && !IsClient && initialItemPrefab != null)
-            SpawnInitialItems();
+        {
+            Invoke("SpawnInitialItems", 5);
+            //SpawnInitialItems();
+        }
         else if (IsServer && IsClient && initialItemPrefab != null && stackedItemIds.Count == 0)
-            SpawnInitialItems();
+        {
+            Invoke("SpawnInitialItems", 5);
+            //SpawnInitialItems();
+        }
+            
 
         currentItemType.OnValueChanged += OnItemTypeChanged;
         itemCount.OnValueChanged += OnItemCountChanged;
@@ -201,28 +208,23 @@ public class Tile : NetworkBehaviour
     public void ForceAddItemToStackFromServer(ulong itemNetId)
     {
         if (!IsServer) return;
-
-        Debug.Log($"[DEBUG] ForceAddItemToStackFromServer called with itemNetId: {itemNetId}");
+        
         
         // Stack의 Contains 메소드 사용 여부 검사
         bool containsItem = false;
-        Debug.Log($"[DEBUG] Current stack count: {stackedItemIds.Count}");
         
         // 스택의 모든 아이템 출력
         foreach (ulong id in stackedItemIds)
         {
-            Debug.Log($"[DEBUG] Stack contains item: {id}");
             if (id == itemNetId)
             {
                 containsItem = true;
-                Debug.Log($"[DEBUG] Found duplicate item {itemNetId} in stack!");
             }
         }
         
         // 중복 확인 (이미 스택에 있는 아이템인지)
         if (containsItem)
         {
-            Debug.LogWarning($"Item {itemNetId} is already in the stack. Skipping.");
             return;
         }
 
