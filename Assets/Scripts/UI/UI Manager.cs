@@ -119,12 +119,14 @@ public class UIManager: NetworkSingletonManager<UIManager>
     public void OnRestartButtonClicked()
     {
         CloseGameOverMenu();
+        MapGenerator.Instance.GameOverObjectDespawn();
         RpcManager.Instance.StartGameClientRpc();
         RpcManager.Instance.ToggleLoadingScreenRpc(true);
     }
 
     public void OnLeaveButtonClicked()
     {
+        MapGenerator.Instance.GameOverObjectDespawn();
         NetworkManager.Singleton.Shutdown();
     }
     

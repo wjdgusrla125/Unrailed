@@ -211,12 +211,16 @@ public class MapGenerator : SingletonManager<MapGenerator>
         }
     }
 
-    //모든 오브젝트를 제거한다(타일 제외)
+    //모든 오브젝트를 제거한다(타일, 게임오버 오브젝트 제외)
     public void AllObjectsDespawn()
     {
-        if (gameOverObj) gameOverObj.GetComponent<NetworkObject>().Despawn();
         RailManager.Instance.AllRailsDespawn();
         _trainHead.GetComponent<TrainManager>().AllTrainsDespawn();
+    }
+
+    public void GameOverObjectDespawn()
+    {
+        if (gameOverObj) gameOverObj.GetComponent<NetworkObject>().Despawn();
     }
 
     #endregion
