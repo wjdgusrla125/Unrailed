@@ -8,6 +8,7 @@ public class CameraController: MonoBehaviour
     private TrainManager _cameraTarget;
     private float _offsetX;
     private bool _isFollowing = false;
+    private bool _isGameOver = false;
     
     public Vector3 originInitPosition; //최초의 InitPosition
     private Vector3 _initPosition;
@@ -30,6 +31,7 @@ public class CameraController: MonoBehaviour
     //카메라를 초기상태로 전환
     public void ResetCamera()
     {
+        _isGameOver = false;
         _isFollowing = false;
         _cameraTarget = null;
         _initPosition = originInitPosition;
@@ -62,7 +64,7 @@ public class CameraController: MonoBehaviour
     
     private void LateUpdate()
     {
-        if (!_cameraTarget) return;
+        if (!_cameraTarget || _isGameOver) return;
 
         // 기차가 _initialTargetX만큼 이동했는지 체크
         if (!_isFollowing)
@@ -82,16 +84,19 @@ public class CameraController: MonoBehaviour
 
     public void GameOverCameraMoving()
     {
+        _isGameOver = true;
         _isFollowing = false;
         StartCoroutine(GameOverCameraCoroutine());
     }
     
     private IEnumerator GameOverCameraCoroutine()
     {
+        // Debug.Log($"게임오버 카메라이동");
         yield return new WaitForSeconds(3f);
         Vector3 startPos = transform.position;
-        Vector3 targetPos = _initPosition;                     
+        Vector3 targetPos = _initPosition;
         targetPos.x -= 14.0f;
+        
 
         const float duration = 13f;
         float elapsed = 0f;
@@ -115,7 +120,10 @@ public class CameraController: MonoBehaviour
         }
 
         transform.position = targetPos;
+        UIManager.Instance.OpenGameOverMenu();
         MapGenerator.Instance.AllTileDespawn();
+        MapGenerator.Instance.AllObjectsDespawn();
+        
         Debug.Log("GameOverCameraMoving 동작 종료");
     }
 }

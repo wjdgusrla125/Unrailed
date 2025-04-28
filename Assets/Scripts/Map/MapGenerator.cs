@@ -138,7 +138,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             _lastGenerateTime = Time.time;
             Debug.Log("Q입력, 시드 랜덤화 후 맵 생성");
             AllTileDespawn();
-            AllObjectDespawn();
+            AllObjectsDespawn();
             mapSeed = string.Empty;
             StartCoroutine(GenerateMapCoroutine());
         }
@@ -149,7 +149,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
             _lastGenerateTime = Time.time;
             Debug.Log("E입력, 시드 유지 맵 생성");
             AllTileDespawn();
-            AllObjectDespawn();
+            AllObjectsDespawn();
             StartCoroutine(GenerateMapCoroutine());
         }
 
@@ -172,8 +172,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #endregion
 
-    #region 모든 타일 제거
+    #region 타일 & 오브젝트 제거
 
+    //모든 타일을 제거한다.
     public void AllTileDespawn()
     {
         List<Transform> children = new List<Transform>();
@@ -210,7 +211,8 @@ public class MapGenerator : SingletonManager<MapGenerator>
         }
     }
 
-    public void AllObjectDespawn()
+    //모든 오브젝트를 제거한다(타일 제외)
+    public void AllObjectsDespawn()
     {
         if (gameOverObj) gameOverObj.GetComponent<NetworkObject>().Despawn();
         RailManager.Instance.AllRailsDespawn();

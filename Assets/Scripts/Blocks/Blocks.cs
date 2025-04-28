@@ -86,7 +86,7 @@ public abstract class Blocks : NetworkBehaviour
         if (envObj)
         {
             envObj.Spawn();
-            envObj.GetComponent<BreakableObject>().TileInfo = gameObject.GetComponent<Tile>();
+            // envObj.GetComponent<BreakableObject>().TileInfo = gameObject.GetComponent<Tile>();
             ulong parentId = transform.GetComponent<NetworkObject>().NetworkObjectId;
             ulong childId = envObj.NetworkObjectId;
             StartCoroutine(SetParentCoroutine(parentId, childId));

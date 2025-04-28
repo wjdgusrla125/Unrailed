@@ -17,6 +17,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     [SerializeField]private GameObject sessionUI;
     [SerializeField]private GameObject gameUI;
     [SerializeField]private GameObject loadingScreen;
+    [SerializeField]private GameObject gameOverMenu;
     
     [SerializeField]private Button startButton;
     [SerializeField]private TextMeshProUGUI startButtonText;
@@ -103,6 +104,28 @@ public class UIManager: NetworkSingletonManager<UIManager>
     public void PlayUIButtonUpSound()
     {
         SoundManager.Instance.PlaySound(mouseUpSound, SoundManager.SoundGroup.Ui, 0.5f);
+    }
+
+    public void OpenGameOverMenu()
+    {
+        gameOverMenu.SetActive(true);
+    }
+
+    public void CloseGameOverMenu()
+    {
+        gameOverMenu.SetActive(false);
+    }
+
+    public void OnRestartButtonClicked()
+    {
+        CloseGameOverMenu();
+        RpcManager.Instance.StartGameClientRpc();
+        RpcManager.Instance.ToggleLoadingScreenRpc(true);
+    }
+
+    public void OnLeaveButtonClicked()
+    {
+        NetworkManager.Singleton.Shutdown();
     }
     
 }

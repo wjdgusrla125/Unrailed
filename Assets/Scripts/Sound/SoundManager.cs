@@ -140,28 +140,36 @@ namespace Sound
         
         public void SetMasterVolume(float volume)
         {
-            float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f; 
-
+            float dB;
+            if (Mathf.Approximately(volume, 0f)) dB = -80f;
+            else dB = Mathf.Log10(Mathf.Clamp(volume, 0f, 1f)) * 20f;
+            
             mixer.SetFloat(MasterVolume, dB);
         }
         
         public void SetSfxVolume(float volume)
         {
-            float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f; 
+            float dB;
+            if (Mathf.Approximately(volume, 0f)) dB = -80f;
+            else dB = Mathf.Log10(Mathf.Clamp(volume, 0f, 1f)) * 20f;
 
             mixer.SetFloat(SfxVolume, dB);
         }
         
         public void SetUiVolume(float volume)
         {
-            float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f; 
+            float dB;
+            if (Mathf.Approximately(volume, 0f)) dB = -80f;
+            else dB = Mathf.Log10(Mathf.Clamp(volume, 0f, 1f)) * 20f;
 
             mixer.SetFloat(UiVolume, dB);
         }
         
         public void SetMusicVolume(float volume)
         {
-            float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f; 
+            float dB;
+            if (Mathf.Approximately(volume, 0f)) dB = -80f;
+            else dB = Mathf.Log10(Mathf.Clamp(volume, 0f, 1f)) * 20f;
 
             mixer.SetFloat(MusicVolume, dB);
         }
@@ -177,25 +185,26 @@ namespace Sound
             }
             if (mixer.GetFloat(MasterVolume, out float masterVolume))
             {
-                float linearVolume = Mathf.Pow(10, masterVolume * 0.05f);
+                float linearVolume = Mathf.Approximately(masterVolume, -80f) ? 0f : Mathf.Pow(10, masterVolume * 0.05f);
                 PlayerPrefs.SetFloat(MasterVolume, linearVolume);
+                // Debug.Log($"저장: {linearVolume}");
             }
 
             if (mixer.GetFloat(SfxVolume, out float sfxVolume))
             {
-                float linearVolume = Mathf.Pow(10, sfxVolume * 0.05f);
+                float linearVolume = Mathf.Approximately(sfxVolume, -80f) ? 0f : Mathf.Pow(10, sfxVolume * 0.05f);
                 PlayerPrefs.SetFloat(SfxVolume, linearVolume);
             }
 
             if (mixer.GetFloat(UiVolume, out float uiVolume))
             {
-                float linearVolume = Mathf.Pow(10, uiVolume * 0.05f);
+                float linearVolume = Mathf.Approximately(uiVolume, -80f) ? 0f : Mathf.Pow(10, uiVolume * 0.05f);
                 PlayerPrefs.SetFloat(UiVolume, linearVolume);
             }
 
             if (mixer.GetFloat(MusicVolume, out float musicVolume))
             {
-                float linearVolume = Mathf.Pow(10, musicVolume * 0.05f);
+                float linearVolume = Mathf.Approximately(musicVolume, -80f) ? 0f : Mathf.Pow(10, musicVolume * 0.05f);
                 PlayerPrefs.SetFloat(MusicVolume, linearVolume);
             }
 
@@ -229,6 +238,7 @@ namespace Sound
             if (PlayerPrefs.HasKey(MasterVolume))
             {
                 float linearVolume = PlayerPrefs.GetFloat(MasterVolume);
+                // Debug.Log($"불러오기: {linearVolume}");
                 float dB = Mathf.Log10(Mathf.Clamp(linearVolume, 0.0001f, 1f)) * 20f;
                 mixer.SetFloat(MasterVolume, dB);
             }
