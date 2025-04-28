@@ -100,20 +100,10 @@ public class PlayerMovement : NetworkBehaviour
 
     private void MovePlayer()
     {
-        if (rb == null || mainCamera == null) return;
+        if (rb == null) return;
         
-        // 카메라 기준 이동 방향 계산
-        Vector3 forward = mainCamera.transform.forward;
-        Vector3 right = mainCamera.transform.right;
-        
-        // 이동이 수평면에서만 이루어지도록 함
-        forward.y = 0f;
-        right.y = 0f;
-        forward.Normalize();
-        right.Normalize();
-        
-        // 이동 벡터 생성
-        Vector3 moveDirection = (right * movementInput.x + forward * movementInput.y).normalized;
+        // 월드 좌표계 기준 이동 방향 계산
+        Vector3 moveDirection = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
         
         // 이동 적용
         if (moveDirection.magnitude > 0.1f)
@@ -137,16 +127,8 @@ public class PlayerMovement : NetworkBehaviour
         // 이동 방향이 있을 때만 회전
         if (movementInput.magnitude > 0.1f)
         {
-            // 카메라 기준 이동 방향 계산
-            Vector3 forward = mainCamera.transform.forward;
-            Vector3 right = mainCamera.transform.right;
-            
-            forward.y = 0f;
-            right.y = 0f;
-            forward.Normalize();
-            right.Normalize();
-            
-            Vector3 moveDirection = (right * movementInput.x + forward * movementInput.y).normalized;
+            // 월드 좌표계 기준 이동 방향 계산
+            Vector3 moveDirection = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
             
             // 이동 방향으로 캐릭터 회전
             if (moveDirection != Vector3.zero)
