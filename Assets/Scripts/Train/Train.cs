@@ -114,7 +114,7 @@ public abstract class Train : NetworkBehaviour
         if (this is not Train_Head)
         {
             Vector3 trainPos = frontTrainCar.transform.position;
-            trainPos.x -= index == 1 ? 1.6f : 0.95f;
+            trainPos.x -= index == 1 ? 2.13f : 1.26f;
             if (index == 1) trainPos -= (HEAD_OFFSET - OTHER_OFFSET);
             transform.position = trainPos;
         }
