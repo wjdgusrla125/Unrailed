@@ -24,7 +24,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     {
         UIManager.Instance.OpenGameUI();
         GameManager.Instance.CurrentGameState = GameState.InGame;
-        
+
         SoundManager.Instance.FadeOutBGM();
 
         //초기 수치 입력
@@ -38,9 +38,33 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         if (NetworkManager.Singleton.IsHost)
         {
             MapGenerator.Instance.StartMapGeneration();
+
+            // Resources에서 PlayerPrefab 로드
+            GameObject playerPrefab = Resources.Load<GameObject>("Prefabs/Player");
+            if (playerPrefab == null)
+            {
+                Debug.LogError("Resources/Prefabs/Player 프리팹을 찾을 수 없습니다.");
+                return;
+            }
+
+            Vector3 spawnPos = new Vector3(0f, 0.5f, 7f);
+
+            foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
+            {
+                ulong clientId = clientPair.Key;
+
+                NetworkObject oldPlayer = clientPair.Value.PlayerObject;
+                if (oldPlayer != null && oldPlayer.IsSpawned)
+                {
+                    oldPlayer.Despawn(true);
+                }
+
+                GameObject newPlayer = Object.Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+
+                NetworkObject netObj = newPlayer.GetComponent<NetworkObject>();
+                netObj.SpawnAsPlayerObject(clientId, true);
+            }
         }
-        
-        
     }
 
     //로딩스크린을 토글한다.
@@ -49,6 +73,11 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     {
         if (UIManager.Instance.IsLoading == open || !NetworkManager.Singleton.IsHost) return;
         UIManager.Instance.ToggleLoadingScreen(open);
+    }
+    
+    private Vector3 GetSpawnPosition(ulong clientId)
+    {
+        return new Vector3(clientId * 2f, 0f, 0f);
     }
 
     #endregion
