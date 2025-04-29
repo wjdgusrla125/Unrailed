@@ -10087,6 +10087,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   collectEffect: {fileID: 480031225806203038}
   bolt: {fileID: 7278395252229248220}
+  boltMesh: {fileID: 5485166357370565014}
+  spinSpeed: 50
 --- !u!65 &4182469164930795378
 BoxCollider:
   m_ObjectHideFlags: 0
