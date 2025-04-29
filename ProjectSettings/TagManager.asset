@@ -7,6 +7,8 @@ TagManager:
   - Invisible
   - Train
   - WaterBox
+  - Rooting
+  - Map
   layers:
   - Default
   - TransparentFX
@@ -19,7 +21,7 @@ TagManager:
   - Rail
   - ShopTile
   - Train
-  - 
+  - Resource
   - 
   - 
   - 

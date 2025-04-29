@@ -31,9 +31,6 @@ public class CustomNetworkManager : MonoBehaviour
 
         // ConnectionApprovalCallback 설정
         NetworkManager.Singleton.ConnectionApprovalCallback = ApproveConnection;
-        
-        // 추가 네트워크 관련 설정 코드...
-        // NetworkManager.Singleton.StartHost(); // 또는 StartServer()
     }
 
     private void ApproveConnection(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
