@@ -226,6 +226,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     {
         RailManager.Instance.AllRailsDespawn();
         _trainHead.GetComponent<TrainManager>().AllTrainsDespawn();
+        
     }
 
     public void GameOverObjectDespawn()
