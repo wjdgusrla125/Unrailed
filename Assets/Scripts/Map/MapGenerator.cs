@@ -226,9 +226,23 @@ public class MapGenerator : SingletonManager<MapGenerator>
     //모든 오브젝트를 제거한다(타일, 게임오버 오브젝트 제외)
     public void AllObjectsDespawn()
     {
+        // 레일 및 기차 제거
         RailManager.Instance.AllRailsDespawn();
         _trainHead.GetComponent<TrainManager>().AllTrainsDespawn();
-        
+
+        // 맵 상에 존재하는 NetworkObject 중 Item 컴포넌트를 가진 오브젝트만 제거
+        NetworkObject[] allNetworkObjects = FindObjectsOfType<NetworkObject>();
+        foreach (var netObj in allNetworkObjects)
+        {
+            if (netObj == null || !netObj.IsSpawned)
+                continue;
+
+            // Item 스크립트를 가진 오브젝트만 Despawn
+            if (netObj.GetComponent<Item>() != null)
+            {
+                netObj.Despawn();
+            }
+        }
     }
 
     public void GameOverObjectDespawn()
@@ -3076,32 +3090,6 @@ public class MapGenerator : SingletonManager<MapGenerator>
     }
 
     #endregion
-    
-    public GameObject SpawnPrefabAt(GameObject prefab, Vector2Int tilePos)
-    {
-        if (prefab == null)
-        {
-            Debug.LogError("SpawnPrefabAt: 프리팹이 null입니다.");
-            return null;
-        }
-
-        if (Map == null || tilePos.x < 0 || tilePos.x >= Map.GetLength(0) || tilePos.y < 0 || tilePos.y >= Map.GetLength(1))
-        {
-            Debug.LogError("SpawnPrefabAt: 유효하지 않은 타일 좌표입니다.");
-            return null;
-        }
-
-        Vector3 worldPos = new Vector3(tilePos.x * 1f, 0f, tilePos.y * 1f) + Vector3.up * SPAWN_OFFSET;
-        GameObject obj = Instantiate(prefab, worldPos, Quaternion.identity, _clusterParent);
-    
-        NetworkObject networkObj = obj.GetComponent<NetworkObject>();
-        if (networkObj != null && NetworkManager.Singleton.IsServer)
-        {
-            networkObj.Spawn();
-        }
-
-        return obj;
-    }
 }
 
 #region 커스텀 예외 클래스
