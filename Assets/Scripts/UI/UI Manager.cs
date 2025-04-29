@@ -15,7 +15,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     [SerializeField]private TMP_InputField seedInput;
     [SerializeField]private GameObject lobbyUI;
     [SerializeField]private GameObject sessionUI;
-    [SerializeField]private GameObject gameUI;
+    [SerializeField]private InGameUIController gameUI;
     [SerializeField]private GameObject loadingScreen;
     [SerializeField]private GameObject gameOverMenu;
     
@@ -44,7 +44,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     {
         lobbyUI.SetActive(true);
         sessionUI.SetActive(false);
-        gameUI.SetActive(false);
+        gameUI.gameObject.SetActive(false);
     }
     
     //인게임 UI 오픈
@@ -52,7 +52,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     {
         lobbyUI.SetActive(false);
         sessionUI.SetActive(false);
-        gameUI.SetActive(true);
+        gameUI.gameObject.SetActive(true);
     }
 
     //세션창 UI 오픈
@@ -60,7 +60,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     {
         lobbyUI.SetActive(false);
         sessionUI.SetActive(true);
-        gameUI.SetActive(false);
+        gameUI.gameObject.SetActive(false);
     }
 
     //세션창에서 게임 시작 버튼 활성화 여부
@@ -128,6 +128,11 @@ public class UIManager: NetworkSingletonManager<UIManager>
     {
         MapGenerator.Instance.GameOverObjectDespawn();
         NetworkManager.Singleton.Shutdown();
+    }
+    
+    public void SetReaderBoardTextWrapper(string seedText = null, string distanceText = null, string boltText = null, string speedText = null)
+    {
+        gameUI.SetReaderBoardText(seedText, distanceText, boltText, speedText);
     }
     
 }

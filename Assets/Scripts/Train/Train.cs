@@ -233,6 +233,7 @@ public abstract class Train : NetworkBehaviour
         trainObject.SetActive(false);
         destroyObject.SetActive(true);
         SoundManager.Instance.PlaySound(destroySound);
+        GetComponent<Collider>().enabled = false;
         StartCoroutine(CameraShake(0.5f, 0.15f));
     }
 

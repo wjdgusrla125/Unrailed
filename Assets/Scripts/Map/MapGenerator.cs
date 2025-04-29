@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -520,15 +522,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     private void InitializeSeed(string seed = null)
     {
-        mapSeed = string.IsNullOrEmpty(seed) ? DateTime.Now.Ticks.ToString() : seed;
-        // if (string.IsNullOrEmpty(mapSeed))
-        //     mapSeed = DateTime.Now.Ticks.ToString();
+        SetDeterministicSeed(seed);
 
         _curWidth = width;
-
-        int masterSeed = mapSeed.GetHashCode();
-        _masterRng = new System.Random(masterSeed);
-        Random.InitState(masterSeed);
     }
 
     private void InitializeMap()
@@ -545,6 +541,55 @@ public class MapGenerator : SingletonManager<MapGenerator>
         _clusterParent.GetComponent<NetworkObject>().Spawn();
         _oldMapParent = Instantiate(oldMapParentPrefab);
         _oldMapParent.GetComponent<NetworkObject>().Spawn();
+    }
+    
+    // 시드 랜덤 생성
+    private string GenerateRandomSeed(int length = 8)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        var sb = new StringBuilder(length);
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            byte[] buffer = new byte[sizeof(uint)];
+            for (int i = 0; i < length; i++)
+            {
+                rng.GetBytes(buffer);
+                uint value = BitConverter.ToUInt32(buffer, 0);
+                sb.Append(chars[(int)(value % (uint)chars.Length)]);
+            }
+        }
+        return sb.ToString();
+    }
+    
+    /// <summary>
+    /// 시드를 SHA256으로 해시 -> 앞 4바이트를 int로 변환해 랜덤 초기화에 사용
+    /// </summary>
+    private void SetDeterministicSeed(string seed)
+    {
+        string s = string.IsNullOrEmpty(seed)
+            ? GenerateRandomSeed(8)
+            : seed;
+
+        if (s.Length > 8)
+        {
+            Debug.LogWarning($"씨드가 8자를 초과함. 8자만 잘라서 사용: \"{s}\" → \"{s.Substring(0, 8)}\"");
+            s = s.Substring(0, 8);
+        }
+        
+        mapSeed = s;
+        
+        // SHA256 해시
+        byte[] hash;
+        using (var sha = SHA256.Create())
+            hash = sha.ComputeHash(Encoding.UTF8.GetBytes(s));
+
+        // 앞 4바이트 -> 양수 int
+        int deterministicSeed = BitConverter.ToInt32(hash, 0) & 0x7FFFFFFF;
+
+        _masterRng = new System.Random(deterministicSeed);
+        Random.InitState(deterministicSeed);
+
+        Debug.Log($"[Seed] \"{s}\" → int seed {deterministicSeed}");
     }
 
     #endregion
@@ -2878,10 +2923,11 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public void SetSeed(string seed)
     {
         // Debug.Log("시드설정");
-        mapSeed = seed;
-        int masterSeed = mapSeed.GetHashCode();
-        _masterRng = new System.Random(masterSeed);
-        Random.InitState(masterSeed);
+        SetDeterministicSeed(seed);
+        // mapSeed = seed;
+        // int masterSeed = mapSeed.GetHashCode();
+        // _masterRng = new System.Random(masterSeed);
+        // Random.InitState(masterSeed);
     }
 
     // 확장(추가 생성) 여부를 반환 (extensionCount가 0이면 첫 생성)

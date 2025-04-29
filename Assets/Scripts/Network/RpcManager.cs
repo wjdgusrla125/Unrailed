@@ -1,5 +1,6 @@
 ﻿
 
+using System.Globalization;
 using Sound;
 using Unity.Netcode;
 using UnityEngine;
@@ -28,6 +29,14 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         GameManager.Instance.CurrentGameState = GameState.InGame;
         
         SoundManager.Instance.FadeOutBGM();
+
+        //초기 수치 입력
+        UIManager.Instance.SetReaderBoardTextWrapper(
+            MapGenerator.Instance.GetSeed(),
+            "0",
+            "0",
+            "0.1"
+        );
 
         if (NetworkManager.Singleton.IsHost)
         {
