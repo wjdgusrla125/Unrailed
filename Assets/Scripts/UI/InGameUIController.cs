@@ -4,21 +4,27 @@ using UnityEngine.UI;
 
 public class InGameUIController: MonoBehaviour
 {
-    [SerializeField] private Text seed;
-    [SerializeField] private Text distance;
-    [SerializeField] private Text bolt;
-    [SerializeField] private Text speed;
+    [SerializeField] private Text seed; //현재 시드값
+    [SerializeField] private Text distance; //기차가 오른쪽으로 얼마나 이동했는지
+    [SerializeField] private Text bolt; //현재 획득한 볼트의 수
+    [SerializeField] private Text speed; //현재 기차의 속도
     
-    private float _cachedSpeed;
-    private string _lastSpeedText;
-    public float Speed
+    private float _startX;
+    private int _maxDistance = 0;
+    
+    public void InitDistance(float startPositionX)
     {
-        get
+        _startX = startPositionX;
+        _maxDistance = 0;
+    }
+    
+    public void UpdateDistance(float currentPositionX)
+    {
+        int displacement = Mathf.RoundToInt(currentPositionX - _startX);
+        if (displacement > _maxDistance)
         {
-            if (speed.text == _lastSpeedText) return _cachedSpeed;
-            _lastSpeedText = speed.text;
-            _cachedSpeed = float.TryParse(_lastSpeedText, out var v) ? v : 0;
-            return _cachedSpeed;
+            _maxDistance = displacement;
+            distance.text = _maxDistance + "m";
         }
     }
 

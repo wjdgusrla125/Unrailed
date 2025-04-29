@@ -28,7 +28,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         SoundManager.Instance.FadeOutBGM();
 
         //초기 수치 입력
-        UIManager.Instance.SetReaderBoardTextWrapper(
+        UIManager.Instance.gameUI.SetReaderBoardText(
             MapGenerator.Instance.GetSeed(),
             "0",
             "0",

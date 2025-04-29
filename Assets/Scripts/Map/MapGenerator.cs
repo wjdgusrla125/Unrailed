@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class MapGenerator : SingletonManager<MapGenerator>
@@ -592,7 +591,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         byte[] hash;
         using (var sha = SHA256.Create())
             hash = sha.ComputeHash(Encoding.UTF8.GetBytes(s));
-
+        
         // 앞 4바이트 -> 양수 int
         int deterministicSeed = BitConverter.ToInt32(hash, 0) & 0x7FFFFFFF;
 

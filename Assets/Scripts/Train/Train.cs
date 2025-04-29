@@ -120,6 +120,7 @@ public abstract class Train : NetworkBehaviour
         }
         else
         {
+            UIManager.Instance.gameUI.InitDistance(transform.position.x);
             // Vector3 trainPos = new Vector3(3, 0, 9);
             // trainPos += HEAD_OFFSET;
             // transform.position = trainPos;
@@ -356,6 +357,7 @@ public abstract class Train : NetworkBehaviour
 
                     yield return StartCoroutine(MoveAndRotate(targetHead, targetRotation, isHead));
                     SetDestinationRail(nextRailController);
+                    if (isHead) UIManager.Instance.gameUI.UpdateDistance(transform.position.x);
                 }
                 else
                 {
