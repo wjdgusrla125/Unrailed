@@ -3224,22 +3224,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: InitAxeprefab
-      value: 
-      objectReference: {fileID: 3258400204647497964, guid: c662f70a4663b3341a4b8bbb3e72848b, type: 3}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: InitIronprefab
-      value: 
-      objectReference: {fileID: 3258400204647497964, guid: 00c1e5cebecafff42aa13311f5ef1f42, type: 3}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: InitWoodprefab
-      value: 
-      objectReference: {fileID: 3258400204647497964, guid: 2cad750e78dbe394c88f7bf4431b4697, type: 3}
-    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
-      propertyPath: InitpickAxeprefab
-      value: 
-      objectReference: {fileID: 3258400204647497964, guid: 6ebaf1a38bf290a4b86ba987b5bdfeb6, type: 3}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator

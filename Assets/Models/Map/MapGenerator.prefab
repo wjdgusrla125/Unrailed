@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d204d1c0f02cc594aa49a35050b0882c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSeed: 638798434893155023
+  mapSeed: 
   gameOverObj: {fileID: 0}
   width: 43
   height: 19
@@ -73,6 +73,10 @@ MonoBehaviour:
   wood0Prefab: {fileID: 3258400204647497964, guid: f63d5ed9c3ebb0d458a128c1b5f0077f, type: 3}
   wood1Prefab: {fileID: 3258400204647497964, guid: 2ac2f5ed8d1e2764c850606c5dfb2cd1, type: 3}
   gameOverPrefab: {fileID: 1901379270106373271, guid: bb98dbf17c008ee449b4f1548efc4f66, type: 3}
+  InitWoodprefab: {fileID: 3258400204647497964, guid: 2cad750e78dbe394c88f7bf4431b4697, type: 3}
+  InitIronprefab: {fileID: 3258400204647497964, guid: 00c1e5cebecafff42aa13311f5ef1f42, type: 3}
+  InitpickAxeprefab: {fileID: 3258400204647497964, guid: 6ebaf1a38bf290a4b86ba987b5bdfeb6, type: 3}
+  InitAxeprefab: {fileID: 3258400204647497964, guid: c662f70a4663b3341a4b8bbb3e72848b, type: 3}
   iron0Prefab: {fileID: 3258400204647497964, guid: ec4cc45aa38b71649ac0597005432b00, type: 3}
   iron1Prefab: {fileID: 3258400204647497964, guid: 049de7cfe090ed84d9cc791a64e4a160, type: 3}
   mountain0Prefab: {fileID: 3258400204647497964, guid: 233a594e33ade2b43ad10f0c965e46a4, type: 3}
