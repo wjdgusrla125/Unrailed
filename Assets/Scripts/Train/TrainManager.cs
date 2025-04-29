@@ -9,7 +9,6 @@ using UnityEngine;
 public class TrainManager: MonoBehaviour
 {
     public Dictionary<int, Train> trains = new ();
-    public RailController firstRail;
     private CameraController _cameraController;
     public float Speed { get; private set; }
     private const float START_COUNTDOWN = 5.0F;

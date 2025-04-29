@@ -15,7 +15,7 @@ public class UIManager: NetworkSingletonManager<UIManager>
     [SerializeField]private TMP_InputField seedInput;
     [SerializeField]private GameObject lobbyUI;
     [SerializeField]private GameObject sessionUI;
-    [SerializeField]private InGameUIController gameUI;
+    [SerializeField]public InGameUIController gameUI;
     [SerializeField]private GameObject loadingScreen;
     [SerializeField]private GameObject gameOverMenu;
     
@@ -128,11 +128,6 @@ public class UIManager: NetworkSingletonManager<UIManager>
     {
         MapGenerator.Instance.GameOverObjectDespawn();
         NetworkManager.Singleton.Shutdown();
-    }
-    
-    public void SetReaderBoardTextWrapper(string seedText = null, string distanceText = null, string boltText = null, string speedText = null)
-    {
-        gameUI.SetReaderBoardText(seedText, distanceText, boltText, speedText);
     }
     
 }
