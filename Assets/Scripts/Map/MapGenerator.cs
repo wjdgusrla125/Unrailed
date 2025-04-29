@@ -47,10 +47,14 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private int maxRiverCount = 3; // 최대 강 개수
     [SerializeField] private int minRiverLength = 8; // 강의 최소 셀 크기
     [SerializeField] private int maxRiverCellsAllowed = 35; // 강의 최대 셀 크기
-
     [SerializeField] private float lateralSpreadProbability = 0.4f; // 강 확산 확률
     // [SerializeField] private int elongatedRiverMinWidth = 1; // 강 최소 폭
     // [SerializeField] private int elongatedRiverMaxWidth = 2; // 강 최대 폭
+    
+    [Header("Bolt 관련 설정")]
+    [SerializeField] private GameObject boltPrefab; // Bolt 프리팹
+    [SerializeField] private int boltMinDistance = 10; // posA에서 이 수치만큼 떨어진 위치에 Bolt를 생성
+    [SerializeField] private int boltMaxDistance = 20;
 
     [Header("프리팹")] [SerializeField] private Transform clusterParentPrefab; // 생성된 클러스터들을 담을 오브젝트
     [SerializeField] private Transform oldMapParentPrefab; // 이전 라운드의 맵을 담을 오브젝트
@@ -139,6 +143,15 @@ public class MapGenerator : SingletonManager<MapGenerator>
         _customTiles.Add(new Vector2Int(2, 7), (InitIronprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(1, 6), (InitpickAxeprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(2, 6), (InitAxeprefab, TileType.Grass));
+        
+        if (boltMaxDistance < boltMinDistance)
+        {
+            Debug.LogWarning(
+                $"boltMaxDistance({boltMaxDistance}) < boltMinDistance({boltMinDistance}) " +
+                $"-> boltMaxDistance를 boltMinDistance와 동일하게 설정합니다."
+            );
+            boltMaxDistance = boltMinDistance;
+        }
     }
 
     private void Update()
@@ -2367,6 +2380,152 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     #endregion
 
+    #region 볼트 생성
+
+    private Vector2Int SelectBoltPos()
+    {
+        int w = Map.GetLength(0), h = Map.GetLength(1);
+        var start = _posA;
+        var end   = _posB;
+
+        // 초기화
+        int[][] score = new int[w][];
+        bool[][] visited = new bool[w][];
+        for (int x = 0; x < w; x++)
+        {
+            score[x]   = new int[h];
+            visited[x] = new bool[h];
+            for (int y = 0; y < h; y++)
+                score[x][y] = int.MaxValue;
+        }
+        score[start.x][start.y] = 0;
+
+        // Dijkstra 변형: 점수 누적 계산
+        var queue = new List<Vector2Int> { start };
+        Vector2Int[] dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
+        while (queue.Count > 0)
+        {
+            // 가장 작은 score 부터 꺼내기
+            queue.Sort((a, b) => score[a.x][a.y].CompareTo(score[b.x][b.y]));
+            var cur = queue[0];
+            queue.RemoveAt(0);
+            if (visited[cur.x][cur.y]) continue;
+            visited[cur.x][cur.y] = true;
+
+            foreach (var d in dirs)
+            {
+                var nxt = cur + d;
+                if (nxt.x < 0 || nxt.x >= w || nxt.y < 0 || nxt.y >= h) continue;
+                if (Map[nxt.x, nxt.y] == TileType.Mountain) continue;
+
+                int tileCost = Map[nxt.x, nxt.y] switch
+                {
+                    TileType.Wood  or TileType.Iron => 2,
+                    TileType.River                  => 3,
+                    _                               => 0
+                };
+                int newScore = score[cur.x][cur.y] + tileCost;
+                if (newScore < score[nxt.x][nxt.y])
+                {
+                    score[nxt.x][nxt.y] = newScore;
+                    queue.Add(nxt);
+                }
+            }
+        }
+
+        // boltMin~boltMax 거리 후보 수집
+        var distanceCandidates = new List<Vector2Int>();
+        int maxScore = int.MinValue;
+        for (int x = 0; x < w; x++)
+        for (int y = 0; y < h; y++)
+            if (score[x][y] < int.MaxValue)
+            {
+                if (score[x][y] >= boltMinDistance && score[x][y] <= boltMaxDistance)
+                    distanceCandidates.Add(new Vector2Int(x, y));
+                if (score[x][y] > maxScore)
+                    maxScore = score[x][y];
+            }
+
+        // 4방향이 Wood/Iron/River 로 둘러싼 후보만 추리기
+        var enclosed = new List<Vector2Int>();
+        foreach (var tile in distanceCandidates)
+        {
+            bool ok = true;
+            foreach (var d in dirs)
+            {
+                var nb = tile + d;
+                if (nb.x < 0 || nb.x >= w || nb.y < 0 || nb.y >= h ||
+                    (Map[nb.x, nb.y] != TileType.Wood &&
+                     Map[nb.x, nb.y] != TileType.Iron &&
+                     Map[nb.x, nb.y] != TileType.River))
+                {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) enclosed.Add(tile);
+        }
+
+        // 최종 후보군 결정
+        List<Vector2Int> candidates;
+        if (enclosed.Count > 0) candidates = enclosed;
+        else if (distanceCandidates.Count>0) candidates = distanceCandidates;
+        else
+        {
+            candidates = new List<Vector2Int>();
+            for (int x = 0; x < w; x++)
+            for (int y = 0; y < h; y++)
+                if (score[x][y] == maxScore)
+                    candidates.Add(new Vector2Int(x, y));
+        }
+        
+        // 도착위치 주변 5x5는 제외
+        candidates.RemoveAll(t =>
+            (Mathf.Abs(t.x - end.x) <= 2 && Mathf.Abs(t.y - end.y) <= 2)
+        );
+        
+        //후보가 모두 없어졌다면 다시뽑기
+        if (candidates.Count == 0)
+        {
+            candidates.Clear();
+            for (int x = 0; x < w; x++)
+            for (int y = 0; y < h; y++)
+                if (score[x][y] == maxScore &&
+                    !(Mathf.Abs(x - end.x) <= 2 && Mathf.Abs(y - end.y) <= 2))
+                    candidates.Add(new Vector2Int(x, y));
+        }
+        
+        //그래도 후보가 없다면 아무데나 선정
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning("이 로그가 떴다면 bolt의 생성 위치에 대한 거리가 보장되지 않음.");
+            for (int x = 0; x < w; x++)
+            for (int y = 0; y < h; y++)
+            {
+                if (score[x][y] < int.MaxValue &&
+                    Mathf.Abs(x - end.x) > 2 || Mathf.Abs(y - end.y) > 2)
+                {
+                    candidates.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+
+        // 랜덤 선택
+        var selected = candidates[_masterRng.Next(candidates.Count)];
+        int selectedScore = score[selected.x][selected.y];
+
+        if (Map[selected.x, selected.y] != TileType.Grass)
+        {
+            Map[selected.x, selected.y] = TileType.Grass;
+            ReassignTile(selected);
+        }
+
+        Debug.Log($"볼트 위치 설정: {selected} (점수: {selectedScore})");
+        return selected;
+    }
+
+    #endregion
+
     #region 공통 함수
 
     private bool IsInBounds(Vector2Int pos)
@@ -2627,6 +2786,9 @@ public class MapGenerator : SingletonManager<MapGenerator>
         // 마지막 보정 작업 실행
         EnsurePathConnectivity();
 
+        Vector2Int boltPos = SelectBoltPos();
+        boltPos = new Vector2Int(3, 7); //디버그용
+
         // 게임오버 오브젝트 생성 (최초 1회만)
         if (oldWidth == 0)
         {
@@ -2783,6 +2945,13 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 if (tileInstance)
                 {
                     Blocks blocks = tileInstance.GetComponent<Blocks>();
+                    
+                    //볼트 타일에서 볼트를 생성
+                    if (tilePos == boltPos)
+                    {
+                        blocks.isBoltTile = true;
+                        blocks.BoltPrefab = boltPrefab;
+                    }
 
                     if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group))
                     {
