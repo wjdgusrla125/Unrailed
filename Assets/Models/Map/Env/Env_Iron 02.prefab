@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2726532878780316127}
   - component: {fileID: -3780415906557548371}
   - component: {fileID: 8189835526755085153}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Env_Iron 02
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -96,6 +96,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -149,7 +159,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 927781646860496193}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -184,7 +194,7 @@ GameObject:
   - component: {fileID: 927781647312898324}
   - component: {fileID: 927781647312898327}
   - component: {fileID: 927781647312898326}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -270,7 +280,7 @@ GameObject:
   - component: {fileID: 927781648467833190}
   - component: {fileID: 927781648467833193}
   - component: {fileID: 927781648467833192}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

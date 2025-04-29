@@ -756,7 +756,7 @@ GameObject:
   m_Component:
   - component: {fileID: 187316955509820592}
   - component: {fileID: 8074302410278265221}
-  - component: {fileID: 1077141039454660502}
+  - component: {fileID: 792681691870385283}
   - component: {fileID: 1914943282}
   - component: {fileID: 1363995341099909590}
   - component: {fileID: -6823921237156432841}
@@ -812,7 +812,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!65 &1077141039454660502
+--- !u!65 &792681691870385283
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -842,8 +842,8 @@ Rigidbody:
   m_GameObject: {fileID: 5496825195785439562}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 5
-  m_AngularDrag: 0.05
+  m_Drag: 0
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -859,7 +859,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 1
+  m_CollisionDetection: 2
 --- !u!114 &1363995341099909590
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -931,6 +931,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 1
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 1
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -983,6 +993,10 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 5
   rotationSpeed: 10
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 2048
+  skinWidth: 0.05
 --- !u!114 &8206591846314276960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1023,7 +1037,8 @@ MonoBehaviour:
   Bucket: {fileID: 0}
   PickAxeHitSound: {fileID: 8300000, guid: 5b172cc53f7caf4438c185bf538f69f0, type: 3}
   AxeHitSound: {fileID: 8300000, guid: 388d7ef1c984fb741961dcbe3876c891, type: 3}
-  WaterSound: {fileID: 8300000, guid: dd279d03742a8a14483f0215ec4b1e4d, type: 3}
+  WaterDrawSound: {fileID: 0}
+  WaterSpraySound: {fileID: 0}
 --- !u!114 &7778199186492131206
 MonoBehaviour:
   m_ObjectHideFlags: 0

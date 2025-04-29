@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2658325198078716499
+--- !u!1 &1042248036223154250
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,23 +8,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 724852027837031206}
-  m_Layer: 0
-  m_Name: ItemPoint
+  - component: {fileID: 3721694431966649948}
+  m_Layer: 7
+  m_Name: Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &724852027837031206
+--- !u!4 &3721694431966649948
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2658325198078716499}
+  m_GameObject: {fileID: 1042248036223154250}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -43,12 +43,12 @@ GameObject:
   - component: {fileID: 3258400204647497961}
   - component: {fileID: 3258400204647497962}
   - component: {fileID: 3258400204647497963}
-  - component: {fileID: 1291051699433753942}
-  - component: {fileID: -7183026962103279962}
-  - component: {fileID: -7793049810870516416}
-  - component: {fileID: 3419317224006422490}
+  - component: {fileID: -796648658375609884}
+  - component: {fileID: -1408107970539627013}
+  - component: {fileID: -548648578989355137}
+  - component: {fileID: -3279291280514360106}
   m_Layer: 7
-  m_Name: GrassBlock 1
+  m_Name: InitPickAxeBlock
   m_TagString: Invisible
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,7 +67,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 724852027837031206}
+  - {fileID: 3721694431966649948}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &3258400204647497961
@@ -101,7 +101,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f2b4ba6bdbd88c649a20a600c3b5fa07, type: 2}
+  - {fileID: 2100000, guid: c5794710a39bf2049856b2a62d16796f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -144,7 +144,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1291051699433753942
+--- !u!114 &-796648658375609884
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2294154533
+  GlobalObjectIdHash: 354111218
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -169,27 +169,7 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-7183026962103279962
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3258400204647497964}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 067d5111824143b49ad1da366c6a5052, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  rndSeedOffset: 0
-  envPrefab:
-  - {fileID: 2222689848673879557, guid: 7bb55a959f3d47442aee4d44f9d84690, type: 3}
-  fragPrefab: {fileID: 0}
-  envOffset: {x: 0, y: 0.5, z: 0}
-  desiredParent: {fileID: 0}
-  railed: 0
---- !u!114 &-7793049810870516416
+--- !u!114 &-1408107970539627013
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -235,7 +215,7 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!114 &3419317224006422490
+--- !u!114 &-548648578989355137
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -248,8 +228,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  itemPoint: {fileID: 724852027837031206}
+  itemPoint: {fileID: 3721694431966649948}
   stackHeight: 0.2
-  initialItemPrefab: {fileID: 0}
+  initialItemPrefab: {fileID: 8647543255831081959, guid: 6bd6e0b2b507c004bb9bef61dfd71dc2, type: 3}
   initialItemCount: 1
   debugStackItems: 
+--- !u!114 &-3279291280514360106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3258400204647497964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 067d5111824143b49ad1da366c6a5052, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  rndSeedOffset: 0
+  envPrefab:
+  - {fileID: 0}
+  fragPrefab: {fileID: 0}
+  envOffset: {x: 0, y: 0.5, z: 0}
+  desiredParent: {fileID: 0}
+  railed: 0

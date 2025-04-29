@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: -3086100162415034250}
   - component: {fileID: 3329410435209895858}
   - component: {fileID: -6263931203894678674}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Env_Iron
   m_TagString: Invisible
   m_Icon: {fileID: 0}
@@ -96,6 +96,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -151,7 +161,7 @@ GameObject:
   - component: {fileID: 4083061367281016984}
   - component: {fileID: 6865442360452768794}
   - component: {fileID: 4035016499308238695}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: MeshObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
