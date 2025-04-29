@@ -1,6 +1,3 @@
-﻿
-
-using System.Globalization;
 using Sound;
 using Unity.Netcode;
 using UnityEngine;
@@ -42,6 +39,8 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         {
             MapGenerator.Instance.StartMapGeneration();
         }
+        
+        
     }
 
     //로딩스크린을 토글한다.

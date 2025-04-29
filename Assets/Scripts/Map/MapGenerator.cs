@@ -62,7 +62,12 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private GameObject wood1Prefab;
     [SerializeField] private GameObject gameOverPrefab;
 
-
+    private Dictionary<Vector2Int, (GameObject prefab, TileType tileType)> _customTiles = new Dictionary<Vector2Int, (GameObject, TileType)>();
+    [SerializeField] private GameObject InitWoodprefab;
+    [SerializeField] private GameObject InitIronprefab;
+    [SerializeField] private GameObject InitpickAxeprefab;
+    [SerializeField] private GameObject InitAxeprefab;
+    
     [SerializeField]
     private GameObject iron0Prefab; //iron: 고정(스폰 시 주변 4방향이 iron으로 둘러싸여 있을 경우 iron0, 한 면이라도 다른 타일이 있을 경우 iron1)
 
@@ -130,6 +135,11 @@ public class MapGenerator : SingletonManager<MapGenerator>
     {
         base.Awake();
         _camera = Camera.main.GetComponent<CameraController>();
+        
+        _customTiles.Add(new Vector2Int(1, 7), (InitWoodprefab, TileType.Grass));
+        _customTiles.Add(new Vector2Int(2, 7), (InitIronprefab, TileType.Grass));
+        _customTiles.Add(new Vector2Int(1, 6), (InitpickAxeprefab, TileType.Grass));
+        _customTiles.Add(new Vector2Int(2, 6), (InitAxeprefab, TileType.Grass));
     }
 
     private void Update()
@@ -2603,7 +2613,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         // 마지막 보정 작업 실행
         EnsurePathConnectivity();
 
-        //게임오버 생성
+        // 게임오버 오브젝트 생성 (최초 1회만)
         if (oldWidth == 0)
         {
             gameOverObj = Instantiate(gameOverPrefab, new Vector3(-15f, 0f, 15f), Quaternion.identity);
@@ -2611,17 +2621,14 @@ public class MapGenerator : SingletonManager<MapGenerator>
             gameOverObj.SetActive(false);
         }
 
-        //(디버그용) 경로 출력
-        // CheckPath();
-
         int localSeed = _masterRng.Next();
         System.Random localRng = new System.Random(localSeed);
 
-        //클러스터 그룹 수집
+        // 클러스터 그룹 수집
         List<ClusterGroup> allClusterGroups = _tileClusterGroupMap.Values.Distinct().ToList();
         allClusterGroups.RemoveAll(cg => cg.Tiles == null || cg.Tiles.Count == 0);
 
-        // 클러스터 그룹별로 clusterPrefab 인스턴스 생성 및 Cluster 컴포넌트에 그룹 정보 할당
+        // 클러스터 프리팹 생성 및 등록
         Dictionary<ClusterGroup, GameObject> clusterGameObjects = new Dictionary<ClusterGroup, GameObject>();
         foreach (ClusterGroup cg in allClusterGroups)
         {
@@ -2637,11 +2644,11 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     clusterGo.GetComponent<NetworkObject>().NetworkObjectId);
                 cluster.SetOffset(SPAWN_OFFSET);
                 cluster.ClusterGroup = cg;
+
                 if (_specialClusterGroups.Contains(cg))
                 {
                     cluster.isSpecial = true;
                 }
-                // Debug.Log($"클러스터 생성 완료: clusterSize: {cg.Tiles.Count}");
             }
             else
             {
@@ -2649,22 +2656,22 @@ public class MapGenerator : SingletonManager<MapGenerator>
             }
         }
 
-        // 클러스터 그룹들을 centerTile.x 기준 오름차순 정렬
+        // 클러스터들을 X좌표 기준 정렬
         List<ClusterGroup> sortedClusters = allClusterGroups.OrderBy(cg => cg.CenterTile.x).ToList();
         for (int i = 0; i < sortedClusters.Count; i++)
         {
             clusterGameObjects[sortedClusters[i]].transform.SetSiblingIndex(i);
         }
 
-        //클러스터마다 iron1의 스케일을 공유하기 위함
+        // Iron1 클러스터별 스케일 관리용
         Dictionary<ClusterGroup, float> clusterIron1Scales = new Dictionary<ClusterGroup, float>();
         foreach (ClusterGroup cg in allClusterGroups)
         {
-            // 각 클러스터마다 0.7~1.0 사이의 랜덤 scale 값을 할당
             float scale = Random.Range(0.7f, 1.0f);
             clusterIron1Scales[cg] = scale;
         }
 
+        // 타일 배치 시작
         int newRegionWidth = _curWidth - oldWidth;
         for (int localX = 0; localX < newRegionWidth; localX++)
         {
@@ -2682,7 +2689,14 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 GameObject tileInstance = null;
                 Vector2Int tilePos = new Vector2Int(x, y);
 
-                if (tilePos == _posA)
+                // ======== [1] 커스텀 타일 우선 적용 ==========
+                if (_customTiles != null && _customTiles.TryGetValue(tilePos, out var customData))
+                {
+                    tileInstance = Instantiate(customData.prefab, basePos, Quaternion.identity);
+                    Map[x, y] = customData.tileType; // Map 데이터도 수정
+                }
+                // ======== [2] 시작점/도착점 적용 ==========
+                else if (tilePos == _posA)
                 {
                     tileInstance = Instantiate(startPointPrefab, basePos, Quaternion.identity);
                 }
@@ -2690,6 +2704,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 {
                     tileInstance = Instantiate(endPointPrefab, basePos, Quaternion.identity);
                 }
+                // ======== [3] 일반 맵 타일 생성 ==========
                 else
                 {
                     switch (Map[x, y])
@@ -2697,19 +2712,24 @@ public class MapGenerator : SingletonManager<MapGenerator>
                         case TileType.Grass:
                             if (_tileClusterGroupMap.TryGetValue(tilePos, out ClusterGroup group) &&
                                 _specialClusterGroups.Contains(group))
+                            {
                                 tileInstance = Instantiate(grass0Prefab, basePos, Quaternion.identity);
-
+                            }
                             else
-                                tileInstance = Instantiate(localRng.NextDouble() < 0.05f ? grass1Prefab : grass0Prefab,
+                            {
+                                tileInstance = Instantiate(
+                                    localRng.NextDouble() < 0.05f ? grass1Prefab : grass0Prefab,
                                     basePos, Quaternion.identity);
+                            }
                             break;
+
                         case TileType.Wood:
-                            tileInstance = Instantiate(localRng.NextDouble() < 0.5f ? wood1Prefab : wood0Prefab,
-                                basePos,
-                                Quaternion.identity);
+                            tileInstance = Instantiate(
+                                localRng.NextDouble() < 0.5f ? wood1Prefab : wood0Prefab,
+                                basePos, Quaternion.identity);
                             break;
+
                         case TileType.Iron:
-                            //주변 4방향이 모두 Iron이면 iron0, 아니면 iron1
                             bool allCardinalIron = true;
                             foreach (Vector2Int neighbor in GetCardinalNeighbors(tilePos))
                             {
@@ -2719,11 +2739,11 @@ public class MapGenerator : SingletonManager<MapGenerator>
                                     break;
                                 }
                             }
-
                             tileInstance = allCardinalIron
                                 ? Instantiate(iron0Prefab, basePos, Quaternion.identity)
                                 : Instantiate(iron1Prefab, basePos, Quaternion.identity);
                             break;
+
                         case TileType.Mountain:
                             bool allCardinalMountain = true;
                             foreach (Vector2Int neighbor in GetCardinalNeighbors(tilePos))
@@ -2734,19 +2754,18 @@ public class MapGenerator : SingletonManager<MapGenerator>
                                     break;
                                 }
                             }
-
                             tileInstance = allCardinalMountain
                                 ? Instantiate(mountain0Prefab, basePos, Quaternion.identity)
                                 : Instantiate(mountain1Prefab, basePos, Quaternion.identity);
                             break;
+
                         case TileType.River:
                             tileInstance = Instantiate(riverPrefab, basePos, Quaternion.identity);
-
                             break;
                     }
                 }
 
-                // 생성한 타일 설정 및 부모 및 클러스터 그룹 할당
+                // ======== 생성된 타일 설정 ==========
                 if (tileInstance)
                 {
                     Blocks blocks = tileInstance.GetComponent<Blocks>();
@@ -2760,32 +2779,28 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     }
                     else
                     {
-                        Debug.LogWarning($"{basePos.x}, {basePos.y}에 클러스터 그룹이 할당되어 있지 않음.");
+                        Debug.LogWarning($"{basePos.x}, {basePos.y}에 클러스터 그룹이 없습니다.");
                         blocks.ClusterGroup = null;
                         blocks.desiredParent = _clusterParent;
-                        // tileInstance.transform.SetParent(clusterParent);
                     }
 
                     if (blocks) blocks.NetworkObject.Spawn();
 
                     if (blocks is Water water)
                     {
-                        if (water)
-                        {
-                            if (tilePos.x == 0)
-                                RpcManager.Instance.ToggleWaterFallRpc(water.NetworkObjectId, 1);
-                            if (tilePos.y == 0)
-                                RpcManager.Instance.ToggleWaterFallRpc(water.NetworkObjectId, 3);
-                            if (tilePos.y == height - 1)
-                                RpcManager.Instance.ToggleWaterFallRpc(water.NetworkObjectId, 7);
-                        }
+                        if (tilePos.x == 0)
+                            RpcManager.Instance.ToggleWaterFallRpc(water.NetworkObjectId, 1);
+                        if (tilePos.y == 0)
+                            RpcManager.Instance.ToggleWaterFallRpc(water.NetworkObjectId, 3);
+                        if (tilePos.y == height - 1)
+                            RpcManager.Instance.ToggleWaterFallRpc(water.NetworkObjectId, 7);
                     }
                 }
             }
-
             yield return null;
         }
 
+        // 스폰 애니메이션 시작
         yield return new WaitForSeconds(1.0f);
 
         Debug.Log("맵 타일 생성 완료, 스폰 애니메이션 시작");
@@ -2800,6 +2815,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
         yield return null;
     }
+
 
     //레일을 스폰(MapGenerator이 아닌 Cluster에서 호출)
     public void SpawnRails(int oldWidth = 0)
@@ -3059,6 +3075,32 @@ public class MapGenerator : SingletonManager<MapGenerator>
     }
 
     #endregion
+    
+    public GameObject SpawnPrefabAt(GameObject prefab, Vector2Int tilePos)
+    {
+        if (prefab == null)
+        {
+            Debug.LogError("SpawnPrefabAt: 프리팹이 null입니다.");
+            return null;
+        }
+
+        if (Map == null || tilePos.x < 0 || tilePos.x >= Map.GetLength(0) || tilePos.y < 0 || tilePos.y >= Map.GetLength(1))
+        {
+            Debug.LogError("SpawnPrefabAt: 유효하지 않은 타일 좌표입니다.");
+            return null;
+        }
+
+        Vector3 worldPos = new Vector3(tilePos.x * 1f, 0f, tilePos.y * 1f) + Vector3.up * SPAWN_OFFSET;
+        GameObject obj = Instantiate(prefab, worldPos, Quaternion.identity, _clusterParent);
+    
+        NetworkObject networkObj = obj.GetComponent<NetworkObject>();
+        if (networkObj != null && NetworkManager.Singleton.IsServer)
+        {
+            networkObj.Spawn();
+        }
+
+        return obj;
+    }
 }
 
 #region 커스텀 예외 클래스

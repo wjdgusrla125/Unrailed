@@ -7,6 +7,10 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float moveSpeed = 5f;      // 이동 속도
     [SerializeField] private float rotationSpeed = 10f; // 회전 속도
     
+    [Header("충돌 설정")]
+    [SerializeField] private LayerMask obstacleLayer;   // 장애물 레이어
+    [SerializeField] private float skinWidth = 0.05f;   // 충돌 감지 여유 공간
+    
     [Header("네트워크 변수")]
     private NetworkVariable<Vector3> networkPosition = new NetworkVariable<Vector3>();
     private NetworkVariable<Quaternion> networkRotation = new NetworkVariable<Quaternion>();
@@ -17,6 +21,7 @@ public class PlayerMovement : NetworkBehaviour
     private BoxCollider boxCollider;
     private Camera mainCamera;
     private Vector3 lastServerPosition;
+    private Vector3 currentVelocity;
 
     private void Awake()
     {
@@ -38,7 +43,7 @@ public class PlayerMovement : NetworkBehaviour
         {
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY; // Y축 위치와 회전 고정
             rb.useGravity = false; // 중력 비활성화 (Y축 고정과 함께 사용)
-            rb.collisionDetectionMode = CollisionDetectionMode.Continuous; // 연속 충돌 감지
+            rb.isKinematic = true; // 물리 엔진 영향을 받지 않도록 설정
         }
     }
 
@@ -49,14 +54,6 @@ public class PlayerMovement : NetworkBehaviour
         if (IsOwner)
         {
             mainCamera = Camera.main;
-        }
-        else
-        {
-            // 네트워크에서 동기화될 때는 물리 시스템이 작동하지 않도록 설정
-            if (rb != null)
-            {
-                rb.isKinematic = !IsOwner;
-            }
         }
         
         lastServerPosition = transform.position;
@@ -100,25 +97,75 @@ public class PlayerMovement : NetworkBehaviour
 
     private void MovePlayer()
     {
-        if (rb == null) return;
-        
-        // 월드 좌표계 기준 이동 방향 계산
+        // 이동 방향 계산
         Vector3 moveDirection = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
         
-        // 이동 적용
         if (moveDirection.magnitude > 0.1f)
         {
-            // 새로운 속도 계산 (Y축 속도는 0으로 유지)
-            Vector3 newVelocity = moveDirection * moveSpeed;
-            newVelocity.y = 0f; // Y축은 고정
+            // 목표 속도 계산
+            Vector3 targetVelocity = moveDirection * moveSpeed;
             
-            // 속도 적용
-            rb.linearVelocity = newVelocity;
+            // 현재 속도에서 목표 속도로 부드럽게 전환
+            currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, 0.3f);
         }
         else
         {
-            // 이동 입력이 없을 때는 속도를 0으로 설정
-            rb.linearVelocity = Vector3.zero;
+            // 입력이 없을 때 속도 감소
+            currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, 0.2f);
+        }
+        
+        // 분리된 축으로 이동 처리 (X와 Z 분리)
+        Vector3 movement = currentVelocity * Time.fixedDeltaTime;
+        
+        // X축과 Z축을 분리하여 이동 및 충돌 검사
+        MoveInDirection(new Vector3(movement.x, 0, 0)); // X축 이동
+        MoveInDirection(new Vector3(0, 0, movement.z)); // Z축 이동
+    }
+    
+    private void MoveInDirection(Vector3 movement)
+    {
+        if (movement.magnitude < 0.001f) return; // 미세한 이동은 무시
+        
+        // 이동 방향
+        Vector3 direction = movement.normalized;
+        float distance = movement.magnitude;
+        
+        // 박스 캐스트를 위한 사이즈와 중심 계산
+        Vector3 boxCenter = boxCollider.center + transform.position;
+        Vector3 boxSize = boxCollider.size - new Vector3(skinWidth * 2, skinWidth * 2, skinWidth * 2); // 여유 공간 제외
+        
+        // 박스 캐스트로 충돌 검사
+        RaycastHit hit;
+        bool collided = Physics.BoxCast(
+            boxCenter, 
+            boxSize * 0.5f, 
+            direction, 
+            out hit, 
+            transform.rotation, 
+            distance + skinWidth, 
+            obstacleLayer
+        );
+        
+        if (collided)
+        {
+            // 충돌한 지점까지만 이동 (여유 공간 고려)
+            float moveDistance = Mathf.Max(0, hit.distance - skinWidth);
+            transform.position += direction * moveDistance;
+            
+            // 충돌한 축의 속도를 0으로 설정
+            if (Mathf.Abs(direction.x) > 0.5f)
+            {
+                currentVelocity.x = 0;
+            }
+            if (Mathf.Abs(direction.z) > 0.5f)
+            {
+                currentVelocity.z = 0;
+            }
+        }
+        else
+        {
+            // 충돌하지 않으면 전체 거리 이동
+            transform.position += movement;
         }
     }
     
@@ -141,11 +188,7 @@ public class PlayerMovement : NetworkBehaviour
     
     public Vector3 GetCurrentVelocity()
     {
-        if (rb != null)
-        {
-            return rb.linearVelocity;
-        }
-        return Vector3.zero;
+        return currentVelocity;
     }
 
     public float GetMaxSpeed()
@@ -174,11 +217,8 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (IsOwner)
         {
-            // Rigidbody의 속도를 0으로 리셋하고 위치를 설정
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector3.zero;
-            }
+            // 속도를 0으로 리셋하고 위치를 설정
+            currentVelocity = Vector3.zero;
             transform.position = position;
             transform.rotation = rotation;
         }
