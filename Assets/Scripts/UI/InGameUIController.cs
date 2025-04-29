@@ -1,4 +1,5 @@
 ﻿
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,6 +27,16 @@ public class InGameUIController: MonoBehaviour
             _maxDistance = displacement;
             distance.text = _maxDistance + "m";
         }
+    }
+
+    public void UpdateBolt(int value)
+    {
+        bolt.text = value.ToString();
+    }
+
+    public void UpdateSpeed(float value)
+    {
+        speed.text = value.ToString("#.000") + "m/s";
     }
 
     public void SetReaderBoardText(string seedText = null, string distanceText = null, string boltText = null, string speedText = null)

@@ -19,6 +19,9 @@ public abstract class Blocks : NetworkBehaviour
     public ClusterGroup ClusterGroup;
     private System.Random _rng; //랜덤 시드값
     public int rndSeedOffset;
+    
+    public bool isBoltTile = false; //볼트가 생성될 타일인지 확인
+    [NonSerialized] public GameObject BoltPrefab; //생성될 Bolt Object, 귀찮으니까 MapGenerator에서 코드로 지정
 
     [SerializeField, Header("블럭 위에 소환될 오브젝트")]
     private GameObject[] envPrefab;
@@ -62,8 +65,12 @@ public abstract class Blocks : NetworkBehaviour
             {
                 Debug.LogError("desiredParent가 null임!!");
             }
-            CreateEnv();
-            SetEnv();
+            if (!isBoltTile)
+            {
+                CreateEnv();
+                SetEnv();
+            }
+            else CreateBolt();
         }
         
     }
@@ -93,6 +100,22 @@ public abstract class Blocks : NetworkBehaviour
             // Debug.Log($"parentId: {parentId}, childId: {childId}");
         }
     }
+
+    public void CreateBolt()
+    {
+        _env = Instantiate(BoltPrefab, transform.position + envOffset, Quaternion.identity);
+        NetworkObject boltObj = _env.GetComponent<NetworkObject>();
+        if (boltObj)
+        {
+            
+            boltObj.Spawn();
+            ulong parentId = NetworkObjectId;
+            ulong childId = boltObj.NetworkObjectId;
+            // Debug.Log($"볼트생성, parentId: {parentId}, childId: {childId}");
+            StartCoroutine(SetParentCoroutine(parentId, childId));
+        }
+    }
+
 
     private IEnumerator SetParentCoroutine(ulong parentId, ulong childId)
     {
@@ -168,12 +191,12 @@ public abstract class Blocks : NetworkBehaviour
         }
     }
 
-    // env 오브젝트 애니메이션 관련 로직
-    public IEnumerator AnimateEnvDrop(float duration, float dropOffset)
+    // 역 오브젝트는 무조건 위에서 내려온다.
+    public IEnumerator AnimateStationDrop(float duration, float dropOffset)
     {
         if (!_env)
             yield break;
-
+        
         Vector3 targetLocalPos = _env.transform.localPosition;
         Vector3 startLocalPos = new Vector3(targetLocalPos.x, dropOffset, targetLocalPos.z);
         _env.transform.localPosition = startLocalPos;

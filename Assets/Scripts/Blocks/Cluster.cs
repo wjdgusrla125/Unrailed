@@ -70,7 +70,8 @@ public class Cluster : NetworkBehaviour
                 block.SetRendererActive(true);
             if (block is StartPoint or EndPoint)
             {
-                block.StartCoroutine(block.AnimateEnvDrop(fadeDuration, _spawnOffset * 2));
+                //시작점 또는 도착점이면 스테이션의 스폰애니메이션을 재생
+                block.StartCoroutine(block.AnimateStationDrop(fadeDuration, _spawnOffset * 2));
             }
         }
 

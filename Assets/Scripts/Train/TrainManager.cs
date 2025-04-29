@@ -10,8 +10,20 @@ public class TrainManager: MonoBehaviour
 {
     public Dictionary<int, Train> trains = new ();
     private CameraController _cameraController;
-    public float Speed { get; private set; }
+    
     private const float START_COUNTDOWN = 5.0F;
+
+    private float _speed;
+    public float Speed
+    {
+        get => _speed;
+        private set
+        {
+            if(Mathf.Approximately(value, _speed)) return;
+            _speed = value;
+            UIManager.Instance.gameUI.UpdateSpeed(value);
+        }
+    }
 
     private void Awake()
     {

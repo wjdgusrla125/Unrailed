@@ -65,6 +65,8 @@ MonoBehaviour:
   minRiverLength: 20
   maxRiverCellsAllowed: 45
   lateralSpreadProbability: 0.4
+  boltPrefab: {fileID: 4186585146093093111, guid: 76b44fafcd7bbaa478af1bd198b7bf59, type: 3}
+  boltDistanceThreshold: 15
   clusterParentPrefab: {fileID: 4826452072328128688, guid: 4aa16aa90d65e0a4bb8af51c8016e1f2, type: 3}
   oldMapParentPrefab: {fileID: 8577820584975421676, guid: 23ca768653824d944a55f4954c806adf, type: 3}
   clusterPrefab: {fileID: 5415564128649301798, guid: b0a18d9106d02aa4b82a52cbea6ca75c, type: 3}
