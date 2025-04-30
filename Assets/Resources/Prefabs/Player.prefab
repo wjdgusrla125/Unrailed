@@ -872,7 +872,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3643933709
+  GlobalObjectIdHash: 507715172
   InScenePlacedSourceGlobalObjectIdHash: 3643933709
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1027,7 +1027,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7fc0add96d924145b88bdd2ad86a550, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rayDistance: 0.8
+  rayDistance: 1.4
   itemType: 0
   IsDig: 0
   hitBlock: 0

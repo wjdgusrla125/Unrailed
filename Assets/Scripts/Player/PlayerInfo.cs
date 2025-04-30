@@ -9,8 +9,8 @@ public class PlayerInfo : MonoBehaviour
 {
     private Vector3 PlayerPos;
     private Vector3 PlayerFront;
-    public float rayDistance = 0.8f;
-    private float digwaitTime = 1f;
+    public float rayDistance;
+    private float digwaitTime = 0.5f;
 
     [Header("플레이어 상태")]
     public ItemType itemType;
@@ -138,7 +138,7 @@ public class PlayerInfo : MonoBehaviour
             hitOBJ = hit.collider.gameObject;
 
             // 불 끄는 체크 및 코루틴 실행.
-            if(blockType == BlockType.None)
+            /*if(blockType == BlockType.None)
             {
 
                 if (hitOBJ.GetComponent<BurnTrainObject>().Isburn)
@@ -146,7 +146,7 @@ public class PlayerInfo : MonoBehaviour
                     hitOBJ.GetComponent<BurnTrainObject>().Isburn = false;
                 }
                 return;
-            }
+            }*/
 
             // 물 뜨는 체크 및 코루틴 실행.
             if(blockType == BlockType.Water && HandleCheckDigBlock() && waterCoroutine == null && itemType == ItemType.Bucket)
