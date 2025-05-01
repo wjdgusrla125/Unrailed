@@ -212,7 +212,6 @@ public class BlockPickup : NetworkBehaviour
 
         if (playerInfo.hitBlock == BlockType.Water && playerInfo.itemType == ItemType.WoodPlank && heldObjectStack.Count > 0)
         {
-            // Check if the hit object has a BridgeController component
             Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
             RaycastHit hit;
 
@@ -221,7 +220,6 @@ public class BlockPickup : NetworkBehaviour
                 BridgeController bridgeController = hit.collider.GetComponent<BridgeController>();
                 if (bridgeController != null)
                 {
-                    // Consume one wood plank and activate the bridge
                     NetworkObject woodPlank = heldObjectStack.Pop();
                     UpdateHeldObjectList();
 

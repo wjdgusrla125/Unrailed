@@ -878,8 +878,8 @@ MonoBehaviour:
   debugIronItems: 
   woodTransform: {fileID: 1713753087180798736}
   ironTransform: {fileID: 4478986449056861845}
-  stackHeight: 0.1
-  targetDesk: {fileID: 0}
+  stackHeight: 0.2
+  targetDesk: {fileID: 2740634083671255965, guid: d9dbc46c899562346849b6ac368489b2, type: 3}
 --- !u!65 &6077228087594002525
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using Sound;
 using System.Collections;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Unity.AppUI.UI;
@@ -7,8 +8,8 @@ using UnityEngine;
 
 public class PlayerInfo : MonoBehaviour
 {
-    public float rayDistance;
-    private float digwaitTime = 0.5f;
+    public float rayDistance = 0.8f;
+    private float digwaitTime = 1f;
 
     [Header("플레이어 상태")]
     public ItemType itemType;
@@ -79,7 +80,7 @@ public class PlayerInfo : MonoBehaviour
 
     private void PlayerRaycast()
     {
-        // IsDig 상태 초기화
+        // 위치나 방향이 바뀌면 IsDig 상태 초기화
         if (hitOBJ == null)
         {
             IsDig = false;
@@ -104,19 +105,25 @@ public class PlayerInfo : MonoBehaviour
         {
             // 제작대/책상 체크
             CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
+            deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
+            
+            // 먼저 특수 오브젝트 타입 검사
             if (CraftingTableObject != null)
             {
                 hitBlock = BlockType.CraftingTable;
+                hitOBJ = hit.collider.gameObject;
                 Debug.Log("크래프팅 테이블 감지됨");
+                return; // 특수 오브젝트를 감지했으므로 여기서 레이캐스트 처리 종료
             }
-
-            deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
-            if (deskInfo != null)
+            else if (deskInfo != null)
             {
                 hitBlock = BlockType.DeskTable;
+                hitOBJ = hit.collider.gameObject;
                 Debug.Log("데스크 테이블 감지됨");
+                return; // 특수 오브젝트를 감지했으므로 여기서 레이캐스트 처리 종료
             }
 
+            // 일반 블록 및 불 타는 오브젝트 처리
             BlockType blockType = BlockType.None;
 
             var breakable = hit.collider.gameObject.GetComponent<BreakableObject>();
@@ -125,18 +132,24 @@ public class PlayerInfo : MonoBehaviour
                 blockType = breakable.BlockTypeProperty;
             }
 
-            if (blockType == BlockType.None && hit.collider.gameObject.GetComponent<BurnTrainObject>() == null) return;
+            var burnTrain = hit.collider.gameObject.GetComponent<BurnTrainObject>();
+            if (blockType == BlockType.None && burnTrain == null)
+            {
+                // 처리할 수 있는 오브젝트가 아님
+                hitBlock = BlockType.None;
+                hitOBJ = null;
+                return;
+            }
 
             hitBlock = blockType;
             hitOBJ = hit.collider.gameObject;
 
-            // 불 끄는 체크 및 코루틴 실행.
-            /*if(blockType == BlockType.None)
+            /*// 불 끄는 체크 및 코루틴 실행.
+            if (blockType == BlockType.None && burnTrain != null)
             {
-
-                if (hitOBJ.GetComponent<BurnTrainObject>().Isburn)
+                if (burnTrain.Isburn)
                 {
-                    hitOBJ.GetComponent<BurnTrainObject>().Isburn = false;
+                    burnTrain.Isburn = false;
                 }
                 return;
             }*/
@@ -178,7 +191,7 @@ public class PlayerInfo : MonoBehaviour
         if (hits.Length > 0)
         {
             Debug.Log("감지됨");
-            foreach(Collider col in hits)
+            foreach (Collider col in hits)
             {
                 if (col.gameObject.GetComponent<BurnTrainObject>().Isburn)
                 {
@@ -189,8 +202,9 @@ public class PlayerInfo : MonoBehaviour
                 }
             }
         }
-        
+
     }
+
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);

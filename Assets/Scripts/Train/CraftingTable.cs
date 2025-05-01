@@ -21,9 +21,12 @@ public class CraftingTable : NetworkBehaviour
     
     private const int MAX_STACK_SIZE = 3;
     
+    private Dictionary<ulong, Vector3> itemLocalPositions = new Dictionary<ulong, Vector3>();
+    
     // 레일 제작에 필요한 재료 정의
     private const int WOOD_REQUIRED = 1;
     private const int IRON_REQUIRED = 1;
+    
     private void Start()
     {
         targetDesk = FindObjectOfType<DeskInfo>();
@@ -42,6 +45,11 @@ public class CraftingTable : NetworkBehaviour
     private void Update()
     {
         TryCraftRail();
+        
+        if (IsClient) // 클라이언트에서만 위치 업데이트 수행
+        {
+            UpdateItemPositions();
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -210,6 +218,7 @@ public class CraftingTable : NetworkBehaviour
                 woodStackedItemIds.Push(itemNetId);
                 woodCount.Value = woodStackedItemIds.Count;
                 
+                // 위치 설정만 하고 부모는 변경하지 않음
                 netObj.transform.position = GetWoodPositionAtHeight(woodStackedItemIds.Count - 1);
                 netObj.transform.rotation = Quaternion.identity;
                 
@@ -235,6 +244,7 @@ public class CraftingTable : NetworkBehaviour
                 ironStackedItemIds.Push(itemNetId);
                 ironCount.Value = ironStackedItemIds.Count;
                 
+                // 위치 설정만 하고 부모는 변경하지 않음
                 netObj.transform.position = GetIronPositionAtHeight(ironStackedItemIds.Count - 1);
                 netObj.transform.rotation = Quaternion.identity;
                 
@@ -365,6 +375,35 @@ public class CraftingTable : NetworkBehaviour
                 netObj.gameObject.SetActive(true);
                 netObj.transform.position = GetIronPositionAtHeight(i);
                 netObj.transform.rotation = Quaternion.identity;
+            }
+        }
+    }
+    
+    private void UpdateItemPositions()
+    {
+        // 나무 아이템 위치 업데이트
+        ulong[] woodItems = woodStackedItemIds.ToArray();
+        for (int i = 0; i < woodItems.Length; i++)
+        {
+            NetworkObject netObj = GetNetworkObjectById(woodItems[i]);
+            if (netObj != null)
+            {
+                // 테이블 기준 위치 계산
+                Vector3 targetPosition = GetWoodPositionAtHeight(woodItems.Length - 1 - i);
+                netObj.transform.position = targetPosition;
+            }
+        }
+        
+        // 철 아이템 위치 업데이트
+        ulong[] ironItems = ironStackedItemIds.ToArray();
+        for (int i = 0; i < ironItems.Length; i++)
+        {
+            NetworkObject netObj = GetNetworkObjectById(ironItems[i]);
+            if (netObj != null)
+            {
+                // 테이블 기준 위치 계산
+                Vector3 targetPosition = GetIronPositionAtHeight(ironItems.Length - 1 - i);
+                netObj.transform.position = targetPosition;
             }
         }
     }
