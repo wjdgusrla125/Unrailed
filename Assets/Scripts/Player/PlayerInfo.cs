@@ -7,8 +7,6 @@ using UnityEngine;
 
 public class PlayerInfo : MonoBehaviour
 {
-    private Vector3 PlayerPos;
-    private Vector3 PlayerFront;
     public float rayDistance;
     private float digwaitTime = 0.5f;
 
@@ -81,11 +79,9 @@ public class PlayerInfo : MonoBehaviour
 
     private void PlayerRaycast()
     {
-        // 위치나 방향이 바뀌면 IsDig 상태 초기화
-        if (PlayerPos != transform.position || PlayerFront != transform.forward || hitOBJ == null)
+        // IsDig 상태 초기화
+        if (hitOBJ == null)
         {
-            PlayerPos = transform.position;
-            PlayerFront = transform.forward;
             IsDig = false;
 
             // 위치 바뀌면 코루틴도 초기화
@@ -94,7 +90,7 @@ public class PlayerInfo : MonoBehaviour
                 StopCoroutine(digCoroutine);
                 digCoroutine = null;
             }
-            if(waterCoroutine != null)
+            if (waterCoroutine != null)
             {
                 StopCoroutine(waterCoroutine);
                 waterCoroutine = null;
@@ -106,9 +102,6 @@ public class PlayerInfo : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, rayDistance))
         {
-            PlayerPos = transform.position;
-            PlayerFront = transform.forward;
-
             // 제작대/책상 체크
             CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
             if (CraftingTableObject != null)
@@ -201,8 +194,7 @@ public class PlayerInfo : MonoBehaviour
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
-        if (hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() &&
-            PlayerPos == transform.position && PlayerFront == transform.forward && hitOBJ != null)
+        if (hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() && hitOBJ != null)
         {
             IsDig = true;
         }

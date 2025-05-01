@@ -35,7 +35,7 @@ public class BreakableObject : MonoBehaviour
         originalPos = transform.localPosition;
         float currentDuration = shakeDuration;
 
-        gameObject.GetComponent<Collider>().isTrigger = true;
+        //gameObject.GetComponent<Collider>().isTrigger = true;
         while (currentDuration >= 0)
         {
             transform.localPosition = originalPos + Random.insideUnitSphere * shakeAmount;
@@ -44,7 +44,7 @@ public class BreakableObject : MonoBehaviour
         }
         transform.localPosition = originalPos;
         yield return null;
-        gameObject.GetComponent<Collider>().isTrigger = false;
+        //gameObject.GetComponent<Collider>().isTrigger = false;
     }
 
     public void SetMeshObject()
