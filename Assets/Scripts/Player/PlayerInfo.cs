@@ -1,5 +1,6 @@
 using Sound;
 using System.Collections;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Unity.AppUI.UI;
@@ -7,8 +8,6 @@ using UnityEngine;
 
 public class PlayerInfo : MonoBehaviour
 {
-    private Vector3 PlayerPos;
-    private Vector3 PlayerFront;
     public float rayDistance = 0.8f;
     private float digwaitTime = 1f;
 
@@ -82,10 +81,8 @@ public class PlayerInfo : MonoBehaviour
     private void PlayerRaycast()
     {
         // 위치나 방향이 바뀌면 IsDig 상태 초기화
-        if (PlayerPos != transform.position || PlayerFront != transform.forward || hitOBJ == null)
+        if (hitOBJ == null)
         {
-            PlayerPos = transform.position;
-            PlayerFront = transform.forward;
             IsDig = false;
 
             // 위치 바뀌면 코루틴도 초기화
@@ -94,7 +91,7 @@ public class PlayerInfo : MonoBehaviour
                 StopCoroutine(digCoroutine);
                 digCoroutine = null;
             }
-            if(waterCoroutine != null)
+            if (waterCoroutine != null)
             {
                 StopCoroutine(waterCoroutine);
                 waterCoroutine = null;
@@ -106,9 +103,6 @@ public class PlayerInfo : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, rayDistance))
         {
-            PlayerPos = transform.position;
-            PlayerFront = transform.forward;
-
             // 제작대/책상 체크
             CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
             deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
@@ -150,7 +144,7 @@ public class PlayerInfo : MonoBehaviour
             hitBlock = blockType;
             hitOBJ = hit.collider.gameObject;
 
-            // 불 끄는 체크 및 코루틴 실행.
+            /*// 불 끄는 체크 및 코루틴 실행.
             if (blockType == BlockType.None && burnTrain != null)
             {
                 if (burnTrain.Isburn)
@@ -158,7 +152,7 @@ public class PlayerInfo : MonoBehaviour
                     burnTrain.Isburn = false;
                 }
                 return;
-            }
+            }*/
 
             // 물 뜨는 체크 및 코루틴 실행.
             if(blockType == BlockType.Water && HandleCheckDigBlock() && waterCoroutine == null && itemType == ItemType.Bucket)
@@ -197,7 +191,7 @@ public class PlayerInfo : MonoBehaviour
         if (hits.Length > 0)
         {
             Debug.Log("감지됨");
-            foreach(Collider col in hits)
+            foreach (Collider col in hits)
             {
                 if (col.gameObject.GetComponent<BurnTrainObject>().Isburn)
                 {
@@ -208,13 +202,13 @@ public class PlayerInfo : MonoBehaviour
                 }
             }
         }
-        
+
     }
+
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
-        if (hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() &&
-            PlayerPos == transform.position && PlayerFront == transform.forward && hitOBJ != null)
+        if (hitBlock != BlockType.None && !IsDig && HandleCheckDigBlock() && hitOBJ != null)
         {
             IsDig = true;
         }
