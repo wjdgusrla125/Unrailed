@@ -828,6 +828,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -867,8 +877,8 @@ MonoBehaviour:
   debugIronItems: 
   woodTransform: {fileID: 1713753087180798736}
   ironTransform: {fileID: 4478986449056861845}
-  stackHeight: 0.1
-  targetDesk: {fileID: 0}
+  stackHeight: 0.2
+  targetDesk: {fileID: 2740634083671255965, guid: d9dbc46c899562346849b6ac368489b2, type: 3}
 --- !u!65 &6077228087594002525
 BoxCollider:
   m_ObjectHideFlags: 0

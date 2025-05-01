@@ -111,19 +111,25 @@ public class PlayerInfo : MonoBehaviour
 
             // 제작대/책상 체크
             CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
+            deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
+            
+            // 먼저 특수 오브젝트 타입 검사
             if (CraftingTableObject != null)
             {
                 hitBlock = BlockType.CraftingTable;
+                hitOBJ = hit.collider.gameObject;
                 Debug.Log("크래프팅 테이블 감지됨");
+                return; // 특수 오브젝트를 감지했으므로 여기서 레이캐스트 처리 종료
             }
-
-            deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
-            if (deskInfo != null)
+            else if (deskInfo != null)
             {
                 hitBlock = BlockType.DeskTable;
+                hitOBJ = hit.collider.gameObject;
                 Debug.Log("데스크 테이블 감지됨");
+                return; // 특수 오브젝트를 감지했으므로 여기서 레이캐스트 처리 종료
             }
 
+            // 일반 블록 및 불 타는 오브젝트 처리
             BlockType blockType = BlockType.None;
 
             var breakable = hit.collider.gameObject.GetComponent<BreakableObject>();
@@ -132,18 +138,24 @@ public class PlayerInfo : MonoBehaviour
                 blockType = breakable.BlockTypeProperty;
             }
 
-            if (blockType == BlockType.None && hit.collider.gameObject.GetComponent<BurnTrainObject>() == null) return;
+            var burnTrain = hit.collider.gameObject.GetComponent<BurnTrainObject>();
+            if (blockType == BlockType.None && burnTrain == null)
+            {
+                // 처리할 수 있는 오브젝트가 아님
+                hitBlock = BlockType.None;
+                hitOBJ = null;
+                return;
+            }
 
             hitBlock = blockType;
             hitOBJ = hit.collider.gameObject;
 
             // 불 끄는 체크 및 코루틴 실행.
-            if(blockType == BlockType.None)
+            if (blockType == BlockType.None && burnTrain != null)
             {
-
-                if (hitOBJ.GetComponent<BurnTrainObject>().Isburn)
+                if (burnTrain.Isburn)
                 {
-                    hitOBJ.GetComponent<BurnTrainObject>().Isburn = false;
+                    burnTrain.Isburn = false;
                 }
                 return;
             }
