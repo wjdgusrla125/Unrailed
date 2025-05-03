@@ -12,6 +12,8 @@ public class BlockPickup : NetworkBehaviour
     public Vector3 boxSize;
     public LayerMask tileLayerMask;
     public InputReader inputReader;
+    [SerializeField] private GameObject previewPrefab;
+    private GameObject previewInstance;
 
     private Stack<NetworkObject> heldObjectStack = new Stack<NetworkObject>();
 
@@ -28,6 +30,8 @@ public class BlockPickup : NetworkBehaviour
     private Coroutine holdCoroutine;
     public Vector3 TriggerOBJPos;
     private GameObject ShopPanelOBJ;
+    
+    
 
     [SerializeField] private PlayerInfo playerInfo;
     private const int maxStackSize = 4;
@@ -60,14 +64,12 @@ public class BlockPickup : NetworkBehaviour
         HoldInteract = false;
         holdCoroutine = null;
     }
-
-
+    
     private void OnEnable()
     {
         if (inputReader != null)
         {
             inputReader.InteractEvent += OnInteract;
-            inputReader.OneRailEvent += OneRail;
         }
     }
 
@@ -76,7 +78,6 @@ public class BlockPickup : NetworkBehaviour
         if (inputReader != null)
         {
             inputReader.InteractEvent -= OnInteract;
-            inputReader.OneRailEvent -= OneRail;
         }
     }
 
@@ -132,6 +133,8 @@ public class BlockPickup : NetworkBehaviour
                 UpdateStackedItemPositions(holdPosition);
             }
         }
+        
+        UpdatePreview();
     }
 
     private void DetectTiles()
@@ -186,7 +189,7 @@ public class BlockPickup : NetworkBehaviour
 
     private void OnInteract(bool pressed)
     {
-        // 코루틴 관련 코드 - 최원진
+        // 코루틴 관련 코드 - 상점 인터랙션
         if (ExpandingCircleDetector.Instance.GetJoin() && IsTriggerOBJ)
         {
             HoldInteract = pressed;
@@ -210,6 +213,47 @@ public class BlockPickup : NetworkBehaviour
 
         if (!pressed || !IsOwner) return;
 
+        // ✅ Space 키로 레일 설치
+        if (playerInfo.itemType == ItemType.Rail && heldObjectStack.Count > 0 && currentTile != null)
+        {
+            Vector2Int currentTilePos = new Vector2Int(
+                Mathf.RoundToInt(currentTile.transform.position.x),
+                Mathf.RoundToInt(currentTile.transform.position.z)
+            );
+
+            RailController startHeadRail = RailManager.Instance.GetStartHeadRail();
+            if (startHeadRail != null)
+            {
+                Vector2Int headRailPos = startHeadRail.GridPos;
+                int distance = Mathf.Abs(currentTilePos.x - headRailPos.x) + Mathf.Abs(currentTilePos.y - headRailPos.y);
+                if (distance == 1)
+                {
+                    if (currentTile.GetStackSize() == 0 ||
+                        (GetTopStackedItem(currentTile)?.GetComponent<Item>()?.ItemType != ItemType.Rail))
+                    {
+                        NetworkObject railObject = heldObjectStack.Pop();
+                        RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
+                        UpdateTileServerRpc(ItemType.Rail);
+                        UpdateHeldObjectList();
+
+                        RailController rc = railObject.GetComponent<RailController>();
+                        if (rc != null) rc.SetRail();
+
+                        if (heldObjectStack.Count == 0)
+                            UpdatePlayerItemType(ItemType.None);
+                        else
+                            UpdatePlayerItemType(heldObjectStack.Peek().GetComponent<Item>().ItemType);
+
+                        if (previewInstance != null)
+                            previewInstance.SetActive(false);
+                        
+                        return; // 다른 Interact 행동 방지
+                    }
+                }
+            }
+        }
+
+        // 물 위에 다리 설치
         if (playerInfo.hitBlock == BlockType.Water && playerInfo.itemType == ItemType.WoodPlank && heldObjectStack.Count > 0)
         {
             Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
@@ -228,7 +272,6 @@ public class BlockPickup : NetworkBehaviour
                         UpdatePlayerItemType(ItemType.None);
                     }
 
-                    // Remove the wood plank object
                     if (IsServer)
                     {
                         woodPlank.Despawn();
@@ -238,13 +281,13 @@ public class BlockPickup : NetworkBehaviour
                         RequestDespawnObjectServerRpc(woodPlank.NetworkObjectId);
                     }
 
-                    // Activate the bridge
                     bridgeController.ActivateBridgeServerRpc();
                     return;
                 }
             }
         }
 
+        // 제작대에 올리기
         if (playerInfo.hitBlock == BlockType.CraftingTable)
         {
             if (heldObjectStack.Count > 0 && playerInfo.CraftingTableObject != null)
@@ -253,6 +296,7 @@ public class BlockPickup : NetworkBehaviour
             }
         }
 
+        // 데스크에서 레일 꺼내기
         if (playerInfo.hitBlock == BlockType.DeskTable && playerInfo.itemType == ItemType.None && playerInfo.deskInfo.RailCount != 0)
         {
             if (heldObjectStack.Count == 0)
@@ -261,7 +305,8 @@ public class BlockPickup : NetworkBehaviour
             }
         }
 
-        int tileStackSize = currentTile.GetStackSize();
+        // 타일에서 줍기 또는 놓기
+        int tileStackSize = currentTile?.GetStackSize() ?? 0;
         bool hasTileItems = tileStackSize > 0;
 
         if (heldObjectStack.Count == 0 && hasTileItems)
@@ -273,25 +318,7 @@ public class BlockPickup : NetworkBehaviour
             HandlePlacementOnTile();
         }
     }
-
-    private void OneRail(bool pressed)
-    {
-        if (!pressed || !IsOwner) return;
-
-        // 레일을 들고 있는지 확인
-        if (heldObjectStack.Count > 0 && playerInfo.itemType == ItemType.Rail && currentTile != null)
-        {
-            // 스택에서 맨 위의 레일 하나만 가져오기
-            NetworkObject railObject = heldObjectStack.Peek();
-
-            // 타일에 레일 하나만 내려놓기
-            RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
-
-            // 타일 업데이트
-            UpdateTileServerRpc(ItemType.Rail);
-        }
-    }
-
+    
     private void HandlePickupFromTile()
     {
         int tileStackSize = currentTile.GetStackSize();
@@ -1439,5 +1466,42 @@ public class BlockPickup : NetworkBehaviour
                 heldObjectList.Add(obj);
             }
         }
+    }
+    
+    private void UpdatePreview()
+    {
+        if (playerInfo.itemType != ItemType.Rail || currentTile == null)
+        {
+            if (previewInstance != null) previewInstance.SetActive(false);
+            return;
+        }
+
+        Vector2Int currentTilePos = new Vector2Int(
+            Mathf.RoundToInt(currentTile.transform.position.x),
+            Mathf.RoundToInt(currentTile.transform.position.z)
+        );
+
+        RailController head = RailManager.Instance.GetStartHeadRail();
+
+        if (head == null || !IsAdjacent(currentTilePos, head.GridPos)) 
+        {
+            if (previewInstance != null) previewInstance.SetActive(false);
+            return;
+        }
+
+        // 프리뷰가 아직 없으면 생성
+        if (previewInstance == null)
+        {
+            previewInstance = Instantiate(previewPrefab);
+        }
+
+        previewInstance.transform.position = currentTile.transform.position + Vector3.up * 0.5f;
+        previewInstance.transform.rotation = Quaternion.identity;
+        previewInstance.SetActive(true);
+    }
+    
+    private bool IsAdjacent(Vector2Int a, Vector2Int b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) == 1;
     }
 }

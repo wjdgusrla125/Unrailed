@@ -66,10 +66,14 @@ public class RailController : NetworkBehaviour
     {
         ResetRails();
 
-        bool left = prevRail && Mathf.RoundToInt(prevRail.transform.position.x) < _gridPos.x;
-        bool right = nextRail && Mathf.RoundToInt(nextRail.transform.position.x) > _gridPos.x;
-        bool up = nextRail && Mathf.RoundToInt(nextRail.transform.position.z) > _gridPos.y;
-        bool down = prevRail && Mathf.RoundToInt(prevRail.transform.position.z) < _gridPos.y;
+        bool left  = (prevRail && Mathf.RoundToInt(prevRail.transform.position.x) < _gridPos.x)
+                     || (nextRail && Mathf.RoundToInt(nextRail.transform.position.x) < _gridPos.x);
+        bool right = (prevRail && Mathf.RoundToInt(prevRail.transform.position.x) > _gridPos.x)
+                     || (nextRail && Mathf.RoundToInt(nextRail.transform.position.x) > _gridPos.x);
+        bool up    = (prevRail && Mathf.RoundToInt(prevRail.transform.position.z) > _gridPos.y)
+                     || (nextRail && Mathf.RoundToInt(nextRail.transform.position.z) > _gridPos.y);
+        bool down  = (prevRail && Mathf.RoundToInt(prevRail.transform.position.z) < _gridPos.y)
+                     || (nextRail && Mathf.RoundToInt(nextRail.transform.position.z) < _gridPos.y);
 
         int count = (left ? 1 : 0) + (right ? 1 : 0) + (up ? 1 : 0) + (down ? 1 : 0);
 

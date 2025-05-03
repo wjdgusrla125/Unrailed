@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Unity.AppUI.UI;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 public class PlayerInfo : MonoBehaviour
 {

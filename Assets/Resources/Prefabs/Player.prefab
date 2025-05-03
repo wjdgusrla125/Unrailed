@@ -872,7 +872,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3643933709
+  GlobalObjectIdHash: 507715172
   InScenePlacedSourceGlobalObjectIdHash: 3643933709
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1060,6 +1060,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
+  previewPrefab: {fileID: 5124352781100158091, guid: 943605516d3144f47b4fdacf2076898d, type: 3}
   heldObjectList: []
   currentTile: {fileID: 0}
   IsTriggerOBJ: 0

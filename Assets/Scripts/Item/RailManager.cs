@@ -206,7 +206,6 @@ public class RailManager : SingletonManager<RailManager>
     public RailController GetEndFirstRail()
     {
         RailController rc = _rails.Values.FirstOrDefault(r => r.isEndFirstRail);
-        // Debug.Log(rc ? "rc있음" : "rc없음");
         return rc;
     }
 }
