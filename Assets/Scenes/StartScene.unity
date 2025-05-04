@@ -3224,6 +3224,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: InitRailprefab
+      value: 
+      objectReference: {fileID: 3258400204647497964, guid: 0dd91e5f3048b19419636902f33e4a10, type: 3}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: InitBucketprefab
+      value: 
+      objectReference: {fileID: 3258400204647497964, guid: a5836fa9285992f4286728a9178df611, type: 3}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator
