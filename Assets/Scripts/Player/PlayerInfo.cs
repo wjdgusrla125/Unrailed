@@ -10,7 +10,7 @@ using Debug = UnityEngine.Debug;
 public class PlayerInfo : MonoBehaviour
 {
     public float rayDistance = 0.8f;
-    private float digwaitTime = 1f;
+    private float digwaitTime = 0.5f;
 
     [Header("플레이어 상태")]
     public ItemType itemType;
@@ -81,12 +81,13 @@ public class PlayerInfo : MonoBehaviour
 
     private void PlayerRaycast()
     {
-        // 위치나 방향이 바뀌면 IsDig 상태 초기화
+        int excludeLayer = LayerMask.NameToLayer("Tile");
+        int layerMask = ~(1 << excludeLayer);
+
         if (hitOBJ == null)
         {
             IsDig = false;
 
-            // 위치 바뀌면 코루틴도 초기화
             if (digCoroutine != null)
             {
                 StopCoroutine(digCoroutine);
@@ -102,31 +103,27 @@ public class PlayerInfo : MonoBehaviour
         Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, rayDistance))
+        if (Physics.Raycast(ray, out hit, rayDistance, layerMask))
         {
-            // 제작대/책상 체크
             CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
             deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
-            
-            // 먼저 특수 오브젝트 타입 검사
+
             if (CraftingTableObject != null)
             {
                 hitBlock = BlockType.CraftingTable;
                 hitOBJ = hit.collider.gameObject;
                 Debug.Log("크래프팅 테이블 감지됨");
-                return; // 특수 오브젝트를 감지했으므로 여기서 레이캐스트 처리 종료
+                return;
             }
             else if (deskInfo != null)
             {
                 hitBlock = BlockType.DeskTable;
                 hitOBJ = hit.collider.gameObject;
                 Debug.Log("데스크 테이블 감지됨");
-                return; // 특수 오브젝트를 감지했으므로 여기서 레이캐스트 처리 종료
+                return;
             }
 
-            // 일반 블록 및 불 타는 오브젝트 처리
             BlockType blockType = BlockType.None;
-
             var breakable = hit.collider.gameObject.GetComponent<BreakableObject>();
             if (breakable != null)
             {
@@ -136,7 +133,6 @@ public class PlayerInfo : MonoBehaviour
             var burnTrain = hit.collider.gameObject.GetComponent<BurnTrainObject>();
             if (blockType == BlockType.None && burnTrain == null)
             {
-                // 처리할 수 있는 오브젝트가 아님
                 hitBlock = BlockType.None;
                 hitOBJ = null;
                 return;
@@ -145,23 +141,11 @@ public class PlayerInfo : MonoBehaviour
             hitBlock = blockType;
             hitOBJ = hit.collider.gameObject;
 
-            /*// 불 끄는 체크 및 코루틴 실행.
-            if (blockType == BlockType.None && burnTrain != null)
-            {
-                if (burnTrain.Isburn)
-                {
-                    burnTrain.Isburn = false;
-                }
-                return;
-            }*/
-
-            // 물 뜨는 체크 및 코루틴 실행.
-            if(blockType == BlockType.Water && HandleCheckDigBlock() && waterCoroutine == null && itemType == ItemType.Bucket)
+            if (blockType == BlockType.Water && HandleCheckDigBlock() && waterCoroutine == null && itemType == ItemType.Bucket)
             {
                 waterCoroutine = StartCoroutine(BucketInWaterCorutine());
             }
 
-            // Dig 조건 체크 및 코루틴 실행.
             if (!IsDig && digCoroutine == null && blockType != BlockType.Water)
             {
                 digCoroutine = StartCoroutine(DigBlockCorutine());
@@ -174,7 +158,6 @@ public class PlayerInfo : MonoBehaviour
             CraftingTableObject = null;
             deskInfo = null;
 
-            // 감지 해제되면 코루틴도 중단
             if (digCoroutine != null)
             {
                 StopCoroutine(digCoroutine);
@@ -185,9 +168,10 @@ public class PlayerInfo : MonoBehaviour
         Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
     }
 
+
     private void WaterRaycast()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
+        /*Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
 
         if (hits.Length > 0)
         {
@@ -202,8 +186,38 @@ public class PlayerInfo : MonoBehaviour
                     SoundManager.Instance.PlaySound(WaterSpraySound);
                 }
             }
-        }
+        }*/
 
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
+
+        if (hits.Length > 0)
+        {
+            Debug.Log("감지됨");
+
+            Collider closest = null;
+            float minDistance = float.MaxValue;
+
+            foreach (Collider col in hits)
+            {
+                float distance = Vector3.Distance(transform.position, col.transform.position);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closest = col;
+                }
+            }
+
+            // 가장 가까운 오브젝트 처리
+            if (closest != null && closest.gameObject.GetComponent<BurnTrainObject>().Isburn)
+            {
+                var burn = closest.gameObject.GetComponent<BurnTrainObject>();
+                burn.Isburn = false;
+
+                itemType = ItemType.Bucket;
+                Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
+                SoundManager.Instance.PlaySound(WaterSpraySound);
+            }
+        }
     }
 
     IEnumerator DigBlockCorutine()
