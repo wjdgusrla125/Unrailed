@@ -71,6 +71,13 @@ public class Cluster : NetworkBehaviour
                 //시작점 또는 도착점이면 스테이션의 스폰애니메이션을 재생
                 block.StartCoroutine(block.AnimateStationDrop(fadeDuration, _spawnOffset * 2));
             }
+            
+            if (IsServer)
+            {
+                //초기 아이템의 스폰 애니메이션 재생
+                Tile tile = block.GetComponent<Tile>();
+                if (tile) tile.SpawnInitialItems();
+            }
         }
 
         float directionSign = ClusterGroup.Direction == ClusterDirection.Upper ? 1f : -1f;

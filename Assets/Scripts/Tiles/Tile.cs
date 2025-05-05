@@ -20,10 +20,10 @@ public class Tile : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        if (IsServer && !IsClient && initialItemPrefab != null)
-            Invoke("SpawnInitialItems", 4.5f);
-        else if (IsServer && IsClient && initialItemPrefab != null && stackedItemIds.Count == 0)
-            Invoke("SpawnInitialItems", 4.5f);
+        // if (IsServer && !IsClient && initialItemPrefab != null)
+        //     Invoke("SpawnInitialItems", 4.5f);
+        // else if (IsServer && IsClient && initialItemPrefab != null && stackedItemIds.Count == 0)
+        //     Invoke("SpawnInitialItems", 4.5f);
 
         currentItemType.OnValueChanged += OnItemTypeChanged;
         itemCount.OnValueChanged += OnItemCountChanged;
@@ -322,25 +322,36 @@ public class Tile : NetworkBehaviour
     }
 
     //초기 아이템 생성
-    private void SpawnInitialItems()
+    public void SpawnInitialItems()
     {
-        if (initialItemPrefab == null) return;
+        if (!IsServer || !initialItemPrefab || stackedItemIds.Count != 0)
+            return;
 
         Item itemComponent = initialItemPrefab.GetComponent<Item>();
-        if (itemComponent == null) return;
+        if (!itemComponent) return;
 
         currentItemType.Value = itemComponent.ItemType;
         int count = itemComponent.IsStackable ? Mathf.Clamp(initialItemCount, 1, 3) : 1;
 
         for (int i = 0; i < count; i++)
         {
-            GameObject itemInstance = Instantiate(initialItemPrefab, GetItemPositionAtHeight(i), itemPoint.rotation);
+            Vector3 finalPos = GetItemPositionAtHeight(i);
+            GameObject itemInstance = Instantiate(initialItemPrefab, finalPos, itemPoint.rotation);
             NetworkObject netObj = itemInstance.GetComponent<NetworkObject>();
             if (netObj != null)
             {
                 netObj.Spawn();
                 stackedItemIds.Push(netObj.NetworkObjectId);
                 itemCount.Value++;
+                
+                Item itemMb = itemInstance.GetComponent<Item>();
+                if (itemMb)
+                {
+                    float spawnOffset = 20.0f;
+                    float destOffset  = finalPos.y;
+
+                    itemMb.PlaySpawnFromHeight(spawnOffset, destOffset);
+                }
             }
         }
 

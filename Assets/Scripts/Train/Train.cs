@@ -261,8 +261,7 @@ public abstract class Train : NetworkBehaviour
         if (index == 3)
         {
             //마지막 열차의 경우엔 소환된 이후 출발 카운트다운을 진행
-            this.PlaySpawnToGround(spawnOffset, destOffset,
-                duration: 2.5f, delay: 0f,
+            this.PlaySpawnToGround(spawnOffset, destOffset, duration: 2.5f,
                 onComplete: () => manager.StartTrainCount());
         }
         else
@@ -497,6 +496,6 @@ public abstract class Train : NetworkBehaviour
         transform.rotation = targetRot;
         transform.position = endPivot + (transform.rotation * Vector3.forward * cellOffset);
     }
-    
+
     #endregion
 }

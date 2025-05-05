@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -87,17 +88,33 @@ public abstract class Blocks : NetworkBehaviour
         if (envPrefab == null || envPrefab.Length == 0)
             return;
         
-        int prefabIndex = _rng.Next(0, envPrefab.Length);
-        _env = Instantiate(envPrefab[prefabIndex], transform.position + envOffset, Quaternion.identity);
+        // null 요소가 아닌 prefab만 걸러서 리스트 생성
+        List<GameObject> validPrefabs = new List<GameObject>();
+        foreach (var prefab in envPrefab)
+        {
+            if (prefab != null)
+                validPrefabs.Add(prefab);
+        }
+
+        if (validPrefabs.Count == 0)
+            return;
+
+        int prefabIndex = _rng.Next(0, validPrefabs.Count);
+        GameObject chosenPrefab = validPrefabs[prefabIndex];
+
+        _env = Instantiate(chosenPrefab, transform.position + envOffset, Quaternion.identity);
         NetworkObject envObj = _env.GetComponent<NetworkObject>();
         if (envObj)
         {
             envObj.Spawn();
-            envObj.GetComponent<BreakableObject>().TileInfo = gameObject.GetComponent<Tile>();
+            BreakableObject bo = envObj.GetComponent<BreakableObject>();
+            if (bo)
+            {
+                envObj.GetComponent<BreakableObject>().TileInfo = gameObject.GetComponent<Tile>();
+            }
             ulong parentId = transform.GetComponent<NetworkObject>().NetworkObjectId;
             ulong childId = envObj.NetworkObjectId;
             StartCoroutine(SetParentCoroutine(parentId, childId));
-            // Debug.Log($"parentId: {parentId}, childId: {childId}");
         }
     }
 

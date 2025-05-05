@@ -74,7 +74,8 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private GameObject InitIronprefab;
     [SerializeField] private GameObject InitpickAxeprefab;
     [SerializeField] private GameObject InitAxeprefab;
-
+    [SerializeField] private GameObject InitBucketprefab;
+    [SerializeField] private GameObject InitRailprefab;
     [SerializeField]
     private GameObject iron0Prefab; //iron: 고정(스폰 시 주변 4방향이 iron으로 둘러싸여 있을 경우 iron0, 한 면이라도 다른 타일이 있을 경우 iron1)
 
@@ -145,8 +146,10 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
         _customTiles.Add(new Vector2Int(1, 7), (InitWoodprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(2, 7), (InitIronprefab, TileType.Grass));
+        _customTiles.Add(new Vector2Int(3, 7), (InitRailprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(1, 6), (InitpickAxeprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(2, 6), (InitAxeprefab, TileType.Grass));
+        _customTiles.Add(new Vector2Int(3, 6), (InitBucketprefab, TileType.Grass));
 
         if (boltMaxDistance < boltMinDistance)
         {
@@ -2779,7 +2782,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         EnsurePathConnectivity();
 
         Vector2Int boltPos = SelectBoltPos();
-        boltPos = new Vector2Int(3, 7); //디버그용
+        // boltPos = new Vector2Int(3, 10); //디버그용
 
         // 게임오버 오브젝트 생성 (최초 1회만)
         if (oldWidth == 0)
@@ -2860,6 +2863,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 // ======== [1] 커스텀 타일 우선 적용 ==========
                 if (_customTiles != null && _customTiles.TryGetValue(tilePos, out var customData))
                 {
+                    Debug.Log("초기자원생성");
                     tileInstance = Instantiate(customData.prefab, basePos, Quaternion.identity);
                     Map[x, y] = customData.tileType; // Map 데이터도 수정
                 }
