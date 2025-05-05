@@ -93,6 +93,7 @@ public class TrainManager: MonoBehaviour
             }
             yield return new WaitForSeconds(1f);
         }
+        
 
         trains[0].RecallCountdown();
         _cameraController.InitCamera(this);

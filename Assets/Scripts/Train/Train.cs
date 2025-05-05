@@ -29,8 +29,9 @@ public abstract class Train : NetworkBehaviour
     [SerializeField] protected Train backTrainCar;
     public bool IsTail => backTrainCar == null;
 
-    [Header("기차 몸통 / 파괴 오브젝트 / 불 이펙트 / 경고(캔버스) 오브젝트")] 
-    [SerializeField] protected GameObject trainObject;
+    [Header("기차 몸통 / 파괴 오브젝트 / 불 이펙트 / 경고(캔버스) 오브젝트")] [SerializeField]
+    protected GameObject trainObject;
+
     [SerializeField] protected GameObject destroyObject;
     [SerializeField] protected GameObject fire;
     [SerializeField] protected GameObject warning;
@@ -42,14 +43,13 @@ public abstract class Train : NetworkBehaviour
     [SerializeField] protected GameObject chestBoxPrefab;
     [SerializeField] protected GameObject craftDeskPrefab;
 
-    [Header("사운드")] 
-    [SerializeField] protected AudioClip hornSound;
+    [Header("사운드")] [SerializeField] protected AudioClip hornSound;
     [SerializeField] protected AudioClip destroySound;
     [SerializeField] protected AudioClip countdownSound;
     [SerializeField] protected AudioClip fireSound;
-    [SerializeField] protected AudioClip warningSound; 
+    [SerializeField] protected AudioClip warningSound;
     [SerializeField] protected AudioClip engineSound;
-    
+
     // 위치 오프셋
     private readonly Vector3 HEAD_OFFSET = new(0, 0.5f, 0);
     private readonly Vector3 OTHER_OFFSET = new(0, 0.35f, 0);
@@ -71,7 +71,6 @@ public abstract class Train : NetworkBehaviour
         }
     }
 
-    // 이동 일시정지를 위한 플래그와 코루틴 참조
     private bool isPaused = false;
     private Coroutine movementCoroutine;
     private Camera _camera;
@@ -178,7 +177,7 @@ public abstract class Train : NetworkBehaviour
     #endregion
 
     #region 명령
-    
+
     public void StartTrain()
     {
         isPaused = false;
@@ -208,7 +207,7 @@ public abstract class Train : NetworkBehaviour
     public void CallCountdown(int idx)
     {
         if (countdownObject is not { Length: > 0 }) return;
-        
+
         if (idx == 0)
         {
             Debug.LogWarning("CallCountdown은 1-Index로 취급할 것!!");
@@ -220,17 +219,18 @@ public abstract class Train : NetworkBehaviour
             if (i == 0) continue;
             countdownObject[i].SetActive(i == idx);
         }
-        
+
         SoundManager.Instance.PlaySound(countdownSound);
     }
 
     private void DestroyTrain()
     {
-        if(IsTail)
+        if (IsTail)
         {
             SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[0], 0.5f); //마지막 열차가 파괴되면 bgm을 변경
             _camera.GetComponent<CameraController>().GameOverCameraMoving();
         }
+
         trainObject.SetActive(false);
         destroyObject.SetActive(true);
         SoundManager.Instance.PlaySound(destroySound);
@@ -255,7 +255,20 @@ public abstract class Train : NetworkBehaviour
 
     public void PlaySpawnAnimation(float spawnOffset)
     {
-        StartCoroutine(SpawnCoroutine(spawnOffset));
+        // StartCoroutine(SpawnCoroutine(spawnOffset));
+
+        float destOffset = this is Train_Head ? HEAD_OFFSET.y : OTHER_OFFSET.y;
+        if (index == 3)
+        {
+            //마지막 열차의 경우엔 소환된 이후 출발 카운트다운을 진행
+            this.PlaySpawnToGround(spawnOffset, destOffset,
+                duration: 2.5f, delay: 0f,
+                onComplete: () => manager.StartTrainCount());
+        }
+        else
+        {
+            this.PlaySpawnToGround(spawnOffset, destOffset);
+        }
     }
 
     private void StartSmoke()
@@ -269,6 +282,7 @@ public abstract class Train : NetworkBehaviour
         if (this is not Train_Head) return;
         smoke.Stop();
     }
+
     #endregion
 
     #region 기능
@@ -299,106 +313,11 @@ public abstract class Train : NetworkBehaviour
             _camera.transform.localPosition = originalPos;
         }
     }
-    
+
     private IEnumerator MoveToRail(bool isHead)
     {
         StartCoroutine(PlayHornSound());
         StartSmoke();
-        bool pause = false;
-        
-        while (true)
-        {
-            while (isPaused)
-            {
-                if(!pause)
-                {
-                    pause = true;
-                    SoundManager.Instance.StopSoundWithTag("Engine");
-                    StopSmoke();
-                }
-                yield return null;
-            }
-
-            if (pause)
-            {
-                pause = false;
-                StartCoroutine(PlayHornSound()); //멈췄다가 출발하면 다시 경적소리를 낸다.
-                StartSmoke();
-            }
-
-            if (destinationRail)
-            {
-                float offsetY = this is Train_Head ? HEAD_OFFSET.y : OTHER_OFFSET.y;
-                Vector3 currentCenter = new Vector3(
-                    destinationRail.transform.position.x,
-                    offsetY,
-                    destinationRail.transform.position.z
-                );
-
-                if (destinationRail.nextRail)
-                {
-                    var nextRailController = destinationRail.nextRail.GetComponent<RailController>();
-                    if (!nextRailController)
-                    {
-                        Debug.LogError("[MoveToRail] 다음 레일에 RailController 컴포넌트가 없음");
-                        yield break;
-                    }
-
-                    Vector3 nextCenter = new Vector3(
-                        nextRailController.transform.position.x,
-                        offsetY,
-                        nextRailController.transform.position.z
-                    );
-                    Vector3 nextDirection = (nextCenter - currentCenter).normalized;
-                    Quaternion targetRotation = Quaternion.LookRotation(nextDirection);
-                    Vector3 targetHead = isHead
-                        ? currentCenter + (targetRotation * Vector3.forward * 1f)
-                        : nextCenter;
-
-                    yield return StartCoroutine(MoveAndRotate(targetHead, targetRotation, isHead));
-                    SetDestinationRail(nextRailController);
-                    if (isHead) UIManager.Instance.gameUI.UpdateDistance(transform.position.x);
-                }
-                else
-                {
-                    // 다음 레일 없음: 마지막 레일 중심까지 이동 후 게임오버 판단
-                    if (Vector3.Distance(transform.position, currentCenter) > 0.01f)
-                    {
-                        transform.position = Vector3.MoveTowards(
-                            transform.position,
-                            currentCenter,
-                            Speed * Time.deltaTime
-                        );
-                        yield return null;
-                        continue;
-                    }
-
-                    // 이미 중심에 도착했는데 nextRail이 추가되지 않음: 게임오버
-                    if (this is Train_Head)
-                    {
-                        GameManager.Instance.GameOver();
-                        manager.GameOver();
-                    }
-
-                    DestroyTrain();
-                    break;
-                }
-            }
-            else
-            {
-                // 목적지 레일 자체가 없을 때
-                Debug.LogWarning("목표 레일이 없음");
-                break;
-            }
-        }
-
-        movementCoroutine = null;
-    }
-
-    private IEnumerator MoveAndRotate(Vector3 targetHead, Quaternion targetRot, bool isHead)
-    {
-        const float angularSpeedFactor = 90f;
-        float cellOffset = isHead ? 1f : 0f;
         bool pause = false;
 
         while (true)
@@ -406,64 +325,132 @@ public abstract class Train : NetworkBehaviour
             // 일시정지 처리
             while (isPaused)
             {
-                if(!pause)
+                if (!pause)
                 {
-                    Debug.Log("멈춤");
                     pause = true;
                     SoundManager.Instance.StopSoundWithTag("Engine");
-                    StopSmoke();
+                    if (isHead) StopSmoke();
                 }
+
                 yield return null;
             }
 
             if (pause)
             {
-                Debug.Log("재출발");
                 pause = false;
-                StartCoroutine(PlayHornSound()); //멈췄다가 출발하면 다시 경적소리를 낸다.
-                StartSmoke();
+                StartCoroutine(PlayHornSound());
+                if (isHead) StartSmoke();
             }
 
-            if (isHead)
+            if (!destinationRail)
             {
-                Vector3 currentRailCenter = new Vector3(
-                    destinationRail.transform.position.x,
-                    HEAD_OFFSET.y,
-                    destinationRail.transform.position.z
-                );
+                Debug.LogWarning("목표 레일 없음");
+                break;
+            }
 
-                Vector3 tailAnchor = Vector3.MoveTowards(
-                    transform.position - transform.rotation * Vector3.forward * cellOffset,
-                    currentRailCenter,
-                    Speed * Time.deltaTime
-                );
-                transform.position = tailAnchor + (transform.rotation * Vector3.forward * cellOffset);
+            float offsetY = isHead ? HEAD_OFFSET.y : OTHER_OFFSET.y;
+            Vector3 currentCenter = new Vector3(
+                destinationRail.transform.position.x,
+                offsetY,
+                destinationRail.transform.position.z
+            );
 
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRot,
-                    Speed * angularSpeedFactor * Time.deltaTime
+            if (destinationRail.nextRail)
+            {
+                var nextRc = destinationRail.nextRail.GetComponent<RailController>();
+                if (!nextRc)
+                {
+                    Debug.LogError("[MoveToRail] 다음 레일에 RailController 없음");
+                    yield break;
+                }
+
+                Vector3 nextCenter = new Vector3(
+                    nextRc.transform.position.x,
+                    offsetY,
+                    nextRc.transform.position.z
                 );
+                Vector3 dir = (nextCenter - currentCenter).normalized;
+                Quaternion targetRot = Quaternion.LookRotation(dir);
+
+                // 머리(앞칸) 목표 위치
+                float cellOffset = isHead ? 0.5f : 0f;
+                Vector3 targetHead = isHead
+                    ? currentCenter + (targetRot * Vector3.forward * cellOffset)
+                    : nextCenter;
+
+                // 분기 호출
+                if (isHead)
+                    yield return StartCoroutine(
+                        MoveHeadSegment(nextCenter, targetRot)
+                    );
+                else
+                    yield return StartCoroutine(
+                        MoveOneSegment(targetHead, targetRot)
+                    );
+
+                SetDestinationRail(nextRc);
+                if (isHead) UIManager.Instance.gameUI.UpdateDistance(transform.position.x);
             }
             else
             {
-                transform.position = Vector3.MoveTowards(
-                    transform.position,
-                    targetHead,
-                    Speed * Time.deltaTime
-                );
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRot,
-                    Speed * angularSpeedFactor * Time.deltaTime
-                );
-            }
+                // 마지막 레일: pivot→currentCenter, head→currentCenter+forward*offset
+                Vector3 lastCenter = currentCenter;
+                Quaternion lastRot = transform.rotation;
+                float cellOffset = isHead ? 0.5f : 0f;
+                Vector3 targetHead = isHead
+                    ? lastCenter + (lastRot * Vector3.forward * cellOffset)
+                    : lastCenter;
 
-            if (Vector3.Distance(transform.position, targetHead) < 0.01f
-                && Quaternion.Angle(transform.rotation, targetRot) < 0.5f)
-            {
+                if (isHead)
+                    yield return StartCoroutine(
+                        MoveHeadSegment(lastCenter, lastRot)
+                    );
+                else
+                    yield return StartCoroutine(
+                        MoveOneSegment(targetHead, lastRot)
+                    );
+
+                // 게임오버
+                if (isHead)
+                {
+                    GameManager.Instance.GameOver();
+                    manager.GameOver();
+                }
+
+                DestroyTrain();
                 break;
             }
+        }
+
+        movementCoroutine = null;
+    }
+
+    // 1칸짜리 이동, 회전
+    private IEnumerator MoveOneSegment(Vector3 targetHead, Quaternion targetRot)
+    {
+        const float angularSpeedFactor = 90f;
+        while (true)
+        {
+            if (isPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                targetHead,
+                Speed * Time.deltaTime
+            );
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation,
+                targetRot,
+                Speed * angularSpeedFactor * Time.deltaTime
+            );
+
+            if (Vector3.Distance(transform.position, targetHead) < 0.01f &&
+                Quaternion.Angle(transform.rotation, targetRot) < 0.5f)
+                break;
 
             yield return null;
         }
@@ -472,35 +459,44 @@ public abstract class Train : NetworkBehaviour
         transform.rotation = targetRot;
     }
 
-    //스폰 애니메이션
-    private IEnumerator SpawnCoroutine(float spawnOffset)
+    //head용 이동 로직
+    private IEnumerator MoveHeadSegment(Vector3 nextCenter, Quaternion targetRot)
     {
-        Vector3 finalPos = transform.position + Vector3.down * spawnOffset;
+        float cellOffset = 0.5f;
+        float heightY = HEAD_OFFSET.y;
 
-        float moveDuration = 2.5f;
+        Vector3 forward = transform.rotation * Vector3.forward;
+        Vector3 startPivot = transform.position - forward * cellOffset;
+        startPivot = new Vector3(startPivot.x, heightY, startPivot.z);
+
+        Vector3 endPivot = new Vector3(nextCenter.x, heightY, nextCenter.z);
+
+        float segmentLen = Vector3.Distance(startPivot, endPivot);
+        float duration = segmentLen / Speed;
         float elapsed = 0f;
-        Vector3 startPos = transform.position;
-        while (elapsed < moveDuration)
+        Quaternion startRot = transform.rotation;
+
+        while (elapsed < duration)
         {
+            if (isPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            float t = elapsed / duration;
+
+            Vector3 pivotPos = Vector3.Lerp(startPivot, endPivot, t);
+            transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            transform.position = pivotPos + (transform.rotation * Vector3.forward * cellOffset);
+
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / moveDuration);
-            float easedT = EaseOutQuart(t);
-            transform.position = Vector3.Lerp(startPos, finalPos, easedT);
             yield return null;
         }
 
-        transform.position = finalPos;
-
-        if (index == 3) //마지막 열차가 소환된 이후 열차 출발 카운트다운 시작
-        {
-            manager.StartTrainCount();
-        }
+        transform.rotation = targetRot;
+        transform.position = endPivot + (transform.rotation * Vector3.forward * cellOffset);
     }
-
-    private float EaseOutQuart(float t)
-    {
-        return 1f - Mathf.Pow(1f - t, 4f);
-    }
-
+    
     #endregion
 }

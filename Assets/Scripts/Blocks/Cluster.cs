@@ -5,8 +5,6 @@ using UnityEngine;
 public class Cluster : NetworkBehaviour
 {
     public ClusterGroup ClusterGroup;
-
-    private int _delay;
     public bool isSpecial = false;
     private float _spawnOffset;
 
@@ -26,7 +24,7 @@ public class Cluster : NetworkBehaviour
     {
         float fadeDuration = isSpecial ? 0f : 3.0f;
         float moveDuration = isSpecial ? 0f : 2.5f;
-        
+
         Vector3 finalPos;
         if (ClusterGroup is { Direction: ClusterDirection.Upper })
             finalPos = transform.position + Vector3.down * _spawnOffset;
@@ -75,19 +73,8 @@ public class Cluster : NetworkBehaviour
             }
         }
 
-        // 클러스터 위치 이동 애니메이션
-        float elapsed = 0f;
-        Vector3 startPos = transform.position;
-        while (elapsed < moveDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / moveDuration);
-            float easedT = EaseOutQuart(t);
-            transform.position = Vector3.Lerp(startPos, finalPos, easedT);
-            yield return null;
-        }
-
-        transform.position = finalPos;
+        float directionSign = ClusterGroup.Direction == ClusterDirection.Upper ? 1f : -1f;
+        this.PlaySpawn(directionSign * _spawnOffset, finalPos.y, moveDuration);
     }
 
 
@@ -112,7 +99,7 @@ public class Cluster : NetworkBehaviour
         //
         // NetworkObject.Despawn();
     }
-    
+
     private IEnumerator DespawnCoroutine()
     {
         //디스폰도 순차적으로 딜레이를 준다.
@@ -123,7 +110,7 @@ public class Cluster : NetworkBehaviour
 
         Vector3 startPos = transform.position;
         Vector3 endPos = (ClusterGroup.Direction == ClusterDirection.Upper)
-            ? startPos + Vector3.up   * _spawnOffset
+            ? startPos + Vector3.up * _spawnOffset
             : startPos + Vector3.down * _spawnOffset;
 
         float duration = isSpecial ? 0f : 2.5f;
@@ -136,6 +123,7 @@ public class Cluster : NetworkBehaviour
             transform.position = Vector3.Lerp(startPos, endPos, easedT);
             yield return null;
         }
+
         transform.position = endPos;
 
         foreach (Transform child in transform)
