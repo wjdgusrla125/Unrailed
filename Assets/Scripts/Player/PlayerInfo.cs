@@ -100,6 +100,10 @@ public class PlayerInfo : MonoBehaviour
         {
             return true;
         }
+        else if ((itemType == ItemType.Axe || itemType == ItemType.Pickaxe) && hitBlock == BlockType.Enemy)
+        {
+            return true;
+        }
         return false;
     }
 

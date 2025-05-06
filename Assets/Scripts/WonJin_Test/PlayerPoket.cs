@@ -5,19 +5,20 @@ using UnityEngine.UI;
 
 public class PlayerPoket : MonoBehaviour
 {
-    [Header("ÇÃ·¹ÀÌ¾î ÀÚ¿ø ÅØ½ºÆ®")]
+    [Header("ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ú¿ï¿½ ï¿½Ø½ï¿½Æ®")]
     public TMP_Text SeedValueText;
     public TMP_Text DistanceValueText;
     public TMP_Text BoltValueText;
-    [Header("ÇÃ·¹ÀÌ¾î ÀÚ¿ø")]
+    [Header("ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ú¿ï¿½")]
     [SerializeField] private string Seed;
     [SerializeField] private float Distance;
     [SerializeField] private int Bolt;
+    
     public static PlayerPoket Instance { get; private set; }
 
     private void Awake()
     {
-        // ÀÎ½ºÅÏ½º°¡ ÀÌ¹Ì Á¸ÀçÇÏ¸é Áßº¹ Á¦°Å
+        // ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -26,11 +27,11 @@ public class PlayerPoket : MonoBehaviour
 
         Instance = this;
 
-        // ¾À ÀüÈ¯ ½Ã¿¡µµ ÆÄ±«µÇÁö ¾Ê°Ô À¯ÁöÇÏ·Á¸é ¾Æ·¡ ÄÚµå »ç¿ë
+        // ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½
         DontDestroyOnLoad(gameObject);
     }
     
-    // ¿­Â÷ ÁÖÇà °Å¸®¿¡ È£ÃâµÉ ÇÔ¼ö (¹Ì¿Ï)
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ (ï¿½Ì¿ï¿½)
     public void SetDistance(float Speed)
     {
         Distance += Time.deltaTime * Speed;
@@ -47,12 +48,12 @@ public class PlayerPoket : MonoBehaviour
     {
         if (cost > Bolt)
         {
-            Debug.Log("±¸¸Å ½ÇÆÐ!");
+            Debug.Log("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!");
             return false;
         }
         else if (cost <= Bolt)
         {
-            Debug.Log("±¸¸Å ¼º°ø!");
+            Debug.Log("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!");
             Bolt -= cost;
             BoltValueText.text = Bolt.ToString();
             return true;
