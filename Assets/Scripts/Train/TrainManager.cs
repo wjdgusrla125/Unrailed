@@ -51,13 +51,17 @@ public class TrainManager: MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            Debug.Log("Z입력, 기차 출발");
-            StartAllTrains();
+            // Debug.Log("Z입력, 기차 출발");
+            // StartAllTrains();
+            Debug.Log("Z입력, 기차 가속");
+            SetSpeedFaster();
         }
         if (Input.GetKeyDown(KeyCode.X))
         {
-            Debug.Log("X입력, 기차 정지");
-            StopAllTrains();
+            // Debug.Log("X입력, 기차 정지");
+            // StopAllTrains();
+            Debug.Log("X입력, 기차 감속");
+            SetSpeedNormal();
         }
     }
 

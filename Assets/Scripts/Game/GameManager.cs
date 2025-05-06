@@ -19,6 +19,7 @@ public class GameManager: SingletonManager<GameManager>
 
     public TrainManager trainManager; //현재 게임의 기차
     public GameState CurrentGameState { get; set; } = GameState.Lobby;
+    public ExpandingCircleDetector shop;
 
     private int _bolt;
     public int Bolt

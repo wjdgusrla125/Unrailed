@@ -402,13 +402,13 @@ public abstract class Train : NetworkBehaviour
                         GameManager.Instance.trainManager.Reached?.Invoke();
                         GameManager.Instance.trainManager.SetSpeedNormal();
                         GameManager.Instance.trainManager.StopAllTrains();
+                        GameManager.Instance.shop.JoinShop();
                         break;
                     }
                 }
             }
             else
             {
-                // 마지막 레일: pivot→currentCenter, head→currentCenter+forward*offset
                 Vector3 lastCenter = currentCenter;
                 Quaternion lastRot = transform.rotation;
                 float cellOffset = isHead ? 0.5f : 0f;
@@ -482,16 +482,19 @@ public abstract class Train : NetworkBehaviour
 
         Vector3 forward = transform.rotation * Vector3.forward;
         Vector3 startPivot = transform.position - forward * cellOffset;
-        startPivot = new Vector3(startPivot.x, heightY, startPivot.z);
+        startPivot.y = heightY;
 
         Vector3 endPivot = new Vector3(nextCenter.x, heightY, nextCenter.z);
+        
+        const float angularSpeedFactor = 90f;
+        Vector3 pivotPos = startPivot;
+        
+        // float segmentLen = Vector3.Distance(startPivot, endPivot);
+        // float duration = segmentLen / Speed;
+        // float elapsed = 0f;
+        // Quaternion startRot = transform.rotation;
 
-        float segmentLen = Vector3.Distance(startPivot, endPivot);
-        float duration = segmentLen / Speed;
-        float elapsed = 0f;
-        Quaternion startRot = transform.rotation;
-
-        while (elapsed < duration)
+        while (Vector3.Distance(pivotPos, endPivot) > 0.01f)
         {
             if (isPaused)
             {
@@ -499,13 +502,13 @@ public abstract class Train : NetworkBehaviour
                 continue;
             }
 
-            float t = elapsed / duration;
+            pivotPos = Vector3.MoveTowards(pivotPos, endPivot, Speed * Time.deltaTime);
 
-            Vector3 pivotPos = Vector3.Lerp(startPivot, endPivot, t);
-            transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot,
+                Speed * angularSpeedFactor * Time.deltaTime);
+
             transform.position = pivotPos + (transform.rotation * Vector3.forward * cellOffset);
 
-            elapsed += Time.deltaTime;
             yield return null;
         }
 

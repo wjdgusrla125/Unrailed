@@ -2228,6 +2228,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   trainManager: {fileID: 0}
+  shop: {fileID: 865293662}
   testClip: {fileID: 8300000, guid: 61f95ef7068da584daf3343feb9c0d47, type: 3}
 --- !u!4 &583593768
 Transform:
@@ -3494,6 +3495,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c67bbad167405814a8fc8bdb19b4febd, type: 3}
+--- !u!114 &865293662 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7755480611165014605, guid: c67bbad167405814a8fc8bdb19b4febd, type: 3}
+  m_PrefabInstance: {fileID: 865293661}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 278df31b8869dde4b93dc4642536aed3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &918942420
 GameObject:
   m_ObjectHideFlags: 0
