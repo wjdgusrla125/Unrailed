@@ -19,6 +19,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     {
         _nextMapGenerated = false;
         GameManager.Instance.shop.JoinShop();
+        SoundManager.Instance.PlayBGM(GameManager.Instance.shopBGM, 0.5f);
     }
     
     [Rpc(SendTo.Everyone)]
@@ -26,6 +27,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     {
         if (_nextMapGenerated) return;
         _nextMapGenerated = true;
+        SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[0], 0.5f);
         
         GameManager.Instance.shop.ExitShop();
         if (NetworkManager.Singleton.IsHost)

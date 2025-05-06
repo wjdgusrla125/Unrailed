@@ -2229,6 +2229,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   trainManager: {fileID: 0}
   shop: {fileID: 865293662}
+  shopBGM: {fileID: 8300000, guid: 5f70bf2e379bc8a4ab9ac2864db39b53, type: 3}
   testClip: {fileID: 8300000, guid: 61f95ef7068da584daf3343feb9c0d47, type: 3}
 --- !u!4 &583593768
 Transform:
