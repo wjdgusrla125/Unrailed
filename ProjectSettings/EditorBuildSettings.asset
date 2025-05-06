@@ -11,16 +11,16 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Player.unity
     guid: b616b78a5f5786b44bd225cca220bb80
-  - enabled: 1
+  - enabled: 0
     path: Assets/WORK_FOLDER/PSH/Work Scene.unity
     guid: c5204d0b0fd8fb64bac199be39c81de4
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Player3.unity
     guid: 166f774604b527f4ea01a1b1d02cd45f
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Player_Copy.unity
     guid: 0569e549999b4fa4b967f60e275b338d
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/StartScene 1.unity
     guid: e4410008eeb0c5042bba84c21832c758
   m_configObjects:

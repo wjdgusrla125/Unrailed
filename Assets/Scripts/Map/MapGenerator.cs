@@ -147,6 +147,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         _customTiles.Add(new Vector2Int(1, 7), (InitWoodprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(2, 7), (InitIronprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(3, 7), (InitRailprefab, TileType.Grass));
+        _customTiles.Add(new Vector2Int(4, 7), (InitRailprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(1, 6), (InitpickAxeprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(2, 6), (InitAxeprefab, TileType.Grass));
         _customTiles.Add(new Vector2Int(3, 6), (InitBucketprefab, TileType.Grass));
@@ -1117,6 +1118,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
         System.Random localRng = new System.Random(localSeed);
         int totalWood = 0, totalIron = 0;
         bool assignWoodNext = true;
+        
         for (int i = 0; i < destructibleClusterCount; i++)
         {
             int x = localRng.Next(oldWidth, _curWidth);

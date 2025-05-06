@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Sound;
@@ -30,8 +29,7 @@ public class TrainManager: MonoBehaviour
         if(NetworkManager.Singleton.IsServer) StartCoroutine(Spawn());
         if (Camera.main != null) _cameraController = Camera.main.GetComponent<CameraController>();
         GameManager.Instance.trainManager = this;
-        Speed = 0.1f;
-        // firstRail = WorkSceneManager.Instance.firstRail;
+        Speed = 0.08f;
     }
 
     public void SetSpeed(float value)

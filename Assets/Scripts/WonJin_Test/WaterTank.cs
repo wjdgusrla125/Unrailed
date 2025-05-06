@@ -12,12 +12,13 @@ public class WaterTank : MonoBehaviour
     [SerializeField] private Renderer body_1_R;
     [SerializeField] private List<GameObject> TrainOBJ;
     Color startColor;
-    private float duration = 10f;     // »öÀÌ ¹Ù²î´Â µ¥ °É¸®´Â ½Ã°£
+    private float duration = 10f;
     private Coroutine TankCoroutine;
     private Coroutine BurnCoroutine;
+    
     private IEnumerator ChangeColorToRed()
     {
-        startColor = body_0.GetColor("_BaseColor"); // URP/Lit ½¦ÀÌ´õÀÇ ÄÃ·¯ ÇÁ·ÎÆÛÆ¼
+        startColor = body_0.GetColor("_BaseColor");
         Color targetColor = Color.red;
         float time = 0f;
 
@@ -29,8 +30,8 @@ public class WaterTank : MonoBehaviour
             yield return null;
         }
 
-        body_0.SetColor("_BaseColor", targetColor); // ¸¶Áö¸· »ö È®½ÇÇÏ°Ô
-        body_1.SetColor("_BaseColor", targetColor); // ¸¶Áö¸· »ö È®½ÇÇÏ°Ô
+        body_0.SetColor("_BaseColor", targetColor); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï°ï¿½
+        body_1.SetColor("_BaseColor", targetColor); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï°ï¿½
         gameObject.GetComponent<BurnTrainObject>().Isburn = true;
         Debug.Log(gameObject.GetComponent<BurnTrainObject>().Isburn);
     }
@@ -63,8 +64,8 @@ public class WaterTank : MonoBehaviour
 
     public void CoolingTank()
     {
-        body_0.SetColor("_BaseColor", startColor); // ¸¶Áö¸· »ö È®½ÇÇÏ°Ô
-        body_1.SetColor("_BaseColor", startColor); // ¸¶Áö¸· »ö È®½ÇÇÏ°Ô
+        body_0.SetColor("_BaseColor", startColor); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï°ï¿½
+        body_1.SetColor("_BaseColor", startColor); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï°ï¿½
         StopCoroutine(TankCoroutine);
         TankCoroutine = null;
         TankCoroutine = StartCoroutine(ChangeColorToRed());
@@ -72,11 +73,11 @@ public class WaterTank : MonoBehaviour
 
     private void BurnTrains()
     {
-        // Isburn == falseÀÎ ¿ÀºêÁ§Æ®¸¸ ÇÊÅÍ¸µ
+        // Isburn == falseï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½
         List<GameObject> unburned = TrainOBJ.FindAll(obj => !obj.GetComponent<BurnTrainObject>().Isburn);
 
         if (unburned.Count == 0)
-            return; // ´Ù ºÒÅ¸°í ÀÖÀ¸¸é Á¾·á
+            return; // ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
         int randomIndex = Random.Range(0, unburned.Count);
         unburned[randomIndex].GetComponent<BurnTrainObject>().Isburn = true;
