@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class RpcManager: NetworkSingletonManager<RpcManager>
 {
+    private bool _nextMapGenerated = false; //맵제네레이션을 여러번 실행하지 않게 하기 위한 플래그
+    
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -15,13 +17,21 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     [Rpc(SendTo.Everyone)]
     public void JoinShopRpc()
     {
+        _nextMapGenerated = false;
         GameManager.Instance.shop.JoinShop();
     }
     
     [Rpc(SendTo.Everyone)]
     public void ExitShopRpc()
     {
+        if (_nextMapGenerated) return;
+        _nextMapGenerated = true;
+        
         GameManager.Instance.shop.ExitShop();
+        if (NetworkManager.Singleton.IsHost)
+        {
+            MapGenerator.Instance.NextMapGeneration();
+        }
     }
 
     #endregion
