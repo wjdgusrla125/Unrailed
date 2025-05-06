@@ -389,6 +389,22 @@ public abstract class Train : NetworkBehaviour
 
                 SetDestinationRail(nextRc);
                 if (isHead) UIManager.Instance.gameUI.UpdateDistance(transform.position.x);
+                
+                //라운드 클리어 시 끝레일의 전칸에 도착하면 열차를 멈춤.
+                if (isHead && GameManager.Instance.trainManager.RoundClear)
+                {
+                    // StartHeadRail 구하고, 그 전칸(prevRail) 얻기
+                    var headRail = RailManager.Instance.GetStartHeadRail();
+                    var headPrev = headRail?.prevRail?.GetComponent<RailController>();
+
+                    if (nextRc == headPrev)
+                    {
+                        GameManager.Instance.trainManager.Reached?.Invoke();
+                        GameManager.Instance.trainManager.SetSpeedNormal();
+                        GameManager.Instance.trainManager.StopAllTrains();
+                        break;
+                    }
+                }
             }
             else
             {

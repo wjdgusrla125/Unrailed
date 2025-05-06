@@ -29,6 +29,8 @@ public class RailManager : SingletonManager<RailManager>
             startHead.UpdateRailAppearance();
             rail.UpdateRailAppearance();
             endFirst.UpdateRailAppearance();
+            
+            OnChainsMerged(startHead, rail, endFirst);
         }
         else
         {
@@ -41,6 +43,12 @@ public class RailManager : SingletonManager<RailManager>
 
         //헤드 플래그 재계산
         UpdateHeadRail();
+    }
+    
+    private void OnChainsMerged(RailController startHead, RailController middleRail, RailController endFirst)
+    {
+        //시작 체인과 끝 체인이 이어질 때 호출됨
+        GameManager.Instance.trainManager.RailConnected();
     }
 
     //두 좌표가 맨해튼 거리가 1이면 true

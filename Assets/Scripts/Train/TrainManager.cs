@@ -8,11 +8,17 @@ using UnityEngine;
 
 public class TrainManager: MonoBehaviour
 {
+    public bool RoundClear { get; private set; } = false;
+    public Action Reached;
+    
     public Dictionary<int, Train> trains = new ();
     private CameraController _cameraController;
     
     private const float START_COUNTDOWN = 5.0F;
 
+    public const float FAST_SPEED = 0.8f;
+    public float normalSpeed = 0.1f;
+    
     private float _speed;
     public float Speed
     {
@@ -30,13 +36,15 @@ public class TrainManager: MonoBehaviour
         if(NetworkManager.Singleton.IsServer) StartCoroutine(Spawn());
         if (Camera.main != null) _cameraController = Camera.main.GetComponent<CameraController>();
         GameManager.Instance.trainManager = this;
-        Speed = 0.1f;
+        SetSpeedNormal();
         // firstRail = WorkSceneManager.Instance.firstRail;
     }
 
-    public void SetSpeed(float value)
+    public void RailConnected()
     {
-        Speed = value;
+        //시작점과 끝점이 이어질 경우 호출됨.
+        SetSpeedFaster();
+        RoundClear = true;//라운드 클리어 플래그
     }
 
     private void Update()
@@ -104,6 +112,7 @@ public class TrainManager: MonoBehaviour
 
     public void StartAllTrains()
     {
+        RoundClear = false;
         foreach (var keyValuePair in trains)
         {
             keyValuePair.Value.StartTrain();
@@ -139,6 +148,16 @@ public class TrainManager: MonoBehaviour
     //게임 오버 시 기차 속도를 빠르게 함.
     public void GameOver()
     {
-        Speed = 0.8f;
+        SetSpeedFaster();
+    }
+
+    public void SetSpeedFaster()
+    {
+        Speed = FAST_SPEED;
+    }
+
+    public void SetSpeedNormal()
+    {
+        Speed = normalSpeed;
     }
 }
