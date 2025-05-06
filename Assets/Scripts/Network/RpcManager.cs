@@ -10,6 +10,22 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         // Debug.Log("Rpc 매니저 스폰됨");
     }
 
+    #region 인게임 RPC
+
+    [Rpc(SendTo.Everyone)]
+    public void JoinShopRpc()
+    {
+        GameManager.Instance.shop.JoinShop();
+    }
+    
+    [Rpc(SendTo.Everyone)]
+    public void ExitShopRpc()
+    {
+        GameManager.Instance.shop.ExitShop();
+    }
+
+    #endregion
+
     #region UI관련
 
     [Rpc(SendTo.Everyone)]

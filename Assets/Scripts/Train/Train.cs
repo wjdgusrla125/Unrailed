@@ -402,7 +402,8 @@ public abstract class Train : NetworkBehaviour
                         GameManager.Instance.trainManager.Reached?.Invoke();
                         GameManager.Instance.trainManager.SetSpeedNormal();
                         GameManager.Instance.trainManager.StopAllTrains();
-                        GameManager.Instance.shop.JoinShop();
+                        // GameManager.Instance.shop.JoinShop();
+                        RpcManager.Instance.JoinShopRpc();
                         break;
                     }
                 }
