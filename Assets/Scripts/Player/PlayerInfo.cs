@@ -26,6 +26,7 @@ public class PlayerInfo : MonoBehaviour
 
     [Header("양동이 체크")]
     public GameObject Bucket;
+    private bool bucketAssigned = false;
 
     [Header("사운드")]
     public AudioClip PickAxeHitSound;
@@ -37,15 +38,38 @@ public class PlayerInfo : MonoBehaviour
 
     public void Start()
     {
-        BucketInfo temp = FindObjectOfType<BucketInfo>();
-        Bucket = temp.gameObject;
+        // 초기 버킷 찾기 시도
+        FindBucket();
     }
+
     public void Update()
     {
+        // 버킷이 아직 할당되지 않았다면 계속 찾기 시도
+        if (!bucketAssigned)
+        {
+            FindBucket();
+        }
+
         if (itemType == ItemType.WaterInBucket)
             WaterRaycast();
         else
             PlayerRaycast();
+    }
+
+    // 버킷을 찾는 메서드
+    private void FindBucket()
+    {
+        if (Bucket == null)
+        {
+            BucketInfo temp = FindObjectOfType<BucketInfo>();
+            
+            if (temp != null)
+            {
+                Bucket = temp.gameObject;
+                bucketAssigned = true;
+                Debug.Log("버킷이 성공적으로 할당되었습니다.");
+            }
+        }
     }
 
     public void SetItemType(ItemType newItemType)
@@ -171,23 +195,6 @@ public class PlayerInfo : MonoBehaviour
 
     private void WaterRaycast()
     {
-        /*Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
-
-        if (hits.Length > 0)
-        {
-            Debug.Log("감지됨");
-            foreach (Collider col in hits)
-            {
-                if (col.gameObject.GetComponent<BurnTrainObject>().Isburn)
-                {
-                    col.gameObject.GetComponent<BurnTrainObject>().Isburn = false;
-                    itemType = ItemType.Bucket;
-                    Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
-                    SoundManager.Instance.PlaySound(WaterSpraySound);
-                }
-            }
-        }*/
-
         Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
 
         if (hits.Length > 0)
@@ -214,7 +221,10 @@ public class PlayerInfo : MonoBehaviour
                 burn.Isburn = false;
 
                 itemType = ItemType.Bucket;
-                Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
+                if (Bucket != null)
+                {
+                    Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
+                }
                 SoundManager.Instance.PlaySound(WaterSpraySound);
             }
         }
@@ -235,7 +245,10 @@ public class PlayerInfo : MonoBehaviour
     {
         yield return new WaitForSeconds(digwaitTime);
         itemType = ItemType.WaterInBucket;
-        Bucket.GetComponent<Item>().ItemType = ItemType.WaterInBucket;
+        if (Bucket != null)
+        {
+            Bucket.GetComponent<Item>().ItemType = ItemType.WaterInBucket;
+        }
         SoundManager.Instance.PlaySound(WaterDrawSound);
         waterCoroutine = null;
     }

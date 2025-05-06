@@ -231,7 +231,7 @@ MonoBehaviour:
   itemPoint: {fileID: 3721694431966649948}
   stackHeight: 0.2
   initialItemPrefab: {fileID: 7402043901895155594, guid: 5f2437260ce67974bb4afef1b7c006e5, type: 3}
-  initialItemCount: 3
+  initialItemCount: 6
   debugStackItems: 
 --- !u!114 &-3279291280514360106
 MonoBehaviour:
@@ -247,6 +247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   rndSeedOffset: 0
+  isBoltTile: 0
   envPrefab:
   - {fileID: 0}
   fragPrefab: {fileID: 0}
