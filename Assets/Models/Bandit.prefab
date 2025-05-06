@@ -404,6 +404,7 @@ GameObject:
   - component: {fileID: 1869897334087172499}
   - component: {fileID: 5609961396186154792}
   - component: {fileID: 1389204750469296116}
+  - component: {fileID: 4567640864968476171}
   m_Layer: 0
   m_Name: Bandit
   m_TagString: Invisible
@@ -509,6 +510,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 1
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -605,6 +616,26 @@ MonoBehaviour:
     m_Bits: 128
   currentTile: {fileID: 0}
   stackOffset: {x: 0, y: 0.2, z: 0}
+--- !u!114 &4567640864968476171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3209444117828276177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockHpCount: 0
+  blockType: 4
+  DropGameObject: []
+  HitParticle: {fileID: 0}
+  DestroyParticle: {fileID: 0}
+  BrokenSound: {fileID: 0}
+  MeshObjectCount: 0
+  TileInfo: {fileID: 0}
 --- !u!1 &3209444117874655159
 GameObject:
   m_ObjectHideFlags: 0
