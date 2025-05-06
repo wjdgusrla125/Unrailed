@@ -13,6 +13,17 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     }
 
     #region 인게임 RPC
+    
+    //열차를 파괴
+    [Rpc(SendTo.Everyone)]
+    public void DestroyTrainRpc(ulong trainId, bool isTail)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(trainId,
+                out NetworkObject train))
+        {
+            train.GetComponent<Train>().DestroyTrain(isTail);
+        }
+    }
 
     [Rpc(SendTo.Everyone)]
     public void JoinShopRpc()
@@ -101,7 +112,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     [Rpc(SendTo.Everyone)]
     public void ToggleLoadingScreenRpc(bool open)
     {
-        if (UIManager.Instance.IsLoading == open || !NetworkManager.Singleton.IsHost) return;
+        if (UIManager.Instance.IsLoading == open) return;
         UIManager.Instance.ToggleLoadingScreen(open);
     }
     

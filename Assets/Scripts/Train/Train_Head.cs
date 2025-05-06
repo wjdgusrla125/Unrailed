@@ -6,6 +6,12 @@ public class Train_Head: Train
 {
     protected override TrainType Type => TrainType.Head;
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        StopSmoke();
+    }
+
     private void Start()
     {
         InitTrain();

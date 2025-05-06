@@ -44,24 +44,24 @@ public class TrainManager: MonoBehaviour
     {
         //시작점과 끝점이 이어질 경우 호출됨.
         SetSpeedFaster();
-        RoundClear = true;//라운드 클리어 플래그
+        RoundClear = true; //라운드 클리어 플래그
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            // Debug.Log("Z입력, 기차 출발");
-            // StartAllTrains();
-            Debug.Log("Z입력, 기차 가속");
-            SetSpeedFaster();
+            Debug.Log("Z입력, 기차 출발");
+            StartAllTrains();
+            // Debug.Log("Z입력, 기차 가속");
+            // SetSpeedFaster();
         }
         if (Input.GetKeyDown(KeyCode.X))
         {
-            // Debug.Log("X입력, 기차 정지");
-            // StopAllTrains();
-            Debug.Log("X입력, 기차 감속");
-            SetSpeedNormal();
+            Debug.Log("X입력, 기차 정지");
+            StopAllTrains();
+            // Debug.Log("X입력, 기차 감속");
+            // SetSpeedNormal();
         }
     }
 
@@ -88,7 +88,7 @@ public class TrainManager: MonoBehaviour
         StartCoroutine(CountDownAndStart());
     }
 
-    //상점에서 나온 이후 재시작
+    //상점에서 나온 이후 재시작, 모든 플레이어에게 호출됨
     public void RestartTrainCount()
     {
         StartCoroutine(CountDownAndRestart());

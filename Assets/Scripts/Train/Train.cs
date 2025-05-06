@@ -84,6 +84,12 @@ public abstract class Train : NetworkBehaviour
         _camera = Camera.main;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        if (NetworkManager.Singleton.IsHost && this is Train_Head) InitManagerRpc(NetworkObjectId);
+    }
+
     public void InitTrain()
     {
         InitManager(); //매니저를 등록
@@ -98,6 +104,15 @@ public abstract class Train : NetworkBehaviour
         SetManager(this is Train_Head ? GetComponent<TrainManager>() : frontTrainCar.GetManager());
         manager.trains.TryAdd(index, this);
         // Debug.Log($"Train등록: {index}, {name}");
+    }
+
+    [Rpc(SendTo.NotMe)]
+    private void InitManagerRpc(ulong trainId)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(trainId, out NetworkObject obj))
+        {
+            obj.GetComponent<Train>().SetManager(GetComponent<TrainManager>());
+        }
     }
 
     private void InitPrefabs()
@@ -128,7 +143,6 @@ public abstract class Train : NetworkBehaviour
 
     private void InitObject()
     {
-        StopSmoke();
         trainObject.SetActive(true);
         destroyObject.SetActive(false);
         fire.SetActive(false);
@@ -177,19 +191,22 @@ public abstract class Train : NetworkBehaviour
     #endregion
 
     #region 명령
-
+    
     public void StartTrain()
     {
-        isPaused = false;
         if (destinationRail)
         {
             bool isHead = this is Train_Head;
             if (movementCoroutine == null)
             {
+                isPaused = false;
+                StartEffects();
                 movementCoroutine = StartCoroutine(MoveToRail(isHead));
             }
             else
             {
+                isPaused = false;
+                StartEffects();
                 Debug.Log("이미 코루틴 진행중");
             }
         }
@@ -202,6 +219,22 @@ public abstract class Train : NetworkBehaviour
     public void StopTrain()
     {
         isPaused = true;
+        PauseEffects();
+    }
+    
+    private void PauseEffects() {
+        if (this is Train_Head)
+        {
+            ToggleEngineSoundRpc(false);
+            StopSmoke();
+        }
+    }
+    private void StartEffects() {
+        if (this is Train_Head)
+        {
+            ToggleEngineSoundRpc(true);
+            StartSmoke();
+        }
     }
 
     public void CallCountdown(int idx)
@@ -223,10 +256,11 @@ public abstract class Train : NetworkBehaviour
         SoundManager.Instance.PlaySound(countdownSound);
     }
 
-    private void DestroyTrain()
+    public void DestroyTrain(bool isTail)
     {
-        if (IsTail)
+        if (isTail)
         {
+            Debug.Log("마지막 열차 파괴");
             SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[0], 0.5f); //마지막 열차가 파괴되면 bgm을 변경
             _camera.GetComponent<CameraController>().GameOverCameraMoving();
         }
@@ -262,7 +296,7 @@ public abstract class Train : NetworkBehaviour
         {
             //마지막 열차의 경우엔 소환된 이후 출발 카운트다운을 진행
             this.PlaySpawnToGround(spawnOffset, destOffset, duration: 2.5f,
-                onComplete: () => manager.StartTrainCount());
+                onComplete: StartCountdown);
         }
         else
         {
@@ -270,18 +304,60 @@ public abstract class Train : NetworkBehaviour
         }
     }
 
+    //꼬리에서 호출
+    private void StartCountdown()
+    {
+        StartCountdownRpc(manager.trains[0].NetworkObjectId);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    private void StartCountdownRpc(ulong id)
+    {
+        if(manager)
+        {
+            manager.StartTrainCount();
+        }
+        else
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject networkObject))
+            {
+                networkObject.GetComponent<TrainManager>().StartTrainCount();
+            }
+        }
+    }
+
     private void StartSmoke()
     {
         if (this is not Train_Head) return;
-        smoke.Play();
+        ToggleSmokeRpc(true);
     }
 
-    private void StopSmoke()
+    protected void StopSmoke()
     {
         if (this is not Train_Head) return;
-        smoke.Stop();
+        ToggleSmokeRpc(false);
     }
 
+    [Rpc(SendTo.Everyone)]
+    private void ToggleSmokeRpc(bool start)
+    {
+        if (start) smoke.Play();
+        else smoke.Stop();
+    }
+    
+    [Rpc(SendTo.Everyone)]
+    private void ToggleEngineSoundRpc(bool start)
+    {
+        if (start)
+        {
+            StartCoroutine(PlayHornSound());
+        }
+        else
+        {
+            SoundManager.Instance.StopSoundWithTag("Engine");
+        }
+    }
+    
     #endregion
 
     #region 기능
@@ -315,7 +391,7 @@ public abstract class Train : NetworkBehaviour
 
     private IEnumerator MoveToRail(bool isHead)
     {
-        StartCoroutine(PlayHornSound());
+        ToggleEngineSoundRpc(true);
         StartSmoke();
         bool pause = false;
 
@@ -327,8 +403,7 @@ public abstract class Train : NetworkBehaviour
                 if (!pause)
                 {
                     pause = true;
-                    SoundManager.Instance.StopSoundWithTag("Engine");
-                    if (isHead) StopSmoke();
+                    PauseEffects();
                 }
 
                 yield return null;
@@ -337,8 +412,7 @@ public abstract class Train : NetworkBehaviour
             if (pause)
             {
                 pause = false;
-                StartCoroutine(PlayHornSound());
-                if (isHead) StartSmoke();
+                StartEffects();
             }
 
             if (!destinationRail)
@@ -393,6 +467,7 @@ public abstract class Train : NetworkBehaviour
                 //라운드 클리어 시 끝레일의 전칸에 도착하면 열차를 멈춤.
                 if (isHead && GameManager.Instance.trainManager.RoundClear)
                 {
+                    // 호스트 한정
                     // StartHeadRail 구하고, 그 전칸(prevRail) 얻기
                     var headRail = RailManager.Instance.GetStartHeadRail();
                     var headPrev = headRail?.prevRail?.GetComponent<RailController>();
@@ -433,7 +508,8 @@ public abstract class Train : NetworkBehaviour
                     manager.GameOver();
                 }
 
-                DestroyTrain();
+                RpcManager.Instance.DestroyTrainRpc(NetworkObjectId, IsTail);
+                // DestroyTrain();
                 break;
             }
         }
