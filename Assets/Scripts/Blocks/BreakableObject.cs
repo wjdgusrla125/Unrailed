@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class BreakableObject : MonoBehaviour
 {
-    [SerializeField] private int BlockHpCount;
+    [SerializeField] public int BlockHpCount;
     [SerializeField] private BlockType blockType;
     [SerializeField] private List<GameObject> DropGameObject;
     private float shakeDuration = 0.29f;   // ��鸮�� �ð� (��)
@@ -75,7 +75,7 @@ public class BreakableObject : MonoBehaviour
     public void CheckRay(ItemType itemType)
     {
         StartCoroutine(ShakeCoroutine());
-        if (BlockHpCount != 0)
+        if (BlockHpCount != 0 && HitParticle != null)
         {
             GameObject temp = GameObject.Instantiate(HitParticle);
             temp.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
@@ -90,8 +90,16 @@ public class BreakableObject : MonoBehaviour
         {
             BlockHpCount--;
         }
+        else if ((itemType == ItemType.Pickaxe || itemType == ItemType.Axe) && blockType == BlockType.Enemy)
+        {
+            BlockHpCount--;
+        }
+
+        if (blockType != BlockType.Enemy)
+        {
+            SetMeshObject();
+        }
         
-        SetMeshObject();
         if (BlockHpCount == 0)
             DestroyBlock();
     }

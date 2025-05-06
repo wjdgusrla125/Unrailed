@@ -56,8 +56,10 @@ public class ExpandingCircleDetector : MonoBehaviour
         IsJoinShop = false;
         gameObject.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x, 0.5f, MapGenerator.Instance.GetPosB().y);
     }
+    
     public bool GetJoin() => IsJoinShop;
     public bool GetExit() => IsExitShop;
+    
     public void SetGuageBar(Vector3 pos, bool Ison)
     {
         ShopGuage.SetActive(Ison);
