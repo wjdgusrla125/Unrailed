@@ -195,8 +195,7 @@ public class PlayerInfo : MonoBehaviour
 
         Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
     }
-
-
+    
     private void WaterRaycast()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
@@ -222,6 +221,11 @@ public class PlayerInfo : MonoBehaviour
             if (closest != null && closest.gameObject.GetComponent<BurnTrainObject>().Isburn)
             {
                 var burn = closest.gameObject.GetComponent<BurnTrainObject>();
+                
+                WaterTank temp = closest.gameObject.GetComponent<WaterTank>();
+                if (temp != null)
+                    temp.CoolingTank();
+                
                 burn.Isburn = false;
 
                 itemType = ItemType.Bucket;

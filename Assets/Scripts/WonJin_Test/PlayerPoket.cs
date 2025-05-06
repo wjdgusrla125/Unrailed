@@ -6,9 +6,9 @@ using UnityEngine.UI;
 public class PlayerPoket : MonoBehaviour
 {
     [Header("�÷��̾� �ڿ� �ؽ�Ʈ")]
-    public TMP_Text SeedValueText;
-    public TMP_Text DistanceValueText;
-    public TMP_Text BoltValueText;
+    public Text SeedValueText;
+    public Text DistanceValueText;
+    public Text BoltValueText;
     [Header("�÷��̾� �ڿ�")]
     [SerializeField] private string Seed;
     [SerializeField] private float Distance;
