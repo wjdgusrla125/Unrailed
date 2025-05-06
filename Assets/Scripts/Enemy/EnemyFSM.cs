@@ -6,12 +6,14 @@ public class EnemyFSM : NetworkBehaviour
 {
     private GameObject player;
     private BehaviorGraphAgent behaviorAgent;
+    private BreakableObject breakableObject;
 
     private float searchInterval = 1f; // 1초마다 갱신
     private float searchTimer = 0f;
 
     private void Start()
     {
+        breakableObject = GetComponent<BreakableObject>();
         Setup();
     }
 
@@ -37,6 +39,11 @@ public class EnemyFSM : NetworkBehaviour
         {
             searchTimer = 0f;
             UpdateClosestPlayer();
+        }
+
+        if (breakableObject.BlockHpCount <= 0)
+        {
+            Destroy(gameObject);
         }
     }
 
