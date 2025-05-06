@@ -34,6 +34,8 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
         {
             MapGenerator.Instance.NextMapGeneration();
         }
+
+        GameManager.Instance.trainManager.RestartTrainCount();
     }
 
     #endregion

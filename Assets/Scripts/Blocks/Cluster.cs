@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Sound;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -82,8 +83,12 @@ public class Cluster : NetworkBehaviour
 
         float directionSign = ClusterGroup.Direction == ClusterDirection.Upper ? 1f : -1f;
         this.PlaySpawn(directionSign * _spawnOffset, finalPos.y, moveDuration);
+        
+        //0번일때만 사운드를 재생
+        if (delay != 0) yield break;
+        yield return new WaitForSeconds(moveDuration - 0.5f);
+        SoundManager.Instance.PlaySound(MapGenerator.Instance.spawnSound);
     }
-
 
     private float EaseOutQuart(float t)
     {

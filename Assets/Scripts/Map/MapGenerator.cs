@@ -66,6 +66,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
     [SerializeField] private GameObject wood0Prefab; //wood: 랜덤(50%)
     [SerializeField] private GameObject wood1Prefab;
     [SerializeField] private GameObject gameOverPrefab;
+    public AudioClip spawnSound;
 
     private Dictionary<Vector2Int, (GameObject prefab, TileType tileType)> _customTiles =
         new Dictionary<Vector2Int, (GameObject, TileType)>();

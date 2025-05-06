@@ -3227,6 +3227,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: spawnSound
+      value: 
+      objectReference: {fileID: 8300000, guid: d0d41ab4280792c49b2ea647bffa1db9, type: 3}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: InitRailprefab
       value: 
       objectReference: {fileID: 3258400204647497964, guid: 0dd91e5f3048b19419636902f33e4a10, type: 3}

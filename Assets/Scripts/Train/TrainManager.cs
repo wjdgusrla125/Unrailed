@@ -88,7 +88,19 @@ public class TrainManager: MonoBehaviour
         StartCoroutine(CountDownAndStart());
     }
 
-    private IEnumerator CountDownAndStart()
+    //상점에서 나온 이후 재시작
+    public void RestartTrainCount()
+    {
+        StartCoroutine(CountDownAndRestart());
+    }
+
+    private IEnumerator CountDownAndRestart()
+    {
+        yield return new WaitForSeconds(7.0f); //7초 이후 다시 카운트다운 시작
+        StartCoroutine(CountDownAndStart(true));
+    }
+
+    private IEnumerator CountDownAndStart(bool isRestart = false)
     {
         Debug.Log("카운트다운 시작");
 
@@ -108,7 +120,7 @@ public class TrainManager: MonoBehaviour
         
 
         trains[0].RecallCountdown();
-        _cameraController.InitCamera(this);
+        if (!isRestart) _cameraController.InitCamera(this);
         // _cameraController.StartCamera();
         StartAllTrains();
         SoundManager.Instance.PlayBGM(SoundManager.Instance.bgmClips[1], 0.5f);
