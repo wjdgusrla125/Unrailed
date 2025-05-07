@@ -57,6 +57,8 @@ public class ExpandingCircleDetector : MonoBehaviour
         IsExitShop = true; 
         IsJoinShop = false;
         gameObject.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x, 0.5f, MapGenerator.Instance.GetPosB().y);
+
+        RpcManager.Instance.ExitShopRpc();
     }
     public bool GetJoin() => IsJoinShop;
     public bool GetExit() => IsExitShop;

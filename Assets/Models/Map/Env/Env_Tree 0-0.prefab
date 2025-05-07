@@ -463,7 +463,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BlockHpCount: 1
+  BlockHpCount: 3
   blockType: 1
   DropGameObject:
   - {fileID: 7187630036778189682, guid: b6e1b227b7cc406449be17199cf61543, type: 3}
