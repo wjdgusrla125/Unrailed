@@ -12,7 +12,7 @@ public class WaterTank : MonoBehaviour
     [SerializeField] private Renderer body_1_R;
     [SerializeField] private List<GameObject> TrainOBJ;
     Color startColor;
-    private float duration = 10f;
+    private float duration = 20f;
     private Coroutine TankCoroutine;
     private Coroutine BurnCoroutine;
     
@@ -46,7 +46,7 @@ public class WaterTank : MonoBehaviour
                 BurnCoroutine = null;
                 yield break;
             }
-            yield return new WaitForSeconds(2.5f);
+            yield return new WaitForSeconds(5f);
             BurnTrains();
         }
         StopCoroutine(BurnCoroutine);

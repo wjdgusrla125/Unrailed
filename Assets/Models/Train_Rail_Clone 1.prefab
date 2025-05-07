@@ -8147,6 +8147,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 1
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -8196,6 +8206,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 396e6e992c0a8c34ba20c0cf905de146, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  isStartFirstRail: 0
+  isStartHeadRail: 0
+  isEndFirstRail: 0
+  isEndHeadRail: 0
   RailRight: {fileID: 5750340282539543552}
   RailLeftBottom: {fileID: 8552342458900479637}
   RailLeftTop: {fileID: 413432475128371764}
@@ -8208,6 +8223,8 @@ MonoBehaviour:
   railLayer:
     serializedVersion: 2
     m_Bits: 256
+  prevRail: {fileID: 0}
+  nextRail: {fileID: 0}
 --- !u!1 &7419329411036280246
 GameObject:
   m_ObjectHideFlags: 0

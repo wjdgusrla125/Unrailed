@@ -21,6 +21,7 @@ public class ExpandingCircleDetector : MonoBehaviour
     public Material material;
     public Transform planeTransform;
     [Header("게이지 관련")]
+    public GameObject ExitButton;
     public GameObject ShopGuage;
     private Coroutine FillCoroutine;
     public bool IsHold = false;
@@ -49,17 +50,18 @@ public class ExpandingCircleDetector : MonoBehaviour
     {
         IsJoinShop = true;
         gameObject.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x, 0.5f, MapGenerator.Instance.GetPosB().y);
+        ExitButton.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x + 1, ExitButton.transform.position.y, MapGenerator.Instance.GetPosB().y-3);
     }
     public void ExitShop()
     {
         IsExitShop = true; 
         IsJoinShop = false;
         gameObject.transform.position = new Vector3(MapGenerator.Instance.GetPosB().x, 0.5f, MapGenerator.Instance.GetPosB().y);
+
+        RpcManager.Instance.ExitShopRpc();
     }
-    
     public bool GetJoin() => IsJoinShop;
     public bool GetExit() => IsExitShop;
-    
     public void SetGuageBar(Vector3 pos, bool Ison)
     {
         ShopGuage.SetActive(Ison);
