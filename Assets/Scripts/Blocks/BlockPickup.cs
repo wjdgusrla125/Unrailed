@@ -208,12 +208,11 @@ public class BlockPickup : NetworkBehaviour
             }
         }
 
-        if (ExpandingCircleDetector.Instance.GetJoin() || ExpandingCircleDetector.Instance.GetExit())
-            return;
+        if (ExpandingCircleDetector.Instance.GetJoin() || ExpandingCircleDetector.Instance.GetExit()) return;
 
         if (!pressed || !IsOwner) return;
 
-        // ✅ Space 키로 레일 설치
+        //Space 키로 레일 설치
         if (playerInfo.itemType == ItemType.Rail && heldObjectStack.Count > 0 && currentTile != null)
         {
             Vector2Int currentTilePos = new Vector2Int(
@@ -222,14 +221,15 @@ public class BlockPickup : NetworkBehaviour
             );
 
             RailController startHeadRail = RailManager.Instance.GetStartHeadRail();
+            
             if (startHeadRail != null)
             {
                 Vector2Int headRailPos = startHeadRail.GridPos;
                 int distance = Mathf.Abs(currentTilePos.x - headRailPos.x) + Mathf.Abs(currentTilePos.y - headRailPos.y);
+                
                 if (distance == 1)
                 {
-                    if (currentTile.GetStackSize() == 0 ||
-                        (GetTopStackedItem(currentTile)?.GetComponent<Item>()?.ItemType != ItemType.Rail))
+                    if (currentTile.GetStackSize() == 0 || (GetTopStackedItem(currentTile)?.GetComponent<Item>()?.ItemType != ItemType.Rail))
                     {
                         NetworkObject railObject = heldObjectStack.Pop();
                         RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
@@ -237,7 +237,11 @@ public class BlockPickup : NetworkBehaviour
                         UpdateHeldObjectList();
 
                         RailController rc = railObject.GetComponent<RailController>();
-                        if (rc != null) rc.SetRail();
+                        
+                        if (rc != null)
+                        {
+                            rc.SetRail();
+                        }
 
                         if (heldObjectStack.Count == 0)
                             UpdatePlayerItemType(ItemType.None);
@@ -247,7 +251,7 @@ public class BlockPickup : NetworkBehaviour
                         if (previewInstance != null)
                             previewInstance.SetActive(false);
                         
-                        return; // 다른 Interact 행동 방지
+                        return;
                     }
                 }
             }
@@ -922,7 +926,7 @@ public class BlockPickup : NetworkBehaviour
             netObj.Despawn();
         }
     }
-
+    
     #endregion
 
     #region ClientRPC

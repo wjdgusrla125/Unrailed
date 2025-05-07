@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using Sound;
 using TMPro;
 using Unity.Netcode;
