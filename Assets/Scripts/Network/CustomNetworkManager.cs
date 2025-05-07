@@ -69,6 +69,6 @@ public class CustomNetworkManager : MonoBehaviour
         response.Rotation = spawnRotation;
         
         // 선택적: 플레이어 연결 정보 로깅
-        Debug.Log($"클라이언트 ID {request.ClientNetworkId}가 위치 {spawnPosition}에 스폰됩니다.");
+        // Debug.Log($"클라이언트 ID {request.ClientNetworkId}가 위치 {spawnPosition}에 스폰됩니다.");
     }
 }

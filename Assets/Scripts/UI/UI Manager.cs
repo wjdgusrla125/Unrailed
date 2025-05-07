@@ -4,6 +4,7 @@ using System;
 using Sound;
 using TMPro;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -11,6 +12,8 @@ using UnityEngine.UI;
 public class UIManager: NetworkSingletonManager<UIManager>
 {
     // private string _seed;
+    [Header("클라이언트 접속할 호스트 IP")]
+    [SerializeField] private string hostIp; // 예: "192.168.0.15"
     
     [SerializeField]private TMP_InputField seedInput;
     [SerializeField]private GameObject lobbyUI;
@@ -29,12 +32,23 @@ public class UIManager: NetworkSingletonManager<UIManager>
     //서버 시작
     public void StartHost()
     {
+        var utp = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        // 모든 NIC 바인딩
+        utp.ConnectionData.ServerListenAddress = "0.0.0.0";
+        utp.ConnectionData.Port = 7777;
+        Debug.Log($"[Host] Listening on {utp.ConnectionData.ListenEndPoint.Address}:{utp.ConnectionData.ListenEndPoint.Port}");
         NetworkManager.Singleton.StartHost();
     }
+    
+    
     
     //클라이언트로 접속
     public void StartClient()
     {
+        var utp = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        utp.ConnectionData.Address = hostIp.Trim();
+        utp.ConnectionData.Port    = 7777;
+        Debug.Log($"[Client] Connecting to {utp.ConnectionData.Address}:{utp.ConnectionData.Port}");
         NetworkManager.Singleton.StartClient();
     }
     
