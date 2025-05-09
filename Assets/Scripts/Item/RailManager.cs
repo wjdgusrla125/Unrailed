@@ -136,14 +136,12 @@ public class RailManager : NetworkSingletonManager<RailManager>
                 var next = current.nextRail.GetComponent<RailController>();
                 if (!visited.Add(next))
                 {
-                    Debug.LogWarning("Start 체인 순환 감지");
                     break;
                 }
                 current = next;
             }
             current.isStartHeadRail = true;
-
-            // ✅ 동기화를 위해 위치 저장
+            
             if (IsServer)
                 startHeadPos.Value = current.GridPos;
         }
@@ -157,7 +155,6 @@ public class RailManager : NetworkSingletonManager<RailManager>
                 var next = current.nextRail.GetComponent<RailController>();
                 if (!visited.Add(next))
                 {
-                    Debug.LogWarning("End 체인 순환 감지");
                     break;
                 }
                 current = next;
@@ -230,6 +227,11 @@ public class RailManager : NetworkSingletonManager<RailManager>
     public RailController GetEndFirstRail()
     {
         return _rails.Values.FirstOrDefault(r => r.isEndFirstRail);
+    }
+    
+    public bool IsRailRegistered(Vector2Int pos)
+    {
+        return _rails.ContainsKey(pos);
     }
     
 }

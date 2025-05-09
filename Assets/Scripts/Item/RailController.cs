@@ -67,11 +67,13 @@ public class RailController : NetworkBehaviour
             Mathf.RoundToInt(transform.position.x),
             Mathf.RoundToInt(transform.position.z)
         );
+        
+        if (RailManager.Instance.IsRailRegistered(_gridPos))
+        {
+            return;
+        }
 
-        // 1. 레일 등록 및 appearance 설정
         RailManager.Instance.RegisterRail(this, _gridPos);
-
-        // 2. startHeadPos NetworkVariable 갱신
         RailManager.Instance.UpdateHeadRail();
     }
     
