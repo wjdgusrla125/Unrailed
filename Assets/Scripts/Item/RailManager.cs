@@ -8,8 +8,7 @@ using UnityEngine;
 public class RailManager : NetworkSingletonManager<RailManager>
 {
     private Dictionary<Vector2Int, RailController> _rails = new();
-
-    // ✅ 클라이언트와 동기화될 StartHeadRail 위치
+    
     public NetworkVariable<Vector2Int> startHeadPos = new NetworkVariable<Vector2Int>(
         new Vector2Int(-999, -999),
         NetworkVariableReadPermission.Everyone,
@@ -60,10 +59,10 @@ public class RailManager : NetworkSingletonManager<RailManager>
             if (!extendedStart)
                 InitialConnectRail(rail, gridPos);
         }
-
+        
         UpdateHeadRail();
     }
-
+    
     private void OnChainsMerged(RailController startHead, RailController middleRail, RailController endFirst)
     {
         GameManager.Instance.trainManager.RailConnected();
@@ -232,4 +231,5 @@ public class RailManager : NetworkSingletonManager<RailManager>
     {
         return _rails.Values.FirstOrDefault(r => r.isEndFirstRail);
     }
+    
 }

@@ -1,19 +1,22 @@
-using Unity.VisualScripting;
+using Unity.Netcode;
 using UnityEngine;
 
-public class BucketInfo : MonoBehaviour
+public class BucketInfo : NetworkBehaviour
 {
-    private Item ItemInfo;
-    void Start()
-    {
-        ItemInfo = gameObject.GetComponent<Item>();
-    }
+    public NetworkVariable<ItemType> SyncedItemType = new NetworkVariable<ItemType>(
+        ItemType.Bucket,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     private void Update()
     {
-        if (ItemInfo.ItemType == ItemType.Bucket)
-            gameObject.transform.GetChild(0).transform.GetChild(5).gameObject.SetActive(false);
-        if (ItemInfo.ItemType == ItemType.WaterInBucket)
-            gameObject.transform.GetChild(0).transform.GetChild(5).gameObject.SetActive(true);
+        var visual = transform.GetChild(0).GetChild(5).gameObject;
+        visual.SetActive(SyncedItemType.Value == ItemType.WaterInBucket);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetItemTypeServerRpc(ItemType itemType)
+    {
+        SyncedItemType.Value = itemType;
     }
 }

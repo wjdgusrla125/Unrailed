@@ -30,14 +30,10 @@ public class BlockPickup : NetworkBehaviour
     private Coroutine holdCoroutine;
     public Vector3 TriggerOBJPos;
     private GameObject ShopPanelOBJ;
-    
-    
-
     [SerializeField] private PlayerInfo playerInfo;
     private const int maxStackSize = 4;
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.2f, 0);
-
-    // 코루틴 - 최원진
+    
     private IEnumerator HoldTimer()
     {
         float time = 0f;
@@ -80,8 +76,7 @@ public class BlockPickup : NetworkBehaviour
             inputReader.InteractEvent -= OnInteract;
         }
     }
-
-    // Trigger 체크 - 최원진
+    
     private void OnTriggerStay(Collider other)
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("ShopTile"))
@@ -212,47 +207,42 @@ public class BlockPickup : NetworkBehaviour
 
         if (!pressed || !IsOwner) return;
 
-        //Space 키로 레일 설치
+        //레일 설치
         if (playerInfo.itemType == ItemType.Rail && heldObjectStack.Count > 0 && currentTile != null)
         {
             Vector2Int currentTilePos = new Vector2Int(
                 Mathf.RoundToInt(currentTile.transform.position.x),
                 Mathf.RoundToInt(currentTile.transform.position.z)
             );
-
-            RailController startHeadRail = RailManager.Instance.GetStartHeadRail();
             
-            if (startHeadRail != null)
-            {
-                Vector2Int headRailPos = startHeadRail.GridPos;
-                int distance = Mathf.Abs(currentTilePos.x - headRailPos.x) + Mathf.Abs(currentTilePos.y - headRailPos.y);
+            Vector2Int headRailPos = RailManager.Instance.startHeadPos.Value;
+            int distance = Mathf.Abs(currentTilePos.x - headRailPos.x) + Mathf.Abs(currentTilePos.y - headRailPos.y);
                 
-                if (distance == 1)
+            if (distance == 1)
+            {
+                if (currentTile.GetStackSize() == 0 || (GetTopStackedItem(currentTile)?.GetComponent<Item>()?.ItemType != ItemType.Rail))
                 {
-                    if (currentTile.GetStackSize() == 0 || (GetTopStackedItem(currentTile)?.GetComponent<Item>()?.ItemType != ItemType.Rail))
+                    NetworkObject railObject = heldObjectStack.Pop();
+                    RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
+                    UpdateTileServerRpc(ItemType.Rail);
+                    UpdateHeldObjectList();
+
+                    RailController rc = railObject.GetComponent<RailController>();
+                        
+                    if (rc != null)
                     {
-                        NetworkObject railObject = heldObjectStack.Pop();
-                        RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
-                        UpdateTileServerRpc(ItemType.Rail);
-                        UpdateHeldObjectList();
-
-                        RailController rc = railObject.GetComponent<RailController>();
-                        
-                        if (rc != null)
-                        {
-                            rc.SetRail();
-                        }
-
-                        if (heldObjectStack.Count == 0)
-                            UpdatePlayerItemType(ItemType.None);
-                        else
-                            UpdatePlayerItemType(heldObjectStack.Peek().GetComponent<Item>().ItemType);
-
-                        if (previewInstance != null)
-                            previewInstance.SetActive(false);
-                        
-                        return;
+                        rc.SetRailServerRpc();
                     }
+
+                    if (heldObjectStack.Count == 0)
+                        UpdatePlayerItemType(ItemType.None);
+                    else
+                        UpdatePlayerItemType(heldObjectStack.Peek().GetComponent<Item>().ItemType);
+
+                    if (previewInstance != null)
+                        previewInstance.SetActive(false);
+                        
+                    return;
                 }
             }
         }
@@ -964,7 +954,22 @@ public class BlockPickup : NetworkBehaviour
                 Item heldItem = netObj.GetComponent<Item>();
                 if (heldItem != null && playerPickup.playerInfo != null)
                 {
-                    playerPickup.UpdatePlayerItemType(heldItem.ItemType);
+                    // ✅ Bucket 상태 반영
+                    if (heldItem.ItemType == ItemType.Bucket && netObj.TryGetComponent<BucketInfo>(out var bucketInfo))
+                    {
+                        if (bucketInfo.SyncedItemType.Value == ItemType.WaterInBucket)
+                        {
+                            playerPickup.UpdatePlayerItemType(ItemType.WaterInBucket);
+                        }
+                        else
+                        {
+                            playerPickup.UpdatePlayerItemType(ItemType.Bucket);
+                        }
+                    }
+                    else
+                    {
+                        playerPickup.UpdatePlayerItemType(heldItem.ItemType);
+                    }
                 }
 
                 Transform holdPosition = heldItem != null && heldItem.WithTwoHanded ?
@@ -976,21 +981,8 @@ public class BlockPickup : NetworkBehaviour
                 playerPickup.UpdateStackedItemPositions(holdPosition);
             }
         }
-        else
-        {
-            Transform holdPosition = playerPickup.handPosition;
-            Item heldItem = netObj.GetComponent<Item>();
-
-            if (heldItem != null && heldItem.WithTwoHanded)
-            {
-                holdPosition = playerPickup.twoHandPosition;
-            }
-
-            netObj.transform.position = holdPosition.position;
-            netObj.transform.rotation = holdPosition.rotation;
-        }
     }
-
+    
     [ClientRpc]
     void SetHeldObjectStackClientRpc(ulong[] objectIds, ulong playerId)
     {
@@ -1027,7 +1019,23 @@ public class BlockPickup : NetworkBehaviour
                         Item item = netObj.GetComponent<Item>();
                         if (item != null)
                         {
-                            itemType = item.ItemType;
+                            // ✅ Bucket 상태 반영
+                            if (item.ItemType == ItemType.Bucket && netObj.TryGetComponent<BucketInfo>(out var bucketInfo))
+                            {
+                                if (bucketInfo.SyncedItemType.Value == ItemType.WaterInBucket)
+                                {
+                                    itemType = ItemType.WaterInBucket;
+                                }
+                                else
+                                {
+                                    itemType = ItemType.Bucket;
+                                }
+                            }
+                            else
+                            {
+                                itemType = item.ItemType;
+                            }
+
                             if (item.WithTwoHanded)
                             {
                                 holdPosition = playerPickup.twoHandPosition;
@@ -1055,7 +1063,7 @@ public class BlockPickup : NetworkBehaviour
             }
         }
     }
-
+    
     [ClientRpc]
     void UpdatePlayerItemTypeClientRpc(ItemType itemType, ulong playerId)
     {
@@ -1149,6 +1157,11 @@ public class BlockPickup : NetworkBehaviour
                     localPickup.UpdatePlayerItemType(item.ItemType);
                 }
             }
+        }
+        
+        if (IsServer && netObj.TryGetComponent<RailController>(out var rc))
+        {
+            rc.SetRailServerRpc();
         }
     }
 
@@ -1485,15 +1498,12 @@ public class BlockPickup : NetworkBehaviour
             Mathf.RoundToInt(currentTile.transform.position.z)
         );
 
-        RailController head = RailManager.Instance.GetStartHeadRail();
-
-        if (head == null || !IsAdjacent(currentTilePos, head.GridPos)) 
+        if (!IsAdjacent(currentTilePos, RailManager.Instance.startHeadPos.Value)) 
         {
             if (previewInstance != null) previewInstance.SetActive(false);
             return;
         }
-
-        // 프리뷰가 아직 없으면 생성
+        
         if (previewInstance == null)
         {
             previewInstance = Instantiate(previewPrefab);

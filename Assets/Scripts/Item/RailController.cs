@@ -60,6 +60,21 @@ public class RailController : NetworkBehaviour
         }
     }
 
+    [ServerRpc]
+    public void SetRailServerRpc()
+    {
+        _gridPos = new Vector2Int(
+            Mathf.RoundToInt(transform.position.x),
+            Mathf.RoundToInt(transform.position.z)
+        );
+
+        // 1. 레일 등록 및 appearance 설정
+        RailManager.Instance.RegisterRail(this, _gridPos);
+
+        // 2. startHeadPos NetworkVariable 갱신
+        RailManager.Instance.UpdateHeadRail();
+    }
+    
     private void ResetRails()
     {
         RailRight.SetActive(false);
@@ -111,36 +126,22 @@ public class RailController : NetworkBehaviour
     [ClientRpc]
     public void SetRailAppearanceClientRpc(RailShape shape)
     {
-        ResetRails();
+        ResetRails();  // 기존 모든 rail 모델 숨기기
 
         switch (shape)
         {
-            case RailShape.Right:
-                RailRight.SetActive(true); break;
-            case RailShape.Left:
-                RailLeft.SetActive(true); break;
-            case RailShape.Up:
-                RailUp.SetActive(true); break;
-            case RailShape.Down:
-                RailDown.SetActive(true); break;
+            case RailShape.Right: RailRight.SetActive(true); break;
+            case RailShape.Left: RailLeft.SetActive(true); break;
+            case RailShape.Up: RailUp.SetActive(true); break;
+            case RailShape.Down: RailDown.SetActive(true); break;
             case RailShape.StraightHorizontal:
-                RailLeft.SetActive(true);
-                RailRight.SetActive(true);
-                break;
+                RailLeft.SetActive(true); RailRight.SetActive(true); break;
             case RailShape.StraightVertical:
-                RailUp.SetActive(true);
-                RailDown.SetActive(true);
-                break;
-            case RailShape.CornerLeftTop:
-                RailLeftTop.SetActive(true); break;
-            case RailShape.CornerLeftBottom:
-                RailLeftBottom.SetActive(true); break;
-            case RailShape.CornerRightTop:
-                RailRightTop.SetActive(true); break;
-            case RailShape.CornerRightBottom:
-                RailRightBottom.SetActive(true); break;
-            default:
-                break;
+                RailUp.SetActive(true); RailDown.SetActive(true); break;
+            case RailShape.CornerLeftTop: RailLeftTop.SetActive(true); break;
+            case RailShape.CornerLeftBottom: RailLeftBottom.SetActive(true); break;
+            case RailShape.CornerRightTop: RailRightTop.SetActive(true); break;
+            case RailShape.CornerRightBottom: RailRightBottom.SetActive(true); break;
         }
     }
 

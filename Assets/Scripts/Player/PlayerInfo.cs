@@ -1,9 +1,5 @@
 using Sound;
 using System.Collections;
-using System.Diagnostics;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using Unity.AppUI.UI;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -67,7 +63,6 @@ public class PlayerInfo : MonoBehaviour
             {
                 Bucket = temp.gameObject;
                 bucketAssigned = true;
-                Debug.Log("버킷이 성공적으로 할당되었습니다.");
             }
         }
     }
@@ -200,44 +195,40 @@ public class PlayerInfo : MonoBehaviour
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
 
-        if (hits.Length > 0)
+        foreach (var col in hits)
         {
-            Debug.Log("감지됨");
+            BurnTrainObject burn = col.GetComponent<BurnTrainObject>();
 
-            Collider closest = null;
-            float minDistance = float.MaxValue;
-
-            foreach (Collider col in hits)
+            if (burn != null && burn.Isburn.Value)
             {
-                float distance = Vector3.Distance(transform.position, col.transform.position);
-                if (distance < minDistance)
+                bool bucketHasWater = Bucket != null && Bucket.GetComponent<BucketInfo>().SyncedItemType.Value == ItemType.WaterInBucket;
+
+                if (!bucketHasWater) return;
+                
+                WaterTank tank = col.GetComponent<WaterTank>();
+                
+                if (tank != null)
                 {
-                    minDistance = distance;
-                    closest = col;
+                    tank.CoolingTankServerRpc();
                 }
-            }
-
-            // 가장 가까운 오브젝트 처리
-            if (closest != null && closest.gameObject.GetComponent<BurnTrainObject>().Isburn)
-            {
-                var burn = closest.gameObject.GetComponent<BurnTrainObject>();
+                else
+                {
+                    burn.SetIsBurnServerRpc(false);
+                }
                 
-                WaterTank temp = closest.gameObject.GetComponent<WaterTank>();
-                if (temp != null)
-                    temp.CoolingTank();
-                
-                burn.Isburn = false;
-
                 itemType = ItemType.Bucket;
+
                 if (Bucket != null)
                 {
-                    Bucket.GetComponent<Item>().ItemType = ItemType.Bucket;
+                    Bucket.GetComponent<BucketInfo>()?.SetItemTypeServerRpc(ItemType.Bucket);
                 }
+
                 SoundManager.Instance.PlaySound(WaterSpraySound);
+                break;
             }
         }
     }
-
+    
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
@@ -252,12 +243,17 @@ public class PlayerInfo : MonoBehaviour
     IEnumerator BucketInWaterCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
+
         itemType = ItemType.WaterInBucket;
+
         if (Bucket != null)
         {
-            Bucket.GetComponent<Item>().ItemType = ItemType.WaterInBucket;
+            Bucket.GetComponent<BucketInfo>()?.SetItemTypeServerRpc(ItemType.WaterInBucket);
         }
+
         SoundManager.Instance.PlaySound(WaterDrawSound);
+
         waterCoroutine = null;
     }
+
 }

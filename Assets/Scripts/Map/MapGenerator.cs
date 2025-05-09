@@ -3032,7 +3032,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     var rc = railGo.GetComponent<RailController>();
                     if (dx == startFirstRailX) rc.isStartFirstRail = true;
                     rc.NetworkObject.Spawn();
-                    rc.SetRail();
+                    rc.SetRailServerRpc();
                     rc.PlaySpawnAnimation(SPAWN_OFFSET);
                     // posARails.Add(rc);
                     if (dx == 1) firstDestination = rc;
@@ -3051,7 +3051,7 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     var rc = railGo.GetComponent<RailController>();
                     if (dx == endFirstRailX) rc.isEndFirstRail = true;
                     rc.NetworkObject.Spawn();
-                    rc.SetRail();
+                    rc.SetRailServerRpc();
                     rc.PlaySpawnAnimation(SPAWN_OFFSET);
                     // posBRails.Add(rc);
                 }
@@ -3075,14 +3075,12 @@ public class MapGenerator : SingletonManager<MapGenerator>
                     var rc = railGo.GetComponent<RailController>();
                     if (dx == endFirstRailX) rc.isEndFirstRail = true;
                     rc.NetworkObject.Spawn();
-                    rc.SetRail();
+                    rc.SetRailServerRpc();
                     rc.PlaySpawnAnimation(SPAWN_OFFSET);
-                    // posBRails.Add(rc);
                 }
             }
         }
-
-        // RailManager.Instance.DebugLogAllChains();
+        
     }
 
     //디버그용 레일 생성

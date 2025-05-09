@@ -1058,7 +1058,7 @@ MonoBehaviour:
   boxSize: {x: 0.7, y: 0.5, z: 0.7}
   tileLayerMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 144
   inputReader: {fileID: 11400000, guid: bee4391a13614ed4b9e6f57b678f5372, type: 2}
   previewPrefab: {fileID: 5124352781100158091, guid: 943605516d3144f47b4fdacf2076898d, type: 3}
   heldObjectList: []

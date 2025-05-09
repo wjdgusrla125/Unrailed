@@ -724,11 +724,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7825514442359999686}
-  - component: {fileID: 6405582225729880067}
-  - component: {fileID: 1812287691979021158}
-  - component: {fileID: 4321097107440657267}
-  - component: {fileID: 557042672044241457}
   - component: {fileID: 6077228087594002525}
+  - component: {fileID: 6405582225729880067}
+  - component: {fileID: 4321097107440657267}
+  - component: {fileID: 1812287691979021158}
+  - component: {fileID: 557042672044241457}
   - component: {fileID: 1830664410124295361}
   - component: {fileID: -7026340082006308510}
   m_Layer: 10
@@ -756,6 +756,27 @@ Transform:
   - {fileID: 4401499120967967404}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!65 &6077228087594002525
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817445114893396127}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.82519966, y: 0.8776005, z: 1.3032002}
+  m_Center: {x: -0.010246522, y: 0.62424123, z: -0.25072166}
 --- !u!114 &6405582225729880067
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -781,40 +802,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &1812287691979021158
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1817445114893396127}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 436cf996e9674625ad29956eacdbb8e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  manager: {fileID: 0}
-  index: 0
-  frontTrainCar: {fileID: 0}
-  backTrainCar: {fileID: 0}
-  trainObject: {fileID: 2679377428596172787}
-  destroyObject: {fileID: 7024682644689189619}
-  fire: {fileID: 8406145763712675267}
-  warning: {fileID: 3823140888511881809}
-  smoke: {fileID: 0}
-  countdownObject: []
-  headPrefab: {fileID: 0}
-  waterTankPrefab: {fileID: 0}
-  chestBoxPrefab: {fileID: 0}
-  craftDeskPrefab: {fileID: 0}
-  hornSound: {fileID: 8300000, guid: 4030c1362c790f04bbd938d890d81826, type: 3}
-  destroySound: {fileID: 8300000, guid: 59232370d9cae3c43973791737f54e5d, type: 3}
-  countdownSound: {fileID: 8300000, guid: 514f0808da0a11e458a583738c7d84fc, type: 3}
-  fireSound: {fileID: 8300000, guid: 24a1c006f8830c64d94189e0f03bfd72, type: 3}
-  warningSound: {fileID: 8300000, guid: 3c81908a6f62b444180ce9a13917979b, type: 3}
-  engineSound: {fileID: 8300000, guid: 61f95ef7068da584daf3343feb9c0d47, type: 3}
-  destinationRail: {fileID: 0}
 --- !u!114 &4321097107440657267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -861,6 +848,40 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 0
   SlerpPosition: 0
+--- !u!114 &1812287691979021158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817445114893396127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 436cf996e9674625ad29956eacdbb8e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  manager: {fileID: 0}
+  index: 0
+  frontTrainCar: {fileID: 0}
+  backTrainCar: {fileID: 0}
+  trainObject: {fileID: 2679377428596172787}
+  destroyObject: {fileID: 7024682644689189619}
+  fire: {fileID: 8406145763712675267}
+  warning: {fileID: 3823140888511881809}
+  smoke: {fileID: 0}
+  countdownObject: []
+  headPrefab: {fileID: 0}
+  waterTankPrefab: {fileID: 0}
+  chestBoxPrefab: {fileID: 0}
+  craftDeskPrefab: {fileID: 0}
+  hornSound: {fileID: 8300000, guid: 4030c1362c790f04bbd938d890d81826, type: 3}
+  destroySound: {fileID: 8300000, guid: 59232370d9cae3c43973791737f54e5d, type: 3}
+  countdownSound: {fileID: 8300000, guid: 514f0808da0a11e458a583738c7d84fc, type: 3}
+  fireSound: {fileID: 8300000, guid: 24a1c006f8830c64d94189e0f03bfd72, type: 3}
+  warningSound: {fileID: 8300000, guid: 3c81908a6f62b444180ce9a13917979b, type: 3}
+  engineSound: {fileID: 8300000, guid: 61f95ef7068da584daf3343feb9c0d47, type: 3}
+  destinationRail: {fileID: 0}
 --- !u!114 &557042672044241457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -880,27 +901,6 @@ MonoBehaviour:
   ironTransform: {fileID: 4478986449056861845}
   stackHeight: 0.2
   targetDesk: {fileID: 2740634083671255965, guid: d9dbc46c899562346849b6ac368489b2, type: 3}
---- !u!65 &6077228087594002525
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1817445114893396127}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.82519966, y: 0.8776005, z: 1.3032002}
-  m_Center: {x: -0.010246522, y: 0.62424123, z: -0.25072166}
 --- !u!114 &1830664410124295361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -913,7 +913,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 357c8217d7d04964195a3a82ea2747be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Isburn: 0
+  ShowTopMostFoldoutHeaderGroup: 1
+  Isburn:
+    m_InternalValue: 0
   FireEffect: {fileID: 0}
 --- !u!114 &-7026340082006308510
 MonoBehaviour:
@@ -927,6 +929,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   BlockHpCount: 0
   blockType: 5
   DropGameObject: []

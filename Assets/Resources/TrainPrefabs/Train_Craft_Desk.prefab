@@ -11953,14 +11953,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5865048745562461148}
-  - component: {fileID: 109421124621963952}
-  - component: {fileID: -6291277285027499837}
-  - component: {fileID: -7090672028969431134}
-  - component: {fileID: 2740634083671255965}
+  - component: {fileID: 8431469832024838883}
   - component: {fileID: 1268089699776271930}
+  - component: {fileID: 109421124621963952}
+  - component: {fileID: -7090672028969431134}
+  - component: {fileID: -6291277285027499837}
+  - component: {fileID: 2740634083671255965}
   - component: {fileID: 4161929413256172751}
   - component: {fileID: 2335831629041948266}
-  - component: {fileID: 8431469832024838883}
   m_Layer: 10
   m_Name: Train_Craft_Desk
   m_TagString: Untagged
@@ -11986,6 +11986,49 @@ Transform:
   - {fileID: 3445457876626342895}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!95 &8431469832024838883
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179319214146732209}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 54eea9140b0ecd3419c67512c720ce50, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!65 &1268089699776271930
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179319214146732209}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.89126307, y: 0.99427736, z: 1.5722995}
+  m_Center: {x: 0.0028615196, y: 0.70678985, z: -0.37199432}
 --- !u!114 &109421124621963952
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12011,40 +12054,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-6291277285027499837
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6179319214146732209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8208d44531f749cfaa074eadc45cddee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  manager: {fileID: 0}
-  index: 0
-  frontTrainCar: {fileID: 0}
-  backTrainCar: {fileID: 0}
-  trainObject: {fileID: 7521347764775316776}
-  destroyObject: {fileID: 8978791300100044420}
-  fire: {fileID: 3774393876545337365}
-  warning: {fileID: 3916089870997391993}
-  smoke: {fileID: 0}
-  countdownObject: []
-  headPrefab: {fileID: 0}
-  waterTankPrefab: {fileID: 0}
-  chestBoxPrefab: {fileID: 0}
-  craftDeskPrefab: {fileID: 0}
-  hornSound: {fileID: 8300000, guid: 4030c1362c790f04bbd938d890d81826, type: 3}
-  destroySound: {fileID: 8300000, guid: 59232370d9cae3c43973791737f54e5d, type: 3}
-  countdownSound: {fileID: 8300000, guid: 514f0808da0a11e458a583738c7d84fc, type: 3}
-  fireSound: {fileID: 8300000, guid: 24a1c006f8830c64d94189e0f03bfd72, type: 3}
-  warningSound: {fileID: 8300000, guid: 3c81908a6f62b444180ce9a13917979b, type: 3}
-  engineSound: {fileID: 8300000, guid: 61f95ef7068da584daf3343feb9c0d47, type: 3}
-  destinationRail: {fileID: 0}
 --- !u!114 &-7090672028969431134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12091,6 +12100,40 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 0
   SlerpPosition: 0
+--- !u!114 &-6291277285027499837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179319214146732209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8208d44531f749cfaa074eadc45cddee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  manager: {fileID: 0}
+  index: 0
+  frontTrainCar: {fileID: 0}
+  backTrainCar: {fileID: 0}
+  trainObject: {fileID: 7521347764775316776}
+  destroyObject: {fileID: 8978791300100044420}
+  fire: {fileID: 3774393876545337365}
+  warning: {fileID: 3916089870997391993}
+  smoke: {fileID: 0}
+  countdownObject: []
+  headPrefab: {fileID: 0}
+  waterTankPrefab: {fileID: 0}
+  chestBoxPrefab: {fileID: 0}
+  craftDeskPrefab: {fileID: 0}
+  hornSound: {fileID: 8300000, guid: 4030c1362c790f04bbd938d890d81826, type: 3}
+  destroySound: {fileID: 8300000, guid: 59232370d9cae3c43973791737f54e5d, type: 3}
+  countdownSound: {fileID: 8300000, guid: 514f0808da0a11e458a583738c7d84fc, type: 3}
+  fireSound: {fileID: 8300000, guid: 24a1c006f8830c64d94189e0f03bfd72, type: 3}
+  warningSound: {fileID: 8300000, guid: 3c81908a6f62b444180ce9a13917979b, type: 3}
+  engineSound: {fileID: 8300000, guid: 61f95ef7068da584daf3343feb9c0d47, type: 3}
+  destinationRail: {fileID: 0}
 --- !u!114 &2740634083671255965
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12105,27 +12148,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   RailPrefab: {fileID: 7402043901895155594, guid: 5f2437260ce67974bb4afef1b7c006e5, type: 3}
---- !u!65 &1268089699776271930
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6179319214146732209}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.89126307, y: 0.99427736, z: 1.5722995}
-  m_Center: {x: 0.0028615196, y: 0.70678985, z: -0.37199432}
 --- !u!114 &4161929413256172751
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12138,7 +12160,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 357c8217d7d04964195a3a82ea2747be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Isburn: 0
+  ShowTopMostFoldoutHeaderGroup: 1
+  Isburn:
+    m_InternalValue: 0
   FireEffect: {fileID: 0}
 --- !u!114 &2335831629041948266
 MonoBehaviour:
@@ -12152,6 +12176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   BlockHpCount: 0
   blockType: 6
   DropGameObject: []
@@ -12160,28 +12185,6 @@ MonoBehaviour:
   BrokenSound: {fileID: 0}
   MeshObjectCount: 0
   TileInfo: {fileID: 0}
---- !u!95 &8431469832024838883
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6179319214146732209}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 54eea9140b0ecd3419c67512c720ce50, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &6280144526196900584
 GameObject:
   m_ObjectHideFlags: 0

@@ -8219,10 +8219,6 @@ MonoBehaviour:
   RailUp: {fileID: 2679033301684200986}
   RailDown: {fileID: 6092851041733908163}
   RailLeft: {fileID: 9076389145321103305}
-  raycastDistance: 0.7
-  railLayer:
-    serializedVersion: 2
-    m_Bits: 256
   prevRail: {fileID: 0}
   nextRail: {fileID: 0}
 --- !u!1 &7419329411036280246

@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using Unity.Netcode;
+using UnityEngine;
 
-public class BurnTrainObject : MonoBehaviour
+public class BurnTrainObject : NetworkBehaviour
 {
-    public bool Isburn = false;
+    public NetworkVariable<bool> Isburn = new NetworkVariable<bool>(false);
+
     public GameObject FireEffect;
+
     void Start()
     {
         Transform findTransform = FindDeepChild(transform, "Fire");
@@ -20,7 +23,7 @@ public class BurnTrainObject : MonoBehaviour
 
     void Update()
     {
-        FireEffect.SetActive(Isburn);
+        FireEffect.SetActive(Isburn.Value);
     }
 
     private Transform FindDeepChild(Transform parent, string name)
@@ -35,5 +38,11 @@ public class BurnTrainObject : MonoBehaviour
                 return result;
         }
         return null;
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void SetIsBurnServerRpc(bool value)
+    {
+        Isburn.Value = value;
     }
 }
