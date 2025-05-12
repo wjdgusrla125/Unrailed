@@ -504,8 +504,9 @@ public abstract class Train : NetworkBehaviour
                 // 게임오버
                 if (isHead)
                 {
-                    GameManager.Instance.GameOver();
-                    manager.GameOver();
+                    // GameManager.Instance.GameOver();
+                    RpcManager.Instance.GameOverRpc();
+                    manager.GameOver(); //속도 조정
                 }
 
                 RpcManager.Instance.DestroyTrainRpc(NetworkObjectId, IsTail);

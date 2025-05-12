@@ -1,8 +1,10 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
 public class BucketInfo : NetworkBehaviour
 {
+    [NonSerialized]
     public NetworkVariable<ItemType> SyncedItemType = new NetworkVariable<ItemType>(
         ItemType.Bucket,
         NetworkVariableReadPermission.Everyone,

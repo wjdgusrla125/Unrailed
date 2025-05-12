@@ -262,12 +262,14 @@ public class MapGenerator : SingletonManager<MapGenerator>
 
     public void StartMapGeneration()
     {
+        _camera.ResetCamera(); //카메라를 초기상태로 전환
+        
+        if (!NetworkManager.Singleton.IsHost) return;
         StartCoroutine(GenerateMapCoroutine());
     }
 
     private IEnumerator GenerateMapCoroutine()
     {
-        _camera.ResetCamera(); //카메라를 초기상태로 전환
 
         _isMapGenerating = true;
         try
@@ -2791,8 +2793,10 @@ public class MapGenerator : SingletonManager<MapGenerator>
         if (oldWidth == 0)
         {
             gameOverObj = Instantiate(gameOverPrefab, new Vector3(-15f, 0f, 15f), Quaternion.identity);
-            gameOverObj.GetComponent<NetworkObject>().Spawn();
-            gameOverObj.SetActive(false);
+            var gameOverNo = gameOverObj.GetComponent<NetworkObject>();
+            gameOverNo.Spawn();
+            // gameOverObj.SetActive(false);
+            RpcManager.Instance.ToggleGameOverObjectRpc(gameOverNo.NetworkObjectId, false);
         }
 
         int localSeed = _masterRng.Next();

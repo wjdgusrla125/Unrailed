@@ -48,6 +48,21 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
 
         GameManager.Instance.trainManager.RestartTrainCount();
     }
+    
+    [Rpc(SendTo.Everyone)]
+    public void ToggleGameOverObjectRpc(ulong id, bool active)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject obj))
+        {
+            obj.gameObject.SetActive(active);
+        }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void GameOverRpc()
+    {
+        GameManager.Instance.GameOver();
+    }
 
     #endregion
 
@@ -64,6 +79,7 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     public void StartGameClientRpc()
     {
         UIManager.Instance.OpenGameUI();
+        UIManager.Instance.CloseGameOverMenu();
         GameManager.Instance.CurrentGameState = GameState.InGame;
 
         SoundManager.Instance.FadeOutBGM();
@@ -76,10 +92,10 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
             "0.1"
         );
 
+        MapGenerator.Instance.StartMapGeneration();
+        
         if (NetworkManager.Singleton.IsHost)
         {
-            MapGenerator.Instance.StartMapGeneration();
-
             // Resources에서 PlayerPrefab 로드
             GameObject playerPrefab = Resources.Load<GameObject>("Prefabs/Player");
             if (playerPrefab == null)

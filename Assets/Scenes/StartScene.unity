@@ -3415,6 +3415,8 @@ MonoBehaviour:
   gameUI: {fileID: 81733674698009190}
   loadingScreen: {fileID: 227923388}
   gameOverMenu: {fileID: 1248674363}
+  restartButton: {fileID: 1349589869}
+  leaveButton: {fileID: 1377729038}
   startButton: {fileID: 972261296}
   startButtonText: {fileID: 543249244}
   mousePressSound: {fileID: 8300000, guid: 4bbf74632c9cb9d4f8a31f7a3c12c14d, type: 3}

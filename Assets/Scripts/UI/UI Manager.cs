@@ -19,6 +19,8 @@ public class UIManager: NetworkSingletonManager<UIManager>
     [SerializeField]public InGameUIController gameUI;
     [SerializeField]private GameObject loadingScreen;
     [SerializeField]private GameObject gameOverMenu;
+    [SerializeField]private Button restartButton;
+    [SerializeField]private Button leaveButton;
     
     [SerializeField]private Button startButton;
     [SerializeField]private TextMeshProUGUI startButtonText;
@@ -121,6 +123,9 @@ public class UIManager: NetworkSingletonManager<UIManager>
     public void OpenGameOverMenu()
     {
         gameOverMenu.SetActive(true);
+        bool isHost = NetworkManager.Singleton.IsHost;
+        restartButton.interactable = isHost;
+        // leaveButton.interactable = isHost;
     }
 
     public void CloseGameOverMenu()
@@ -128,18 +133,22 @@ public class UIManager: NetworkSingletonManager<UIManager>
         gameOverMenu.SetActive(false);
     }
 
+    //호스트가 부름
     public void OnRestartButtonClicked()
     {
-        CloseGameOverMenu();
+        if (!NetworkManager.Singleton.IsHost) return;
         MapGenerator.Instance.GameOverObjectDespawn();
+        // CloseGameOverMenu();
         RpcManager.Instance.StartGameClientRpc();
         RpcManager.Instance.ToggleLoadingScreenRpc(true);
     }
 
     public void OnLeaveButtonClicked()
     {
-        MapGenerator.Instance.GameOverObjectDespawn();
         NetworkManager.Singleton.Shutdown();
+        
+        if (!NetworkManager.Singleton.IsHost) return;
+        MapGenerator.Instance.GameOverObjectDespawn();
     }
     
 }

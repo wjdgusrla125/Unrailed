@@ -55,6 +55,9 @@ public class GameManager: SingletonManager<GameManager>
         if (!NetworkManager.Singleton.IsHost) return;
         MapGenerator.Instance.gameOverObj.SetActive(true); //게임오버 오브젝트 활성화
         RpcManager.Instance.ChangeGameStateRpc((int)GameState.GameOver); //게임스테이트를 게임오버로 바꾸기 전파
+        
+        var networkObjectNo = MapGenerator.Instance.gameOverObj.GetComponent<NetworkObject>();
+        RpcManager.Instance.ToggleGameOverObjectRpc(networkObjectNo.NetworkObjectId, true);
         // if (trainManager) 
     }
 
