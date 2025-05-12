@@ -249,6 +249,19 @@ public class MapGenerator : SingletonManager<MapGenerator>
     {
         RailManager.Instance.AllRailsDespawn();
         _trainHead.GetComponent<TrainManager>().AllTrainsDespawn();
+        
+        foreach (var networkObj in FindObjectsOfType<NetworkObject>())
+        {
+            // Item 컴포넌트를 가진 오브젝트만 처리
+            if (networkObj.TryGetComponent<Item>(out var item))
+            {
+                // NetworkObject가 스폰 상태이면 Despawn
+                if (networkObj.IsSpawned)
+                {
+                    networkObj.Despawn(true);
+                }
+            }
+        }
     }
 
     public void GameOverObjectDespawn()
