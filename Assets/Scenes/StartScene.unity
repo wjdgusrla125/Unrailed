@@ -3408,7 +3408,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  hostIp: 58.234.194.61
+  hostIp: 219.248.216.17
   seedInput: {fileID: 1177279039}
   lobbyUI: {fileID: 450419582}
   sessionUI: {fileID: 1493229984}
@@ -4744,7 +4744,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1249913181
 MonoBehaviour:
   m_ObjectHideFlags: 0

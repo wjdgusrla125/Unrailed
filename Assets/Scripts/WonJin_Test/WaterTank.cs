@@ -11,7 +11,7 @@ public class WaterTank : NetworkBehaviour
     [SerializeField] private Renderer body_1_R;
     [SerializeField] private List<GameObject> TrainOBJ;
     private Color startColor;
-    private float duration = 10f;
+    private float duration = 60f;
     private Coroutine TankCoroutine;
     private Coroutine BurnCoroutine;
 
