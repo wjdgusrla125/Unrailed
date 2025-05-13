@@ -227,7 +227,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.60413605, y: 1.3654557, z: 0.6709703}
+  m_Size: {x: 1, y: 1.3654557, z: 1}
   m_Center: {x: 0, y: 0.68655473, z: 0}
 --- !u!114 &-7878464939378890227
 MonoBehaviour:
@@ -298,7 +298,7 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!114 &-2813347641135225584
 MonoBehaviour:
@@ -312,6 +312,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415d733d25437d1458a4e80e40a063ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   BlockHpCount: 3
   blockType: 1
   DropGameObject:

@@ -31,7 +31,7 @@ public class BlockPickup : NetworkBehaviour
     public Vector3 TriggerOBJPos;
     private GameObject ShopPanelOBJ;
     [SerializeField] private PlayerInfo playerInfo;
-    private const int maxStackSize = 4;
+    private const int maxStackSize = 3;
     [SerializeField] private Vector3 stackOffset = new Vector3(0, 0.2f, 0);
     
     private IEnumerator HoldTimer()
@@ -204,10 +204,9 @@ public class BlockPickup : NetworkBehaviour
         }
 
         if (ExpandingCircleDetector.Instance.GetJoin() || ExpandingCircleDetector.Instance.GetExit()) return;
-
         if (!pressed || !IsOwner) return;
 
-        //레일 설치
+        // ✅ 레일 설치
         if (playerInfo.itemType == ItemType.Rail && heldObjectStack.Count > 0 && currentTile != null)
         {
             Vector2Int currentTilePos = new Vector2Int(
@@ -217,33 +216,36 @@ public class BlockPickup : NetworkBehaviour
             
             Vector2Int headRailPos = RailManager.Instance.startHeadPos.Value;
             int distance = Mathf.Abs(currentTilePos.x - headRailPos.x) + Mathf.Abs(currentTilePos.y - headRailPos.y);
-                
+
+            // ✅ 타일 위에 아이템이 있을 경우 설치 금지
+            if (currentTile.GetStackSize() > 0)
+            {
+                Debug.LogWarning("Cannot place rail: tile is not empty.");
+                return;
+            }
+
             if (distance == 1)
             {
-                if (currentTile.GetStackSize() == 0 || (GetTopStackedItem(currentTile)?.GetComponent<Item>()?.ItemType != ItemType.Rail))
+                NetworkObject railObject = heldObjectStack.Pop();
+                RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
+                UpdateTileServerRpc(ItemType.Rail);
+                UpdateHeldObjectList();
+
+                RailController rc = railObject.GetComponent<RailController>();
+                if (rc != null)
                 {
-                    NetworkObject railObject = heldObjectStack.Pop();
-                    RequestDropOnTileServerRpc(railObject.NetworkObjectId, currentTile.NetworkObjectId);
-                    UpdateTileServerRpc(ItemType.Rail);
-                    UpdateHeldObjectList();
-
-                    RailController rc = railObject.GetComponent<RailController>();
-                        
-                    if (rc != null)
-                    {
-                        rc.SetRailServerRpc();
-                    }
-
-                    if (heldObjectStack.Count == 0)
-                        UpdatePlayerItemType(ItemType.None);
-                    else
-                        UpdatePlayerItemType(heldObjectStack.Peek().GetComponent<Item>().ItemType);
-
-                    if (previewInstance != null)
-                        previewInstance.SetActive(false);
-                        
-                    return;
+                    rc.SetRailServerRpc();
                 }
+
+                if (heldObjectStack.Count == 0)
+                    UpdatePlayerItemType(ItemType.None);
+                else
+                    UpdatePlayerItemType(heldObjectStack.Peek().GetComponent<Item>().ItemType);
+
+                if (previewInstance != null)
+                    previewInstance.SetActive(false);
+
+                return;
             }
         }
 
@@ -316,7 +318,6 @@ public class BlockPickup : NetworkBehaviour
     private void HandlePickupFromTile()
     {
         int tileStackSize = currentTile.GetStackSize();
-
         if (tileStackSize == 0) return;
 
         NetworkObject topItem = GetTopStackedItem(currentTile);
@@ -324,6 +325,23 @@ public class BlockPickup : NetworkBehaviour
 
         Item itemComponent = topItem.GetComponent<Item>();
         if (itemComponent == null) return;
+
+        // ✅ Rail일 경우: 클라이언트에서는 안내 메시지만 출력
+        if (itemComponent.ItemType == ItemType.Rail)
+        {
+            RailController rail = topItem.GetComponent<RailController>();
+            bool isConnected = rail != null && (rail.prevRail != null || rail.nextRail != null);
+            Vector2Int currentPos = new Vector2Int(
+                Mathf.RoundToInt(currentTile.transform.position.x),
+                Mathf.RoundToInt(currentTile.transform.position.z)
+            );
+            Vector2Int headPos = RailManager.Instance.startHeadPos.Value;
+
+            if (isConnected && currentPos != headPos)
+            {
+                Debug.LogWarning("클라이언트: 연결된 레일은 헤드레일만 줍기 가능합니다.");
+            }
+        }
 
         if (itemComponent.IsStackable && tileStackSize > 1)
         {
@@ -335,7 +353,7 @@ public class BlockPickup : NetworkBehaviour
             RequestPickUpFromStackServerRpc(currentTile.NetworkObjectId);
         }
     }
-
+    
     private void HandlePlacementOnTile()
     {
         if (heldObjectStack.Count == 0) return;
@@ -521,24 +539,54 @@ public class BlockPickup : NetworkBehaviour
     void RequestPickUpFromStackServerRpc(ulong tileId, ServerRpcParams rpcParams = default)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(tileId, out NetworkObject tileObj))
-        {
             return;
-        }
 
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null || tile.GetStackSize() == 0) return;
 
-        ulong topItemId = tile.RemoveTopItemFromStack();
+        ulong topItemId = tile.PeekTopItemFromStack();
         if (topItemId == 0 || !NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(topItemId, out NetworkObject netObj))
-        {
             return;
+
+        // ✅ [추가] 서버에서 Rail 유효성 검사
+        if (netObj.TryGetComponent<RailController>(out var rail))
+        {
+            Vector2Int railPos = rail.GridPos;
+            Vector2Int headPos = RailManager.Instance.startHeadPos.Value;
+            bool isConnected = rail.prevRail != null || rail.nextRail != null;
+
+            if (isConnected && railPos != headPos)
+            {
+                Debug.LogWarning($"[Server] Only head rail can be picked up. This is not head. Pos={railPos}, Head={headPos}");
+                return;
+            }
+
+            // 연결 해제 처리
+            if (rail.isStartHeadRail)
+            {
+                rail.isStartHeadRail = false;
+
+                if (rail.prevRail != null && rail.prevRail.TryGetComponent<RailController>(out var prevRail))
+                {
+                    prevRail.nextRail = null;
+                    prevRail.isStartHeadRail = true;
+                }
+            }
+
+            RailManager.Instance.UnregisterRail(rail.GridPos);
+            RailManager.Instance.UpdateHeadRail();
         }
+
+        // 아이템 제거
+        ulong removedItemId = tile.RemoveTopItemFromStack();
+        if (removedItemId != topItemId) return;
 
         netObj.ChangeOwnership(rpcParams.Receive.SenderClientId);
 
         UpdateTileStackClientRpc(tileId);
         AddToHeldStackClientRpc(topItemId, NetworkObjectId);
     }
+
 
     [ServerRpc]
     void RequestAddToStackFromTileServerRpc(ulong tileId, int count, ServerRpcParams rpcParams = default)

@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
-using Random = UnityEngine.Random;
 
 public enum TileType
 {
@@ -18,25 +16,26 @@ public enum TileType
 public abstract class Blocks : NetworkBehaviour
 {
     public ClusterGroup ClusterGroup;
-    private System.Random _rng; //랜덤 시드값
+    private System.Random _rng;
     public int rndSeedOffset;
-    
-    public bool isBoltTile = false; //볼트가 생성될 타일인지 확인
-    [NonSerialized] public GameObject BoltPrefab; //생성될 Bolt Object, 귀찮으니까 MapGenerator에서 코드로 지정
+
+    public bool isBoltTile = false;
+    [NonSerialized] public GameObject BoltPrefab;
 
     [SerializeField, Header("블럭 위에 소환될 오브젝트")]
     private GameObject[] envPrefab;
     [SerializeField, Header("오브젝트가 파괴될 때 주변에 튈 파편 오브젝트")]
     private GameObject fragPrefab;
-    
+
     [SerializeField]
     private Vector3 envOffset = new Vector3(0, 0.5f, 0);
+
     private MeshRenderer _meshRenderer;
     private GameObject _env;
 
     public Transform desiredParent;
 
-    public bool railed; //이 타일에 레일이 설치되었는지
+    public bool railed;
 
     public abstract TileType BlockTileType { get; }
 
@@ -48,12 +47,12 @@ public abstract class Blocks : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
         if (MapGenerator.TryGetInstance() == null) return;
-        
+
         rndSeedOffset = (int)NetworkObjectId;
-        
         SetSeed();
-        
+
         if (NetworkManager.Singleton.IsHost)
         {
             if (desiredParent)
@@ -66,14 +65,17 @@ public abstract class Blocks : NetworkBehaviour
             {
                 Debug.LogError("desiredParent가 null임!!");
             }
+
             if (!isBoltTile)
             {
                 CreateEnv();
                 SetEnv();
             }
-            else CreateBolt();
+            else
+            {
+                CreateBolt();
+            }
         }
-        
     }
 
     private void SetSeed()
@@ -81,14 +83,12 @@ public abstract class Blocks : NetworkBehaviour
         int seedValue = MapGenerator.Instance.GetSeed().GetHashCode() + rndSeedOffset;
         _rng = new System.Random(seedValue);
     }
-    
-    // envPrefab를 생성하고 부모 설정 후, tileType에 맞는 회전 및 스케일을 적용
+
     private void CreateEnv()
     {
         if (envPrefab == null || envPrefab.Length == 0)
             return;
-        
-        // null 요소가 아닌 prefab만 걸러서 리스트 생성
+
         List<GameObject> validPrefabs = new List<GameObject>();
         foreach (var prefab in envPrefab)
         {
@@ -104,14 +104,17 @@ public abstract class Blocks : NetworkBehaviour
 
         _env = Instantiate(chosenPrefab, transform.position + envOffset, Quaternion.identity);
         NetworkObject envObj = _env.GetComponent<NetworkObject>();
+
         if (envObj)
         {
             envObj.Spawn();
+
             BreakableObject bo = envObj.GetComponent<BreakableObject>();
             if (bo)
             {
-                envObj.GetComponent<BreakableObject>().TileInfo = gameObject.GetComponent<Tile>();
+                bo.TileInfo = GetComponent<Tile>();
             }
+
             ulong parentId = transform.GetComponent<NetworkObject>().NetworkObjectId;
             ulong childId = envObj.NetworkObjectId;
             StartCoroutine(SetParentCoroutine(parentId, childId));
@@ -122,49 +125,56 @@ public abstract class Blocks : NetworkBehaviour
     {
         _env = Instantiate(BoltPrefab, transform.position + envOffset, Quaternion.identity);
         NetworkObject boltObj = _env.GetComponent<NetworkObject>();
+
         if (boltObj)
         {
-            
             boltObj.Spawn();
             ulong parentId = NetworkObjectId;
             ulong childId = boltObj.NetworkObjectId;
-            // Debug.Log($"볼트생성, parentId: {parentId}, childId: {childId}");
             StartCoroutine(SetParentCoroutine(parentId, childId));
         }
     }
-
 
     private IEnumerator SetParentCoroutine(ulong parentId, ulong childId)
     {
         yield return new WaitForSeconds(1.0f);
         RpcManager.Instance.SetParentRpc(parentId, childId);
     }
-    
-    // tileType별 회전 및 스케일 설정 로직
+
     protected virtual void SetEnv()
     {
-        float scale = 1;
-        float rotation = 0;
+        float scale = 1f;
+        float rotation = 0f;
+
         switch (BlockTileType)
         {
             case TileType.Grass:
                 break;
+
             case TileType.Wood:
-                scale = (float)(_rng.NextDouble() * 0.25 + 0.75); // 0.75 ~ 1.0
+                scale = (float)(_rng.NextDouble() * 0.25 + 0.75);
                 rotation = (float)(_rng.NextDouble() * 360);
+                
+                SetEnvScale(scale);
+                SetEnvRotation(rotation);
                 break;
+
             case TileType.Mountain:
                 if (!DetermineUniformMountain())
                 {
-                    scale = (float)(_rng.NextDouble() * 0.4 + 0.4); // 0.4 ~ 0.8
+                    scale = (float)(_rng.NextDouble() * 0.4 + 0.4);
                     rotation = _rng.Next(0, 4) * 90f;
                 }
                 else
                 {
-                    scale = (float)(_rng.NextDouble() * 1.0 + 0.5); // 0.5 ~ 1.5
+                    scale = (float)(_rng.NextDouble() * 1.0 + 0.5);
                     rotation = _rng.Next(0, 4) * 90f;
                 }
+                
+                SetEnvScale(scale);
+                SetEnvRotation(rotation);
                 break;
+
             case TileType.Iron:
                 if (!DetermineUniformIron())
                 {
@@ -176,47 +186,49 @@ public abstract class Blocks : NetworkBehaviour
                     scale = (float)(_rng.NextDouble() * 0.6 + 0.4);
                     rotation = _rng.Next(0, 4) * 90f;
                 }
+                
+                SetEnvScale(scale);
+                SetEnvRotation(rotation);
                 break;
+
             case TileType.River:
                 break;
-            default:
-                break;
         }
-
-        SetEnvScale(scale);
-        SetEnvRotation(rotation);
+        
+        if (_env.TryGetComponent(out BreakableObject bo))
+        {
+            bo.SetVisualsServerRpc(rotation, scale);
+        }
     }
 
-    // 기본적으로 false를 반환하는 메서드, 필요에 따라 파생 클래스에서 오버라이드 가능
     protected virtual bool DetermineUniformMountain() => false;
     protected virtual bool DetermineUniformIron() => false;
 
     public void SetEnvScale(float scale)
     {
-        // Debug.Log($"스케일 변경: {scale}");
         if (_env)
             _env.transform.localScale = new Vector3(1, scale, 1);
     }
 
     public void SetEnvRotation(float yAngle)
     {
-        // Debug.Log($"로테이션 변경{yAngle}");
-        if (_env)
+        if (_env && _env.transform.childCount > 0)
         {
-            Vector3 currentEuler = _env.transform.rotation.eulerAngles;
-            _env.transform.rotation = Quaternion.Euler(currentEuler.x, yAngle, currentEuler.z);
+            Transform child = _env.transform.GetChild(0);
+            Vector3 currentEuler = child.rotation.eulerAngles;
+            child.rotation = Quaternion.Euler(currentEuler.x, yAngle, currentEuler.z);
         }
     }
 
-    // 역 오브젝트는 무조건 위에서 내려온다.
     public IEnumerator AnimateStationDrop(float duration, float dropOffset)
     {
         if (!_env)
             yield break;
-        
+
         Vector3 targetLocalPos = _env.transform.localPosition;
         Vector3 startLocalPos = new Vector3(targetLocalPos.x, dropOffset, targetLocalPos.z);
         _env.transform.localPosition = startLocalPos;
+
         float elapsed = 0f;
         while (elapsed < duration)
         {
@@ -226,6 +238,7 @@ public abstract class Blocks : NetworkBehaviour
             _env.transform.localPosition = Vector3.Lerp(startLocalPos, targetLocalPos, easedT);
             yield return null;
         }
+
         _env.transform.localPosition = targetLocalPos;
     }
 
@@ -248,11 +261,9 @@ public abstract class Blocks : NetworkBehaviour
                 r.enabled = active;
         }
     }
-    
-    //env를 Despawn한 뒤 자신을 Despawn한다.
+
     public void DespawnBlockAndEnv()
     {
-        // env 오브젝트 Despawn
         if (_env)
         {
             NetworkObject envNetObj = _env.GetComponent<NetworkObject>();
@@ -261,10 +272,10 @@ public abstract class Blocks : NetworkBehaviour
                 envNetObj.Despawn();
             }
         }
-        
+
         NetworkObject.Despawn();
     }
-    
+
     public bool HasEnvObject()
     {
         return _env != null;
