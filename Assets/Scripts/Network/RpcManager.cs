@@ -77,6 +77,13 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     {
         GameManager.Instance.GameOver();
     }
+    
+    
+    [Rpc(SendTo.NotMe)] //호스트가 아닌 플레이어에게도 PosB를 설정
+    public void BroadcastPosBRpc(int x, int y)
+    {
+        MapGenerator.Instance.SetPosB(x, y);
+    }
 
     #endregion
 

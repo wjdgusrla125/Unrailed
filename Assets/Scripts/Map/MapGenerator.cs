@@ -672,13 +672,13 @@ public class MapGenerator : SingletonManager<MapGenerator>
                 (_curWidth - oldWidth) - 1);
             int posXAbs = (oldWidth == 0) ? posXLocal : posXLocal + oldWidth;
             _posB = new Vector2Int(posXAbs, Random.Range(1, height - 1));
+            RpcManager.Instance.BroadcastPosBRpc(_posB.x, _posB.y);
             attempts++;
             if (attempts > maxAttempts)
                 throw new MapGenerationException("SetPath: 최대 시도 횟수를 초과했습니다.");
         } while ((Mathf.Abs(_posB.x - _posA.x) + Mathf.Abs(_posB.y - _posA.y) != pathLength) ||
                  (Mathf.Abs(_posB.x - _posA.x) < minHorizontalDistance));
     }
-
 
     // 시작점에서 도착점까지 경로를 Grass로 설정
     private void GenerateValidPath(int oldWidth = 0)
@@ -3163,6 +3163,11 @@ public class MapGenerator : SingletonManager<MapGenerator>
     public Vector2Int GetPosB()
     {
         return _posB;
+    }
+
+    public void SetPosB(int x, int y)
+    {
+        _posB = new Vector2Int(x, y);
     }
 
     public string GetSeed()
