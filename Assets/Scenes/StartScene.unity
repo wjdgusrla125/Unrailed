@@ -3227,6 +3227,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: pathLength
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: spawnSound
       value: 
       objectReference: {fileID: 8300000, guid: d0d41ab4280792c49b2ea647bffa1db9, type: 3}
@@ -3238,6 +3242,10 @@ PrefabInstance:
       propertyPath: InitBucketprefab
       value: 
       objectReference: {fileID: 3258400204647497964, guid: a5836fa9285992f4286728a9178df611, type: 3}
+    - target: {fileID: 1057837838017135439, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
+      propertyPath: minHorizontalDistance
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 5400635164605228335, guid: fdc52f47cfe3a6942a00730416b2bdd9, type: 3}
       propertyPath: m_Name
       value: MapGenerator
@@ -3494,6 +3502,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7755480611165014605, guid: c67bbad167405814a8fc8bdb19b4febd, type: 3}
+      propertyPath: ExitButton
+      value: 
+      objectReference: {fileID: 1467682192}
     - target: {fileID: 8356337130270909298, guid: c67bbad167405814a8fc8bdb19b4febd, type: 3}
       propertyPath: m_Name
       value: ShopPlane
@@ -5527,6 +5539,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1377729035}
   m_CullTransparentMesh: 1
+--- !u!1 &1467682192 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6600806221533470039, guid: c67bbad167405814a8fc8bdb19b4febd, type: 3}
+  m_PrefabInstance: {fileID: 865293661}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1471973575
 GameObject:
   m_ObjectHideFlags: 0
