@@ -3466,7 +3466,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  hostIp: 127.0.0.1
+  hostIp: 58.234.194.61
   seedInput: {fileID: 1177279039}
   lobbyUI: {fileID: 450419582}
   sessionUI: {fileID: 1493229984}
