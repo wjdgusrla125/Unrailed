@@ -72,6 +72,9 @@ public class PlayerMovement : NetworkBehaviour
             transform.position = Vector3.Lerp(transform.position, networkPosition.Value, Time.deltaTime * 10f);
             transform.rotation = Quaternion.Lerp(transform.rotation, networkRotation.Value, Time.deltaTime * 10f);
         }
+
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
     }
     
     private void FixedUpdate()
@@ -99,25 +102,24 @@ public class PlayerMovement : NetworkBehaviour
     {
         // 이동 방향 계산
         Vector3 moveDirection = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
-        
+
         if (moveDirection.magnitude > 0.1f)
         {
             // 목표 속도 계산
             Vector3 targetVelocity = moveDirection * moveSpeed;
-            
+
             // 현재 속도에서 목표 속도로 부드럽게 전환
             currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, 0.3f);
         }
         else
         {
-            // 입력이 없을 때 속도 감소
-            currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, 0.2f);
+            // 입력이 없을 때 속도 완전히 0으로 설정
+            currentVelocity = Vector3.zero;
         }
-        
-        // 분리된 축으로 이동 처리 (X와 Z 분리)
+
+        // 분리된 축으로 이동 처리
         Vector3 movement = currentVelocity * Time.fixedDeltaTime;
-        
-        // X축과 Z축을 분리하여 이동 및 충돌 검사
+
         MoveInDirection(new Vector3(movement.x, 0, 0)); // X축 이동
         MoveInDirection(new Vector3(0, 0, movement.z)); // Z축 이동
     }
@@ -171,30 +173,51 @@ public class PlayerMovement : NetworkBehaviour
     
     private void HandleRotation()
     {
-        // 이동 방향이 있을 때만 회전
         if (movementInput.magnitude > 0.1f)
         {
-            // 월드 좌표계 기준 이동 방향 계산
             Vector3 moveDirection = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
-            
-            // 이동 방향으로 캐릭터 회전
-            if (moveDirection != Vector3.zero)
+
+            // 8방향 벡터 정의
+            Vector3[] directions = new Vector3[]
             {
-                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                new Vector3(0, 0, 1),     // ↑
+                new Vector3(1, 0, 1).normalized,   // ↗
+                new Vector3(1, 0, 0),     // →
+                new Vector3(1, 0, -1).normalized,  // ↘
+                new Vector3(0, 0, -1),    // ↓
+                new Vector3(-1, 0, -1).normalized, // ↙
+                new Vector3(-1, 0, 0),    // ←
+                new Vector3(-1, 0, 1).normalized   // ↖
+            };
+
+            // 가장 가까운 방향 찾기
+            float maxDot = -Mathf.Infinity;
+            Vector3 bestDirection = Vector3.forward;
+
+            foreach (var dir in directions)
+            {
+                float dot = Vector3.Dot(moveDirection, dir);
+                if (dot > maxDot)
+                {
+                    maxDot = dot;
+                    bestDirection = dir;
+                }
             }
+
+            // 해당 방향으로 바로 회전 (부드럽게 하고 싶으면 Slerp 사용)
+            transform.rotation = Quaternion.LookRotation(bestDirection);
         }
     }
     
-    public Vector3 GetCurrentVelocity()
-    {
-        return currentVelocity;
-    }
+    // public Vector3 GetCurrentVelocity()
+    // {
+    //     return currentVelocity;
+    // }
 
-    public float GetMaxSpeed()
-    {
-        return moveSpeed;
-    }
+    // public float GetMaxSpeed()
+    // {
+    //     return moveSpeed;
+    // }
 
     [ServerRpc]
     private void UpdatePositionServerRpc(Vector3 position, Quaternion rotation)

@@ -59,10 +59,28 @@ public class RailManager : NetworkSingletonManager<RailManager>
             if (!extendedStart)
                 InitialConnectRail(rail, gridPos);
         }
-        
+
+        // ✅ 새로 놓은 레일이 체인의 끝이라면 head로 지정
+        if (rail.prevRail != null && rail.nextRail == null)
+        {
+            rail.isStartHeadRail = true;
+            if (IsServer)
+                startHeadPos.Value = rail.GridPos;
+        }
+
+        // ✅ 항상 전체 헤드 재검사 (혹시나 끊긴 체인이 있다면 복구)
         UpdateHeadRail();
     }
     
+    public void UnregisterRail(Vector2Int gridPos)
+    {
+        if (_rails.ContainsKey(gridPos))
+        {
+            _rails.Remove(gridPos);
+            UpdateHeadRail(); // 체인 재정렬
+        }
+    }
+
     private void OnChainsMerged(RailController startHead, RailController middleRail, RailController endFirst)
     {
         GameManager.Instance.trainManager.RailConnected();
@@ -123,12 +141,15 @@ public class RailManager : NetworkSingletonManager<RailManager>
     {
         foreach (var r in _rails.Values)
         {
+            Debug.Log($"[UpdateHeadRail] registered rail: {r.GridPos} | startFirst: {r.isStartFirstRail}");
             r.isStartHeadRail = false;
             r.isEndHeadRail = false;
         }
 
         foreach (var start in _rails.Values.Where(r => r.isStartFirstRail))
         {
+            Debug.Log($"[UpdateHeadRail] starting from: {start.GridPos}");
+
             var current = start;
             var visited = new HashSet<RailController> { current };
             while (current.nextRail)
@@ -141,25 +162,9 @@ public class RailManager : NetworkSingletonManager<RailManager>
                 current = next;
             }
             current.isStartHeadRail = true;
-            
+
             if (IsServer)
                 startHeadPos.Value = current.GridPos;
-        }
-
-        foreach (var end in _rails.Values.Where(r => r.isEndFirstRail))
-        {
-            var current = end;
-            var visited = new HashSet<RailController> { current };
-            while (current.nextRail)
-            {
-                var next = current.nextRail.GetComponent<RailController>();
-                if (!visited.Add(next))
-                {
-                    break;
-                }
-                current = next;
-            }
-            current.isEndHeadRail = true;
         }
     }
 
@@ -233,5 +238,4 @@ public class RailManager : NetworkSingletonManager<RailManager>
     {
         return _rails.ContainsKey(pos);
     }
-    
 }

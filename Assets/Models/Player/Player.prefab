@@ -1027,7 +1027,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7fc0add96d924145b88bdd2ad86a550, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rayDistance: 1.4
+  rayDistance: 0.5
   itemType: 0
   IsDig: 0
   hitBlock: 0

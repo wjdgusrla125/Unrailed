@@ -831,8 +831,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7, y: 1, z: 0.7}
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_Size: {x: 0.5, y: 1, z: 0.5}
+  m_Center: {x: 0.0026071668, y: 0.5, z: 0.012464635}
 --- !u!54 &1914943282
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -843,7 +843,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 1
   m_Drag: 0
-  m_AngularDrag: 0
+  m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -959,7 +959,7 @@ MonoBehaviour:
   UseQuaternionSynchronization: 0
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
-  InLocalSpace: 1
+  InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 0
   SlerpPosition: 0
@@ -1027,7 +1027,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7fc0add96d924145b88bdd2ad86a550, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rayDistance: 1
+  rayDistance: 0.5
+  boxHalfExtents: {x: 0.15, y: 0.3, z: 0.2}
   itemType: 0
   IsDig: 0
   hitBlock: 0

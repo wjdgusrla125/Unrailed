@@ -5,7 +5,12 @@ using Debug = UnityEngine.Debug;
 
 public class PlayerInfo : MonoBehaviour
 {
+    [Header("Ray 설정")]
     public float rayDistance = 0.8f;
+
+    [Header("OverlapBox 설정")]
+    public Vector3 boxHalfExtents = new Vector3(0.3f, 0.5f, 0.4f);
+
     private float digwaitTime = 0.5f;
 
     [Header("플레이어 상태")]
@@ -29,18 +34,17 @@ public class PlayerInfo : MonoBehaviour
     public AudioClip AxeHitSound;
     public AudioClip WaterDrawSound;
     public AudioClip WaterSpraySound;
+
     private Coroutine digCoroutine;
     private Coroutine waterCoroutine;
 
     public void Start()
     {
-        // 초기 버킷 찾기 시도
         FindBucket();
     }
 
     public void Update()
     {
-        // 버킷이 아직 할당되지 않았다면 계속 찾기 시도
         if (!bucketAssigned)
         {
             FindBucket();
@@ -52,13 +56,11 @@ public class PlayerInfo : MonoBehaviour
             PlayerRaycast();
     }
 
-    // 버킷을 찾는 메서드
     private void FindBucket()
     {
         if (Bucket == null)
         {
             BucketInfo temp = FindObjectOfType<BucketInfo>();
-            
             if (temp != null)
             {
                 Bucket = temp.gameObject;
@@ -77,28 +79,16 @@ public class PlayerInfo : MonoBehaviour
         hitOBJ.GetComponent<BreakableObject>()?.CheckRay(itemType);
         if (itemType == ItemType.Pickaxe)
             SoundManager.Instance.PlaySound(PickAxeHitSound);
-        if(itemType == ItemType.Axe)
+        if (itemType == ItemType.Axe)
             SoundManager.Instance.PlaySound(AxeHitSound);
     }
 
     private bool HandleCheckDigBlock()
     {
-        if (itemType == ItemType.Axe && hitBlock == BlockType.Wood)
-        {
-            return true;
-        }
-        else if (itemType == ItemType.Pickaxe && hitBlock == BlockType.IronOre)
-        {
-            return true;
-        }
-        else if (itemType == ItemType.Bucket && hitBlock == BlockType.Water)
-        {
-            return true;
-        }
-        else if ((itemType == ItemType.Axe || itemType == ItemType.Pickaxe) && hitBlock == BlockType.Enemy)
-        {
-            return true;
-        }
+        if (itemType == ItemType.Axe && hitBlock == BlockType.Wood) return true;
+        if (itemType == ItemType.Pickaxe && hitBlock == BlockType.IronOre) return true;
+        if (itemType == ItemType.Bucket && hitBlock == BlockType.Water) return true;
+        if ((itemType == ItemType.Axe || itemType == ItemType.Pickaxe) && hitBlock == BlockType.Enemy) return true;
         return false;
     }
 
@@ -107,62 +97,47 @@ public class PlayerInfo : MonoBehaviour
         int excludeLayer = LayerMask.NameToLayer("Tile");
         int layerMask = ~(1 << excludeLayer);
 
-        if (hitOBJ == null)
+        Vector3 boxCenter = transform.position + transform.forward * (rayDistance * 0.5f) + Vector3.up * 0.5f;
+        Collider[] hits = Physics.OverlapBox(boxCenter, boxHalfExtents, transform.rotation, layerMask);
+
+        bool found = false;
+
+        foreach (var col in hits)
         {
-            IsDig = false;
-
-            if (digCoroutine != null)
-            {
-                StopCoroutine(digCoroutine);
-                digCoroutine = null;
-            }
-            if (waterCoroutine != null)
-            {
-                StopCoroutine(waterCoroutine);
-                waterCoroutine = null;
-            }
-        }
-
-        Ray ray = new Ray(transform.position + new Vector3(0, 0.5f, 0), transform.forward);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, rayDistance, layerMask))
-        {
-            CraftingTableObject = hit.collider.gameObject.GetComponent<CraftingTable>();
-            deskInfo = hit.collider.gameObject.GetComponent<DeskInfo>();
+            CraftingTableObject = col.GetComponent<CraftingTable>();
+            deskInfo = col.GetComponent<DeskInfo>();
 
             if (CraftingTableObject != null)
             {
                 hitBlock = BlockType.CraftingTable;
-                hitOBJ = hit.collider.gameObject;
-                Debug.Log("크래프팅 테이블 감지됨");
-                return;
+                hitOBJ = col.gameObject;
+                found = true;
+                break;
             }
             else if (deskInfo != null)
             {
                 hitBlock = BlockType.DeskTable;
-                hitOBJ = hit.collider.gameObject;
-                Debug.Log("데스크 테이블 감지됨");
-                return;
+                hitOBJ = col.gameObject;
+                found = true;
+                break;
             }
 
             BlockType blockType = BlockType.None;
-            var breakable = hit.collider.gameObject.GetComponent<BreakableObject>();
+            var breakable = col.GetComponent<BreakableObject>();
             if (breakable != null)
             {
                 blockType = breakable.BlockTypeProperty;
             }
 
-            var burnTrain = hit.collider.gameObject.GetComponent<BurnTrainObject>();
+            var burnTrain = col.GetComponent<BurnTrainObject>();
             if (blockType == BlockType.None && burnTrain == null)
             {
-                hitBlock = BlockType.None;
-                hitOBJ = null;
-                return;
+                continue;
             }
 
             hitBlock = blockType;
-            hitOBJ = hit.collider.gameObject;
+            hitOBJ = col.gameObject;
+            found = true;
 
             if (blockType == BlockType.Water && HandleCheckDigBlock() && waterCoroutine == null && itemType == ItemType.Bucket)
             {
@@ -173,8 +148,11 @@ public class PlayerInfo : MonoBehaviour
             {
                 digCoroutine = StartCoroutine(DigBlockCorutine());
             }
+
+            break;
         }
-        else
+
+        if (!found)
         {
             hitBlock = BlockType.None;
             hitOBJ = null;
@@ -186,11 +164,17 @@ public class PlayerInfo : MonoBehaviour
                 StopCoroutine(digCoroutine);
                 digCoroutine = null;
             }
-        }
 
-        Debug.DrawRay(transform.position + new Vector3(0, 0.5f, 0), transform.forward * rayDistance, Color.red);
+            if (waterCoroutine != null)
+            {
+                StopCoroutine(waterCoroutine);
+                waterCoroutine = null;
+            }
+
+            IsDig = false;
+        }
     }
-    
+
     private void WaterRaycast()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, 0.8f, 1 << LayerMask.NameToLayer("Train"));
@@ -204,9 +188,9 @@ public class PlayerInfo : MonoBehaviour
                 bool bucketHasWater = Bucket != null && Bucket.GetComponent<BucketInfo>().SyncedItemType.Value == ItemType.WaterInBucket;
 
                 if (!bucketHasWater) return;
-                
+
                 WaterTank tank = col.GetComponent<WaterTank>();
-                
+
                 if (tank != null)
                 {
                     tank.CoolingTankServerRpc();
@@ -215,7 +199,7 @@ public class PlayerInfo : MonoBehaviour
                 {
                     burn.SetIsBurnServerRpc(false);
                 }
-                
+
                 itemType = ItemType.Bucket;
 
                 if (Bucket != null)
@@ -228,7 +212,7 @@ public class PlayerInfo : MonoBehaviour
             }
         }
     }
-    
+
     IEnumerator DigBlockCorutine()
     {
         yield return new WaitForSeconds(digwaitTime);
@@ -256,4 +240,11 @@ public class PlayerInfo : MonoBehaviour
         waterCoroutine = null;
     }
 
+    private void OnDrawGizmos()
+    {
+        Vector3 boxCenter = transform.position + transform.forward * (rayDistance * 0.5f) + Vector3.up * 0.5f;
+        Gizmos.color = Color.green;
+        Gizmos.matrix = Matrix4x4.TRS(boxCenter, transform.rotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, boxHalfExtents * 2);
+    }
 }

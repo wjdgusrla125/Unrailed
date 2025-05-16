@@ -29,7 +29,21 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     public void JoinShopRpc()
     {
         _nextMapGenerated = false;
-        GameManager.Instance.shop.JoinShop();
+
+        // 🔽 안전하게 Null 체크 후 직접 호출
+        if (ExpandingCircleDetector.Instance != null)
+        {
+            ExpandingCircleDetector.Instance.JoinShop();
+        }
+        else if (GameManager.Instance != null && GameManager.Instance.shop != null)
+        {
+            GameManager.Instance.shop.JoinShop();
+        }
+        else
+        {
+            Debug.LogWarning("JoinShopRpc: 상점 UI 컴포넌트를 찾을 수 없습니다.");
+        }
+
         SoundManager.Instance.PlayBGM(GameManager.Instance.shopBGM, 0.5f);
     }
     
@@ -62,6 +76,13 @@ public class RpcManager: NetworkSingletonManager<RpcManager>
     public void GameOverRpc()
     {
         GameManager.Instance.GameOver();
+    }
+    
+    
+    [Rpc(SendTo.NotMe)] //호스트가 아닌 플레이어에게도 PosB를 설정
+    public void BroadcastPosBRpc(int x, int y)
+    {
+        MapGenerator.Instance.SetPosB(x, y);
     }
 
     #endregion

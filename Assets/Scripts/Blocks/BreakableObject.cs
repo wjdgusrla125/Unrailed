@@ -9,9 +9,9 @@ public class BreakableObject : NetworkBehaviour
     [SerializeField] public int BlockHpCount;
     [SerializeField] private BlockType blockType;
     [SerializeField] private List<GameObject> DropGameObject;
-    private float shakeDuration = 0.29f; 
-    private float shakeAmount = 0.1f;   
-    private float decreaseFactor = 1f; 
+    private float shakeDuration = 0.29f;
+    private float shakeAmount = 0.1f;
+    private float decreaseFactor = 1f;
     private Vector3 originalPos;
     [SerializeField] private GameObject HitParticle;
     [SerializeField] private GameObject DestroyParticle;
@@ -19,10 +19,24 @@ public class BreakableObject : NetworkBehaviour
     public int MeshObjectCount;
     public Tile TileInfo;
 
-    // NetworkVariable 추가
+    // 외형 동기화용
+    [SerializeField] private Transform modelChild;
+
     private NetworkVariable<int> NetBlockHpCount = new NetworkVariable<int>(
-        0, 
-        NetworkVariableReadPermission.Everyone, 
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private NetworkVariable<float> yRotation = new NetworkVariable<float>(
+        0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private NetworkVariable<float> yScale = new NetworkVariable<float>(
+        1f,
+        NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
@@ -35,46 +49,53 @@ public class BreakableObject : NetworkBehaviour
     private void Start()
     {
         MeshObjectCount = gameObject.transform.GetChild(0).childCount;
-        
+        modelChild = gameObject.transform.GetChild(0);
+
         if (IsServer)
         {
             NetBlockHpCount.Value = BlockHpCount;
         }
-        
-        // NetworkVariable 값 변경 이벤트 구독
+
         NetBlockHpCount.OnValueChanged += OnBlockHpChanged;
     }
-    
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        ApplyVisuals();
+
+        yRotation.OnValueChanged += (_, _) => ApplyVisuals();
+        yScale.OnValueChanged += (_, _) => ApplyVisuals();
+    }
+
     public override void OnDestroy()
     {
         base.OnDestroy();
-        // 이벤트 구독 해제
+
         NetBlockHpCount.OnValueChanged -= OnBlockHpChanged;
+        yRotation.OnValueChanged -= (_, _) => ApplyVisuals();
+        yScale.OnValueChanged -= (_, _) => ApplyVisuals();
     }
-    
-    // HP 값이 변경될 때 실행되는 콜백
+
     private void OnBlockHpChanged(int previous, int current)
     {
         BlockHpCount = current;
-        // 클라이언트에서 실행
         StartCoroutine(ShakeCoroutine());
+
         if (previous > current && current > 0 && HitParticle != null)
         {
             SpawnHitParticle();
         }
-        
+
         if (blockType != BlockType.Enemy)
         {
             SetMeshObject();
         }
-        
-        if (current == 0)
+
+        if (current == 0 && !IsServer)
         {
-            if (!IsServer)
-            {
-                // 클라이언트에서는 시각적 효과만 처리
-                SpawnDestroyEffect();
-            }
+            SpawnDestroyEffect();
         }
     }
 
@@ -82,15 +103,15 @@ public class BreakableObject : NetworkBehaviour
     {
         originalPos = transform.localPosition;
         float currentDuration = shakeDuration;
-        
+
         while (currentDuration >= 0)
         {
             transform.localPosition = originalPos + Random.insideUnitSphere * shakeAmount;
             currentDuration -= Time.deltaTime * decreaseFactor;
             yield return null;
         }
+
         transform.localPosition = originalPos;
-        yield return null;
     }
 
     public void SetMeshObject()
@@ -120,22 +141,21 @@ public class BreakableObject : NetworkBehaviour
 
     public void CheckRay(ItemType itemType)
     {
-        // 서버에서만 HP 업데이트를 처리
         if (!IsServer)
         {
             CheckRayServerRpc(itemType);
             return;
         }
-        
+
         ProcessHit(itemType);
     }
-    
+
     [ServerRpc(RequireOwnership = false)]
     private void CheckRayServerRpc(ItemType itemType)
     {
         ProcessHit(itemType);
     }
-    
+
     private void ProcessHit(ItemType itemType)
     {
         if (itemType == ItemType.Axe && blockType == BlockType.Wood)
@@ -150,18 +170,18 @@ public class BreakableObject : NetworkBehaviour
         {
             NetBlockHpCount.Value--;
         }
-        
+
         if (NetBlockHpCount.Value == 0)
             DestroyBlock();
     }
-    
+
     private void SpawnHitParticle()
     {
         GameObject temp = GameObject.Instantiate(HitParticle);
         temp.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
         temp.transform.SetParent(gameObject.transform);
     }
-    
+
     private void SpawnDestroyEffect()
     {
         GameObject temp = Instantiate(DestroyParticle);
@@ -171,19 +191,16 @@ public class BreakableObject : NetworkBehaviour
 
     public void DestroyBlock()
     {
-        // 서버에서만 실제 파괴 로직 수행
         if (!IsServer)
             return;
-            
+
         if (TileInfo != null)
         {
-            // 블록이 파괴될 때 타일 타입을 Grass로 변경
             Vector2Int tilePos = new Vector2Int(Mathf.RoundToInt(TileInfo.transform.position.x), Mathf.RoundToInt(TileInfo.transform.position.z));
             MapGenerator.Instance.Map[tilePos.x, tilePos.y] = MapGenerator.TileType.Grass;
             MapGenerator.Instance.ReassignTile(tilePos);
         }
 
-        // 시각적 효과 처리 - 모든 클라이언트에 동기화
         SpawnDestroyEffectClientRpc();
 
         if (TileInfo != null)
@@ -191,7 +208,6 @@ public class BreakableObject : NetworkBehaviour
             DropItemsClientRpc();
         }
 
-        // 객체 파괴를 모든 클라이언트에 동기화
         NetworkObject networkObject = GetComponent<NetworkObject>();
         if (networkObject != null)
         {
@@ -202,13 +218,13 @@ public class BreakableObject : NetworkBehaviour
             Destroy(gameObject);
         }
     }
-    
+
     [ClientRpc]
     private void SpawnDestroyEffectClientRpc()
     {
         SpawnDestroyEffect();
     }
-    
+
     [ClientRpc]
     private void DropItemsClientRpc()
     {
@@ -220,5 +236,22 @@ public class BreakableObject : NetworkBehaviour
                 TileInfo.DropitialItems(DropGameObject[index]);
             }
         }
+    }
+
+    // ✅ Host에서 호출하는 외형 동기화 메소드
+    [ServerRpc(RequireOwnership = false)]
+    public void SetVisualsServerRpc(float rotation, float scale)
+    {
+        yRotation.Value = rotation;
+        yScale.Value = scale;
+    }
+
+    private void ApplyVisuals()
+    {
+        if (modelChild == null) return;
+
+        modelChild.localRotation = Quaternion.Euler(0f, yRotation.Value, 0f);
+        Vector3 curScale = gameObject.transform.localScale;
+        gameObject.transform.localScale = new Vector3(curScale.x, yScale.Value, curScale.z);
     }
 }
