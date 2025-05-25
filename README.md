@@ -22,7 +22,7 @@
 |--------|----------------------|--------------------------------------------------------------|
 | 김정현 | 클라이언트 프로그래머 | 플레이어 컨트롤, 상호작용 시스템, AI FSM, Netcode 동기화 구현 |
 | 박상현 | 클라이언트 프로그래머 | 절차적 맵생성, 레일 시스템 및 열차 기능 구현                  |
-| 최원진 | 기획자               | 열차 세부 기능 구현, 자원 시스템                             |
+| 최원진 | 클라이언트 프로그래머 | 열차 세부 기능 구현, 자원 시스템                             |
 | 천예진 | 기획자               | 게임 기획                                                   |
 
 ---
@@ -30,18 +30,17 @@
 ## 🛠 사용 기술 및 툴
 
 <p align="left">
-  <img src="https://img.shields.io/badge/Unity-2022.x-black?logo=unity" />
+  <img src="https://img.shields.io/badge/Unity6-black?logo=unity" />
   <img src="https://img.shields.io/badge/C%23-239120?logo=c-sharp&logoColor=white" />
   <img src="https://img.shields.io/badge/Netcode-Server_Authoritative-blue" />
   <img src="https://img.shields.io/badge/BehaviorTree-Unity6-lightgrey" />
-  <img src="https://img.shields.io/badge/PlasticSCM-VersionControl-green" />
 </p>
 
 ---
 
 ## 🎬 시연 영상
 
-- [📺 게임 플레이 데모 영상](https://youtu.be/your_demo_video_link)
+- [📺 게임 플레이 데모 영상](https://youtu.be/3vN_pJEplKI)
 
 ---
 
